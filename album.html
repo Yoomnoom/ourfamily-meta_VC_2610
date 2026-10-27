@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>가족 앨범 – 가상의 가족 극장</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d3202f'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<div id="app"></div>
+<script src="common.js"></script>
+<script>
+(() => {
+  const { h, has, arr, obj, pagehead, emptyPage, gallery, boot } = App;
+  boot((d, site) => {
+    const title = '가족 앨범 – ' + (has(site.name) ? site.name : '가상의 가족 극장');
+    const photos = arr(obj(d.album).photos).filter(g => g && (has(g.file) || has(g.caption)));
+    if (!photos.length) return { title, main: emptyPage('가족 앨범') };
+    return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('가족 앨범', obj(d.album).intro),
+      h('section', { class: 'page', 'data-section': 'gallery', 'aria-label': '사진 목록' }, h('div', { class: 'wrap' }, ...gallery(photos, { masonry: true })))) };
+  });
+})();
+</script>
+</body>
+</html>

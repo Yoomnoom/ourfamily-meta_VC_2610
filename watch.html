@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>상영관 – 가상의 가족 극장</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d3202f'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<div id="app"></div>
+<script src="common.js"></script>
+<script>
+(() => {
+  const { h, has, arr, obj, TITLES, workId, watchHref, poster, buildVideo, section, timeline, tools, toolList, roles, sourcesTable, href, mediaPath, boot, params } = App;
+
+  boot((d, site, av) => {
+    const name = has(site.name) ? site.name : '가상의 가족 극장';
+    const T = { ...TITLES, ...obj(d.sectionTitles) };
+    const works = arr(d.works), want = params.get('id');
+    let idx = works.findIndex((w, i) => workId(w, i) === want);
+    if (idx < 0 && !want && works.length) idx = 0;
+    if (idx < 0) return { title: '작품을 찾을 수 없어요 – ' + name, main: h('main', { id: 'main', class: 'wrap notice card' },
+      h('h1', { text: '작품을 찾을 수 없어요' }),
+      h('p', { text: '주소가 잘못되었거나 작품이 삭제되었을 수 있어요.' }),
+      h('a', { class: 'btn', href: href('works.html') }, '상영작에서 작품 고르기')) };
+
+    const w = works[idx], v = w.video || {};
+    const title = has(w.title) ? w.title : '제목 미정';
+    const main = h('main', { id: 'main', class: 'pad' });
+
+    // 상영관 – 플레이어
+    const dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, h('a', { class: 'btn ghost sm', href: mediaPath(v.file), download: '' }, '영상 다운로드'));
+    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' },
+      h('div', { class: 'screen-frame' }, buildVideo(v, title, () => dl && dl.remove())), dl)));
+
+    // 영화 정보
+    const jumps = [];
+    main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' },
+      h('div', {},
+        h('h1', { text: title }),
+        has(v.duration) && h('p', { class: 'meta', text: '러닝타임 ' + v.duration.trim() }),
+        has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
+        has(w.intent) && h('div', { id: 'intent' }, h('h2', { text: T.intent }), h('p', { class: 'prose', text: w.intent.trim() })),
+        h('nav', { class: 'jump', 'aria-label': '이 작품의 섹션 이동', id: 'jump' })))));
+    if (has(w.intent)) jumps.push(['intent', T.intent]);
+
+    const add = (id, label, body) => { main.append(section(id, label, '', body)); jumps.push([id, label]); };
+    const tl = timeline(w.process); if (tl) add('process', T.process, tl);
+    if (toolList(w.tools).length) add('tools', T.tools, tools(w.tools));
+    const ro = roles(w.roles, T); if (ro) add('roles', T.roles, ro);
+    const src = sourcesTable(w.sources, T.sources); if (src) add('sources', T.sources, src);
+
+    if (av.making) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('making.html') }, '이 작품의 메이킹 더 보기')));
+
+    const others = works.map((o, i) => [o, i]).filter(([, i]) => i !== idx);
+    if (others.length) { main.append(section('others', T.others, '', h('div', { class: 'mini' }, others.map(([o, i]) =>
+      h('a', { href: watchHref(o, i) }, poster(o),
+        h('h3', { text: has(o.title) ? o.title : '제목 미정' }),
+        has(o.video && o.video.duration) && h('p', { class: 'meta', text: o.video.duration.trim() })))))); jumps.push(['others', T.others]); }
+
+    const nav = main.querySelector('#jump');
+    if (jumps.length > 1) jumps.forEach(([id, label]) => nav.append(h('a', { href: '#' + id, text: label })));
+    else nav.remove();
+
+    return { title: `${title} – ${name}`, main };
+  });
+})();
+</script>
+</body>
+</html>

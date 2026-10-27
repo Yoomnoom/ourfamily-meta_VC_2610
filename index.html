@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>가상의 가족 극장</title>
+<meta name="description" content="생성형 AI로 그려낸 가족 이야기를 상영하는 가상의 가족 극장">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d3202f'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<div id="app"></div>
+<script src="common.js"></script>
+<script>
+(() => {
+  const { h, has, arr, obj, mediaPath, watchHref, href, poster, section, gallery, tools: _t, toolList, boot, reduced } = App;
+  const T0 = { works: '지금 상영 중', topics: '이 영화들이 담은 것', album: '가족 앨범', making: '메이킹' };
+  let current = 0;           // 카로셀 위치는 다시 그려도 유지한다
+
+  /* ---------- 히어로 ---------- */
+  function hero(d, site, av) {
+    const hr = obj(d.hero);
+    const title = has(hr.title) ? hr.title : (has(site.slogan) ? site.slogan : site.name);
+    const still = matchMedia('(max-width:719px)').matches || reduced || (navigator.connection && navigator.connection.saveData);
+    const img = f => { const i = h('img', { class: 'hero-media', src: mediaPath(f), alt: '', 'aria-hidden': 'true' }); i.addEventListener('error', () => i.remove()); return i; };
+    const media = [];
+    if (hr.mode === 'image') { if (has(hr.image)) media.push(img(hr.image)); }
+    else if (has(hr.video)) {
+      const still_ = has(hr.poster) ? img(hr.poster) : null;
+      if (still || !has(hr.video)) { if (still_) media.push(still_); }
+      else {
+        const v = h('video', { class: 'hero-media', muted: true, autoplay: true, loop: true, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', title: (site.name || '') + ' 대표 영상', src: mediaPath(hr.video) });
+        if (has(hr.poster)) v.setAttribute('poster', mediaPath(hr.poster));
+        v.muted = true;
+        v.addEventListener('error', () => v.replaceWith(...(still_ ? [still_] : [])));
+        v.play && v.play().catch(() => {});
+        media.push(v);
+      }
+    } else if (has(hr.poster)) media.push(img(hr.poster));
+    return h('section', { class: 'hero', 'data-section': 'hero', 'aria-label': '대표 화면' }, media,
+      h('div', { class: 'wrap hero-in' },
+        h('h1', { text: title || '' }),
+        has(hr.text) && h('p', { text: hr.text }),
+        h('div', { class: 'hero-cta' },
+          av.works && h('a', { class: 'btn', href: '#now', text: has(hr.ctaWatch) ? hr.ctaWatch : '지금 관람하기' }),
+          av.making && h('a', { class: 'btn ghost', href: href('making.html'), text: has(hr.ctaMaking) ? hr.ctaMaking : '메이킹 보기' }))));
+  }
+
+  /* ---------- 카로셀 ---------- */
+  function carousel(works) {
+    const n = works.length;
+    current = Math.max(0, Math.min(current, n - 1));
+    let swallow = false, startX = null;
+
+    const live = h('p', { class: 'sr', 'aria-live': 'polite' });
+    const prev = h('button', { type: 'button', class: 'arrow prev', 'aria-label': '이전 작품', text: '‹' });
+    const next = h('button', { type: 'button', class: 'arrow next', 'aria-label': '다음 작품', text: '›' });
+    const stage = h('div', {
+      class: 'stage', role: 'group', 'aria-roledescription': 'carousel', 'aria-label': '상영작 목록', tabindex: n > 1 ? '0' : null
+    });
+
+    const slides = works.map((w, i) => {
+      const title = has(w.title) ? w.title : '제목 미정';
+      const link = h('a', { class: 'btn', href: watchHref(w, i) }, '관람하기', h('span', { class: 'sr', text: ' – ' + title }));
+      const pLink = h('a', { href: watchHref(w, i), tabindex: '-1', 'aria-hidden': 'true' }, poster(w));
+      const slide = h('article', { class: 'slide', 'aria-roledescription': 'slide', 'aria-label': `${i + 1} / ${n}` },
+        pLink,
+        h('div', { class: 'slide-info' },
+          h('h3', { text: title }),
+          has(w.video && w.video.duration) && h('p', { class: 'meta', text: '러닝타임 ' + w.video.duration.trim() }),
+          link));
+      slide.addEventListener('click', e => {
+        if (swallow) { e.preventDefault(); return; }
+        if (i !== current) { e.preventDefault(); e.stopPropagation(); go(i); }
+      }, true);
+      stage.append(slide);
+      return { slide, link, pLink };
+    });
+
+    const dots = n > 1 ? h('div', { class: 'dots' }, works.map((w, i) =>
+      h('button', { type: 'button', class: 'dot', 'aria-label': `${i + 1}번째 작품: ${w.title || '제목 미정'}`, onclick: () => go(i) }))) : null;
+
+    function paint(announce) {
+      slides.forEach(({ slide, link, pLink }, i) => {
+        const off = i - current, abs = Math.abs(off);
+        slide.style.setProperty('--o', Math.max(-2, Math.min(2, off)));
+        slide.style.setProperty('--s', abs === 0 ? 1 : abs === 1 ? .8 : .66);
+        slide.style.setProperty('--op', abs === 0 ? 1 : abs === 1 ? .4 : 0);
+        slide.style.zIndex = 10 - abs;
+        slide.classList.toggle('active', abs === 0);
+        slide.classList.toggle('far', abs > 1);
+        slide.setAttribute('aria-hidden', abs === 0 ? 'false' : 'true');
+        link.tabIndex = abs === 0 ? 0 : -1;
+      });
+      prev.disabled = current === 0; next.disabled = current === n - 1;
+      if (dots) [...dots.children].forEach((d, i) => d.setAttribute('aria-current', i === current ? 'true' : 'false'));
+      if (announce) live.textContent = `${current + 1} / ${n}: ${works[current].title || '제목 미정'}`;
+    }
+    function go(i) { current = Math.max(0, Math.min(n - 1, i)); paint(true); }
+
+    prev.addEventListener('click', () => go(current - 1));
+    next.addEventListener('click', () => go(current + 1));
+    stage.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(current - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(current + 1); }
+    });
+    // 스와이프 (터치·마우스 드래그)
+    stage.addEventListener('pointerdown', e => { startX = e.clientX; });
+    const end = e => {
+      if (startX == null) return;
+      const dx = e.clientX - startX; startX = null;
+      if (Math.abs(dx) > 40 && n > 1) {
+        swallow = true; setTimeout(() => swallow = false, 60);
+        go(current + (dx < 0 ? 1 : -1));
+      }
+    };
+    stage.addEventListener('pointerup', end);
+    stage.addEventListener('pointercancel', () => { startX = null; });
+
+    paint(false);
+    return h('div', { class: 'carousel' }, stage, n > 1 && prev, n > 1 && next, dots, live);
+  }
+
+  /* ---------- 렌더 ---------- */
+  boot((d, site, av) => {
+    const home = obj(d.home), T = { ...T0, ...obj(home.titles) };
+    const works = arr(d.works).filter(w => w && (has(w.id) || has(w.title)));
+    const main = h('main', { id: 'main' });
+    main.append(hero(d, site, av));
+
+    if (works.length) main.append(section('now', T.works, '', carousel(works)));
+
+    const topics = arr(home.topics).filter(t => has(t.title) || has(t.text));
+    if (topics.length) main.append(section('topics', T.topics, '', h('div', { class: 'topics' }, topics.map(t =>
+      h('article', { class: 'topic' },
+        has(t.label) && h('span', { class: 'tag', text: t.label }),
+        has(t.title) && h('h3', { text: t.title }),
+        has(t.text) && h('p', { text: t.text }))))));
+
+    const photos = arr(obj(d.album).photos).filter(g => has(g.file) || has(g.caption)).slice(0, 6);
+    if (photos.length) main.append(section('album', T.album, '', ...gallery(photos),
+      h('a', { class: 'btn ghost', href: href('album.html') }, '앨범 전체보기')));
+
+    if (av.making) {
+      const names = [...new Set([...toolList(obj(d.making).tools), ...works.flatMap(w => toolList(w.tools))].map(t => (t.name || '').trim()).filter(Boolean))];
+      main.append(section('making', T.making, '',
+        names.length && h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n }))),
+        h('a', { class: 'btn ghost', href: href('making.html') }, '메이킹 전체보기')));
+    }
+
+    return { title: has(site.name) ? site.name + (has(site.slogan) ? ' – ' + site.slogan : '') : '가상의 가족 극장', main };
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>관리 페이지 – 가상의 가족 극장</title>
+<style>
+/* Pretendard – SIL Open Font License 1.1 (media/fonts/Pretendard-LICENSE.txt) */
+@font-face{font-family:"Pretendard";font-weight:400;font-style:normal;font-display:swap;src:url("media/fonts/Pretendard-Regular.woff2") format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:500;font-style:normal;font-display:swap;src:url("media/fonts/Pretendard-Medium.woff2") format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:700;font-style:normal;font-display:swap;src:url("media/fonts/Pretendard-Bold.woff2") format("woff2")}
+:root{
+  --cream:#fff8ec; --paper:#fffdf7; --line:#e3d4b6; --ink:#3a2f26; --muted:#6a5b4d; --field:#8a7a62;
+  --mint:#c3ead9; --yellow:#ffe7a0; --sky:#c2e1f6; --sky-d:#1d6694;
+  --ok:#16684e; --ph:#8a5a00; --bad:#b3261e; --warn-bg:#fff0c2; --ghost:#857868;
+  --hand:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --sans:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --hdr:64px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:1.0625rem}
+:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+button,.btn{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:6px 18px;border-radius:12px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);font-weight:700;font-size:.95rem}
+.btn:hover{background:var(--yellow)}
+.btn.primary{background:var(--mint)} .btn.primary:hover{background:#a9e0c7}
+.btn.sm{min-height:36px;padding:2px 12px;font-size:.88rem;border-width:1.5px}
+.btn.danger{color:var(--bad);border-color:var(--bad)} .btn.danger:hover{background:#fde8e6}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* 상단 바: 작품 선택 · 저장 상태 · 미리보기 · 저장 · 더보기 */
+header.top{position:sticky;top:0;z-index:40;background:rgba(255,248,236,.98);border-bottom:2px solid var(--line)}
+.top-in{display:flex;gap:10px 14px;align-items:center;padding:8px 20px}
+.top-in .grow{flex:1}
+.top-in select{max-width:min(380px,40vw);font-weight:700}
+.status{font-size:.9rem;line-height:1.35;text-align:right}
+.status b.ok{color:var(--ok)} .status b.dirty{color:var(--bad)}
+.status small{display:block;color:var(--muted);font-size:.8rem}
+.moreWrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:250px;background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:6px;box-shadow:0 10px 30px rgba(58,47,38,.25)}
+.menu .mi{display:flex;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:9px 12px;min-height:40px;font-weight:500;color:var(--ink);align-items:center}
+.menu .mi:hover{background:var(--yellow)}
+.menu .mi.danger{color:var(--bad)}
+.menu .mi:disabled{opacity:.4;cursor:not-allowed}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.menu .mh{font-size:.8rem;color:var(--muted);padding:6px 12px 2px;font-weight:700}
+.folder-banner{display:flex;gap:12px;align-items:center;padding:6px 20px;background:var(--warn-bg);border-top:1px solid #e6bc4d;font-size:.92rem}
+
+/* 3단 화면: 단계 목록 | 지금 단계 | 사이트에서 나올 모습 */
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px;padding:20px;max-width:1700px;margin:0 auto;align-items:start}
+@media(min-width:1280px){.app{grid-template-columns:250px minmax(0,1fr) clamp(400px,34vw,640px)}body.pv-hidden .app{grid-template-columns:250px minmax(0,1fr)}}
+@media(max-width:820px){.app{grid-template-columns:minmax(0,1fr);padding:12px}}
+
+.steps{position:sticky;top:calc(var(--hdr) + 12px);max-height:calc(100vh - var(--hdr) - 28px);overflow-y:auto;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:10px}
+.todo{display:block;width:100%;text-align:left;border:2px solid var(--ink);background:var(--yellow);border-radius:12px;font-weight:700;padding:8px 12px;min-height:42px;margin-bottom:8px}
+.todo.done{background:#e4f6ee;border-color:var(--ok);color:var(--ok);cursor:default}
+.steps h2{font-size:.85rem;color:var(--muted);margin:10px 8px 4px;font-family:var(--sans)}
+.stp{display:flex;width:100%;gap:10px;align-items:center;text-align:left;background:none;border:0;border-radius:10px;padding:8px 8px;min-height:44px;font-weight:500;color:var(--ink)}
+.stp:hover{background:var(--yellow)}
+.stp[aria-current=step]{background:var(--mint);font-weight:700}
+.stp .no{font-weight:700;color:var(--muted);min-width:1.1em}
+.ic{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--field);display:grid;place-items:center;font-size:.75rem;font-weight:700;background:#fff;color:#fff}
+.ic.done{background:var(--ok);border-color:var(--ok)}
+.ic.work{border-color:var(--ph);background:linear-gradient(90deg,var(--ph) 50%,#fff 50%)}
+@media(max-width:820px){.steps{position:static;max-height:none;display:flex;gap:6px;overflow-x:auto;padding:8px}.steps h2{display:none}.stp{flex:none;width:auto;white-space:nowrap}.todo{flex:none;width:auto;margin:0}}
+
+.stepmain{min-width:0}
+.stepno{font-size:.9rem;color:var(--muted);font-weight:700}
+.stephead h1{font-family:var(--hand);font-size:1.9rem;margin:2px 0 6px;line-height:1.25}
+.why{margin:0 0 16px;color:var(--muted);white-space:pre-line}
+.stepbody{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:6px 20px 20px}
+.stepnav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+details.part{border-bottom:1px solid var(--line);padding:6px 0}
+details.part:last-child{border-bottom:0}
+details.part>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;font-family:var(--hand);font-weight:700;font-size:1.2rem}
+details.part>summary::-webkit-details-marker{display:none}
+details.part>summary::before{content:"▾";color:var(--muted);font-size:.9rem}
+details.part:not([open])>summary::before{content:"▸"}
+details.part>summary small{font-family:var(--sans);font-weight:500;color:var(--muted);font-size:.85rem}
+.pdesc{margin:0 0 12px;color:var(--muted);font-size:.93rem;white-space:pre-line}
+
+/* 사이트에서 나올 모습 */
+#pvpane{display:flex;flex-direction:column;background:#0d0b10;border:2px solid var(--ink);border-radius:16px;overflow:hidden;position:sticky;top:calc(var(--hdr) + 12px);height:calc(100vh - var(--hdr) - 28px)}
+.pv-head{display:flex;gap:8px;align-items:center;padding:8px 12px;background:var(--paper);border-bottom:2px solid var(--line)}
+.pv-head b{font-family:var(--hand);font-size:1.15rem;margin-right:auto}
+.pv-head select{max-width:190px;min-height:36px;padding:4px 8px}
+#pvpane iframe{flex:1;border:0;width:100%;background:#0d0b10}
+#btnPV{display:inline-flex}
+@media(max-width:1279px){
+  #pvpane{position:fixed;inset:0;z-index:70;border:0;border-radius:0;height:auto;display:none}
+  body.pv-open #pvpane{display:flex}
+}
+@media(min-width:1280px){#pvClose{display:none} body.pv-hidden #pvpane{display:none}}
+
+/* 폼 */
+.field{margin-bottom:18px}
+.field>label{display:block;font-weight:700;font-size:1rem;margin-bottom:5px}
+.req{display:inline-block;margin-left:8px;font-size:.75rem;font-weight:700;color:var(--bad);border:1px solid var(--bad);border-radius:999px;padding:0 8px;vertical-align:middle}
+.hint{display:block;font-size:.88rem;color:var(--muted);margin-top:4px;white-space:pre-line}
+input[type=text],textarea,select.fld{width:100%;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:11px 14px}
+textarea{resize:vertical;min-height:96px;line-height:1.6}
+textarea.big{min-height:180px;font-family:ui-monospace,"Cascadia Mono",Consolas,var(--sans);font-size:1rem;white-space:pre-wrap;tab-size:2}
+input:focus,textarea:focus,select:focus{border-color:var(--sky-d)}
+::placeholder{color:#a39684;opacity:1}
+select{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:8px 12px;min-height:42px}
+.cb{display:flex;gap:10px;align-items:center;font-weight:700}
+.cb input{width:22px;height:22px;accent-color:var(--ok)}
+.sub-title{font-weight:700;margin:8px 0 6px}
+/* [예시] 값: 회색 글자 + "예시" 표시, 클릭하면 전체 선택 */
+.exw{position:relative;display:block}
+.exw .pill{display:none;position:absolute;right:10px;top:9px;font-size:.72rem;font-weight:700;background:var(--yellow);color:var(--ph);border-radius:999px;padding:0 9px;pointer-events:none}
+.exw.ex .pill{display:block}
+.exw.ex input,.exw.ex textarea{color:var(--ghost)}
+.exw.ex input,.exw.ex textarea{padding-right:60px}
+details.adv{margin:4px 0 14px;border:1.5px dashed var(--line);border-radius:12px;padding:2px 14px}
+details.adv>summary{cursor:pointer;min-height:40px;display:flex;align-items:center;color:var(--muted);font-weight:700}
+details.adv[open]{padding-bottom:10px}
+.list{display:grid;gap:12px;margin-bottom:10px}
+.item{border:1.5px solid var(--line);border-radius:16px;background:#fffaf0;padding:14px}
+.item .item{background:#fff}
+.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.item-head b{font-family:var(--hand);font-size:1.2rem}
+.item-tools{display:flex;gap:6px;flex-wrap:wrap}
+.grip{cursor:grab;user-select:none;padding:4px 8px;border-radius:8px;color:var(--muted);font-size:1.1rem;line-height:1;border:1.5px dashed var(--line);background:#fff}
+.over{outline:3px dashed var(--sky-d);outline-offset:2px}
+.dragging{opacity:.45}
+.two{display:grid;gap:18px;grid-template-columns:1fr}
+@media(min-width:900px){.two{grid-template-columns:1fr 1fr}}
+
+/* 표 (출처·저작권) */
+.tbl{overflow-x:auto;margin-bottom:10px;border:1.5px solid var(--line);border-radius:14px}
+.tbl table{width:100%;border-collapse:collapse;min-width:640px}
+.tbl th{background:#fbefd5;text-align:left;padding:8px 10px;font-size:.9rem;border-bottom:1.5px solid var(--line)}
+.tbl td{padding:0;border-bottom:1px solid var(--line);vertical-align:top;background:#fff}
+.tbl tr:last-child td{border-bottom:0}
+.tbl input.cell{border:0;border-radius:0;padding:12px 10px;font-size:1rem;background:transparent}
+.tbl input.cell:focus{background:#eaf5fc;outline:2px solid var(--sky-d);outline-offset:-2px}
+.tbl .exw .pill{top:12px}
+.tbl td.act{white-space:nowrap;padding:6px;width:1%;background:#fffaf0}
+.tbl tr.auto td{background:#f4efe4}
+
+/* 파일 입력 */
+.filebox{display:flex;gap:14px;align-items:center;border:2px dashed var(--field);border-radius:14px;padding:10px 12px;background:#fff;flex-wrap:wrap}
+.filebox.drag{background:#eaf5fc;border-color:var(--sky-d)}
+.filebox.empty{background:#fffaf0}
+.f-thumb{width:96px;height:64px;border-radius:8px;background:#efe6d0;overflow:hidden;flex:none;display:grid;place-items:center;color:var(--muted);font-size:.75rem}
+.f-thumb img,.f-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.f-info{flex:1;min-width:180px}
+.f-name{font-weight:700;word-break:break-all}
+.f-meta{font-size:.86rem;color:var(--muted)}
+.f-meta.bad{color:var(--bad);font-weight:700} .f-meta.ok{color:var(--ok)}
+.f-btns{display:flex;gap:6px}
+.dropmulti{border:2px dashed var(--field);border-radius:14px;padding:16px;text-align:center;background:#fffaf0;margin-bottom:12px;color:var(--muted)}
+.dropmulti.drag{background:#eaf5fc;border-color:var(--sky-d)}
+.dropmulti .btn{margin-top:6px}
+
+#toasts{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:90;display:grid;gap:8px;justify-items:center;max-width:92vw}
+.toast{background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.95rem;display:flex;gap:12px;align-items:center;white-space:pre-line}
+.toast button{background:var(--yellow);color:var(--ink);border:0;border-radius:999px;font-weight:700;padding:4px 14px;min-height:32px}
+dialog#intro{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;max-width:min(520px,92vw)}
+dialog#intro::backdrop{background:rgba(58,47,38,.45)}
+dialog#intro h2{font-family:var(--hand);margin:0 0 10px}
+dialog#intro ol{margin:0 0 16px;padding-left:22px}
+dialog#intro li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="top-in">
+    <label for="workSel" style="position:absolute;left:-9999px">작품 선택</label>
+    <select id="workSel"></select>
+    <span class="grow"></span>
+    <div class="status" id="status" aria-live="polite"></div>
+    <button class="btn" id="btnPV" type="button">미리보기</button>
+    <button class="btn primary" id="btnSave" type="button">저장 (Ctrl+S)</button>
+    <div class="moreWrap">
+      <button class="btn" id="btnMore" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="더보기">⋯</button>
+      <div class="menu" id="menu" role="menu" hidden></div>
+    </div>
+    <input id="fileImport" type="file" accept="application/json,.json" hidden>
+  </div>
+  <div class="folder-banner" id="folderBanner" hidden></div>
+</header>
+
+<div class="app">
+  <nav class="steps" id="steps" aria-label="할 일 단계"></nav>
+  <main class="stepmain" id="stepmain"></main>
+  <aside id="pvpane" aria-label="사이트에서 나올 모습">
+    <div class="pv-head">
+      <b>사이트에서 나올 모습</b>
+      <select id="pvPage" aria-label="미리볼 페이지"></select>
+      <button class="btn sm" id="pvTab" type="button">새 탭</button>
+      <button class="btn sm" id="pvClose" type="button">닫기 ✕</button>
+    </div>
+    <iframe id="frame" title="공개 페이지 미리보기" src="about:blank"></iframe>
+  </aside>
+</div>
+
+<dialog id="intro" aria-labelledby="introT">
+  <h2 id="introT">이렇게 쓰세요</h2>
+  <ol>
+    <li>왼쪽 단계를 위에서부터 차례로 채워요.</li>
+    <li>오른쪽 화면에 지금 쓰는 내용이 사이트 어디에 나오는지 보여 줘요.</li>
+    <li>저장(Ctrl+S)을 누르면 content.json이 만들어져요.</li>
+  </ol>
+  <button class="btn primary" id="introOk" type="button">시작하기</button>
+</dialog>
+
+<datalist id="dl-tools"></datalist>
+<div id="toasts" role="status"></div>
+
+<script>
+(() => {
+  const KEY = 'familyTheaterAdmin.v3';
+  const OLD_KEY = 'familyTheaterAdmin.v2';
+  const UI_KEY = 'familyTheaterAdmin.ui2';
+  const has = s => typeof s === 'string' && s.trim() !== '';
+  const arr = a => Array.isArray(a) ? a : [];
+  const obj = o => (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  const $ = id => document.getElementById(id);
+  const clone = o => JSON.parse(JSON.stringify(o));
+  /** 문장 끝 온점(.) 뒤에서 줄을 바꾼다. 숫자 뒤 온점과 파일명은 그대로 둔다. */
+  const brk = s => typeof s === 'string' ? s.replace(/([^\d\s])\.[ \t]+(?=\S)/g, '$1.\n') : s;
+  const TOPIC_LABELS = ['연결', '발견', '즐거움'];
+
+  /* ---------- 폼 스키마 ---------- */
+  const T = (key, label, o = {}) => ({ type: 'text', key, label, ...o });
+  const A = (key, label, o = {}) => ({ type: 'area', key, label, ...o });
+  const S = (key, label, options, o = {}) => ({ type: 'select', key, label, options, ...o });
+  const F = (key, label, kind, o = {}) => ({ type: 'file', key, label, kind, ...o });
+
+  const TOOLS_LIST = () => ({ type: 'list', key: 'tools', itemLabel: i => `AI 도구 ${i + 1}`, addLabel: 'AI 도구 추가',
+    fields: [
+      T('name', '도구 이름', { req: 1, list: 'dl-tools', ph: '예) ○○ 이미지 생성 AI', hint: '앞에서 쓴 도구는 자동완성돼요.' }),
+      T('purpose', '무엇에 썼나요', { ph: '예) 장면별 일러스트 만들기' }),
+      { type: 'list', key: 'prompts', itemLabel: i => `프롬프트 ${i + 1}`, addLabel: '프롬프트 추가', fields: [
+        T('title', '프롬프트 이름', { ph: '예) 거실 장면' }),
+        A('text', 'AI에 넣은 문장 (프롬프트)', { req: 1, big: 1, rows: 8, ph: '예) 따뜻한 오후 햇살이 드는 거실, 할머니와 손주가 함께 앨범을 넘기는 모습, 수채화 일러스트',
+          hint: '쓴 그대로 붙여 넣어요. 줄바꿈과 띄어쓰기가 그대로 남아요.\nCtrl+Enter를 누르면 다음 프롬프트가 생겨요.' })] }] });
+  const ROLES_GROUP = () => ({ group: 'roles', cols: 2, fields: [
+    { type: 'list', key: 'ai', str: true, itemLabel: i => `AI ${i + 1}`, addLabel: 'AI가 한 일 추가', title: 'AI가 한 일', ph: '예) 장면별 일러스트 12장 만들기' },
+    { type: 'list', key: 'human', str: true, itemLabel: i => `내가 ${i + 1}`, addLabel: '내가 한 일 추가', title: '내가 한 일', ph: '예) 시나리오 쓰기, 영상 편집' }] });
+  const SOURCES_TABLE = () => ({ type: 'list', key: 'sources', table: true, itemLabel: i => `자료 ${i + 1}`, addLabel: '줄 추가', fields: [
+    T('item', '무엇을 썼나요', { ph: '예) 배경 음악' }), T('source', '어디서 가져왔나요', { ph: '예) 직접 연주 / 음원 사이트 이름' }),
+    T('license', '쓴 방법과 허락 여부', { ph: '예) 직접 만듦 / 상업적 이용 허락 확인' })] });
+  const STEPS_LIST = key => ({ type: 'list', key, itemLabel: i => `단계 ${i + 1}`, addLabel: '단계 추가', fields: [
+    T('title', '단계 이름', { ph: '예) 이야기 모으기' }), A('desc', '한 일', { rows: 3, ph: '예) 가족과 인터뷰하며 기억에 남는 장면 열 가지를 골랐어요.' })] });
+
+  const PH = s => /\[예시\]/.test(s || '') || /^\s*\[[^\]]*\]\s*$/.test(s || '');
+  const st = v => !has(v) ? 0 : PH(v) ? 1 : 2;      // 0 비어 있음 · 1 예시 문구 · 2 완료
+  const best = a => a.length ? Math.max(...a) : 0;
+  const worst = a => a.length ? Math.min(...a) : 0;
+  const ck = (label, s, req, ...ks) => ({ label, s, req, ks });
+  const WATCH = 'watch.html';
+
+  /* 단계: scope(work=선택한 작품, site=사이트 공통), pv=[페이지, 섹션], parts=[{ title, desc, pv, adv, fields }] */
+  const STEPS = [
+    { id: 'video', scope: 'work', title: '영상·포스터 올리기', pv: [WATCH, 'player'],
+      why: '영상과 포스터를 먼저 올려 두면 오른쪽에서 상영관 모습을 바로 볼 수 있어요.',
+      parts: [{ fields: [{ group: 'video', fields: [
+        F('file', '영상 파일', 'video', { hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
+        F('poster', '포스터 사진', 'image', { hint: '세로로 긴 사진(2:3)이 좋아요.' }),
+        T('duration', '영상 길이', { ph: '03:30' }),
+        F('captions', '자막 파일 (있으면)', 'vtt', { hint: '.vtt 파일이에요.' }),
+        { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기' }] }] }],
+      checks: w => [ck('영상 파일', st(obj(w.video).file), false, 'file'), ck('포스터 사진', st(obj(w.video).poster), false, 'poster'), ck('영상 길이', st(obj(w.video).duration), false, 'duration')] },
+    { id: 'intro', scope: 'work', title: '작품 소개 쓰기', pv: [WATCH, 'info'],
+      why: '제목과 한 줄 소개, 기획 의도가 상영관 영상 아래에 나와요.',
+      parts: [{ pv: [WATCH, 'info'], fields: [
+        T('title', '제목', { req: 1, autoId: 1, ph: '예) 할머니의 부엌' }),
+        T('tagline', '한 줄 소개', { ph: '예) 냄새와 소리로 기억하는 할머니의 부엌을 그림으로 되살렸어요.' }),
+        A('intent', '기획 의도', { rows: 7, ph: '왜 이 주제를 골랐는지, 영상으로 무엇을 전하고 싶은지, AI를 어떻게 썼는지를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] },
+        { title: '고급: 작품 주소(ID)', adv: true, fields: [T('id', '작품 주소(ID)', { sanitize: true, ph: 'work-1',
+          hint: '제목을 처음 쓰면 자동으로 만들어져요.\n영문 소문자·숫자·하이픈만 쓰고, 작품마다 달라야 해요.\n이미 사이트에 올린 뒤에 바꾸면 작품 주소가 달라져요.' })] }],
+      checks: w => [ck('제목', st(w.title), false, 'title'), ck('한 줄 소개', st(w.tagline), false, 'tagline'), ck('기획 의도', st(w.intent), false, 'intent'),
+        ck('작품 주소(ID) – 영문·숫자·하이픈, 중복 없음', workIdOk(w) ? 2 : 0, false, 'id')] },
+    { id: 'process', scope: 'work', title: '만든 과정 쓰기', pv: [WATCH, 'process'],
+      why: '이 작품을 어떻게 만들었는지 순서대로 적어요. 모든 작품에 공통인 과정은 10단계에 써요.',
+      parts: [{ fields: [STEPS_LIST('process')] }],
+      checks: w => [ck('만든 과정 1단계 이상', best(arr(w.process).map(p => Math.min(st(p.title), st(p.desc)))), false, 'title', 'desc')] },
+    { id: 'tools', scope: 'work', title: 'AI 도구·프롬프트', pv: [WATCH, 'tools'],
+      why: '심사에서 꼭 보는 항목이에요. 어떤 AI를 썼고 어떤 문장을 넣었는지 그대로 적어요.',
+      parts: [{ fields: [TOOLS_LIST()] }],
+      checks: w => [ck('사용한 AI 도구', best(arr(w.tools).map(t => st(t.name))), true, 'name'), ck('주요 프롬프트', best(arr(w.tools).flatMap(t => arr(t.prompts)).map(p => st(p.text))), true, 'text')] },
+    { id: 'roles', scope: 'work', title: 'AI가 한 일·내가 한 일', pv: [WATCH, 'roles'],
+      why: '심사에서 꼭 보는 항목이에요. 구체적인 작업 단위로 나눠 적어요.\n예) AI: 장면별 일러스트 12장 만들기 / 내가: 시나리오 쓰기, 영상 편집',
+      parts: [{ fields: [ROLES_GROUP()] }],
+      checks: w => [ck('AI가 한 일·내가 한 일 나누기', Math.min(best(arr(obj(w.roles).ai).map(st)), best(arr(obj(w.roles).human).map(st))), true, 'ai', 'human')] },
+    { id: 'sources', scope: 'work', title: '출처·저작권', pv: [WATCH, 'sources'],
+      why: '심사에서 꼭 보는 항목이에요. 음악·사진 등 직접 만들지 않은 자료를 모두 적어요.\n엑셀에서 복사한 여러 줄을 칸에 붙여 넣으면 한 번에 채워져요.',
+      parts: [{ fields: [SOURCES_TABLE()] }],
+      checks: w => [ck('외부 자료 출처·저작권', best(arr(w.sources).filter(s => !s.auto).map(s => Math.min(st(s.item), st(s.source)))), true, 'item', 'source')] },
+
+    { id: 'site', scope: 'site', title: '사이트 이름·슬로건·연락처', pv: ['index.html', 'hero'],
+      why: '모든 페이지의 맨 위와 맨 아래에 나오는 정보예요.',
+      parts: [
+        { title: '이름·슬로건·로고', pv: ['index.html', 'hero'], fields: [{ group: 'site', fields: [
+          T('name', '사이트 이름', { req: 1, ph: '예) 우리 가족 극장' }), T('slogan', '슬로건', { req: 1, ph: '예) 우리의 이야기가 상영됩니다.', hint: '홈 첫 화면의 큰 제목이 돼요.' }),
+          T('logoText', '로고 글자 (1~2글자)', { ph: '극', hint: '비워 두면 사이트 이름의 첫 글자를 써요.' })] }] },
+        { title: '연락처', pv: ['index.html', 'footer'], fields: [{ group: 'site', fields: [
+          T('producer', '만든 사람', { ph: '예) 김○○ 가족' }), T('email', '문의 이메일', { ph: 'name@example.com' }),
+          { type: 'list', key: 'sns', title: 'SNS 주소 (있으면)', itemLabel: i => `주소 ${i + 1}`, addLabel: 'SNS 주소 추가',
+            fields: [T('label', '이름', { ph: '예) 인스타그램' }), T('url', '주소 (https://로 시작)', { ph: 'https://...' })] },
+          A('footer', '맨 아래 문구', { rows: 2, ph: '예) 이 극장의 영상은 모두 생성형 AI를 활용해 만들었으며, 사용한 도구와 프롬프트를 공개했어요.' })] }] }],
+      checks: d => [ck('사이트 이름', st(obj(d.site).name), false, 'name'), ck('슬로건', st(obj(d.site).slogan), false, 'slogan'),
+        ck('만든 사람·문의 이메일', Math.min(st(obj(d.site).producer), st(obj(d.site).email)), false, 'producer', 'email')] },
+    { id: 'home', scope: 'site', title: '홈 첫 화면과 주제 설명', pv: ['index.html', 'hero'],
+      why: '사이트에 처음 들어왔을 때 보이는 큰 화면과 주제 카드예요.',
+      parts: [
+        { title: '첫 화면 배경', pv: ['index.html', 'hero'], fields: [{ group: 'hero', fields: [
+          S('mode', '배경 종류', [['video', '영상 (반복 재생)'], ['image', '사진 한 장']]),
+          F('video', '반복 재생할 영상', 'video', { hint: '10~20초, 5MB 이하가 좋아요. 소리는 나지 않아요.' }),
+          F('poster', '영상 대신 보여줄 사진', 'image', { hint: '휴대폰이나 영상이 안 나올 때 대신 나와요.' }),
+          F('image', '배경 사진', 'image', { hint: '"사진 한 장"을 골랐을 때 써요.' })] }] },
+        { title: '첫 화면 글자와 버튼', pv: ['index.html', 'hero'], fields: [{ group: 'hero', fields: [
+          T('title', '큰 제목', { hint: '비워 두면 슬로건을 써요.' }), A('text', '짧은 설명', { rows: 3, ph: '예) 우리 가족의 이야기를 생성형 AI와 함께 영상으로 그렸어요.' }),
+          T('ctaWatch', '버튼 1 글자', { ph: '지금 관람하기', hint: '누르면 작품 목록으로 부드럽게 내려가요.' }), T('ctaMaking', '버튼 2 글자', { ph: '메이킹 보기', hint: '누르면 메이킹 페이지로 가요.' })] }] },
+        { title: '주제 설명 카드 3개', pv: ['index.html', 'topics'], fields: [{ group: 'home', fields: [
+          { type: 'list', key: 'topics', fixed: true, itemLabel: i => `카드 ${i + 1}`, fields: [T('label', '짧은 이름 (예: 연결)'), T('title', '제목', { ph: '예) 세대를 잇는 이야기' }),
+            A('text', '설명', { rows: 3, ph: '예) 할머니의 옛 이야기와 아이의 상상이 한 화면에서 만나요.' })] }] }] },
+        { title: '고급: 홈 각 구역의 제목', adv: true, pv: ['index.html', 'now'], fields: [{ group: 'home', fields: [{ group: 'titles', fields: [
+          T('works', '작품 목록 구역'), T('topics', '주제 카드 구역'), T('album', '가족 사진 구역'), T('making', '메이킹 구역')] }] }] }],
+      checks: d => [ck('첫 화면 배경 파일', st(obj(d.hero).mode === 'image' ? obj(d.hero).image : obj(d.hero).video), false, 'hero/video', 'hero/image'),
+        ck('주제 설명 카드 3개', arr(obj(d.home).topics).length ? worst(arr(obj(d.home).topics).map(t => Math.min(st(t.title), st(t.text)))) : 0, false, 'topics/title', 'topics/text')] },
+    { id: 'album', scope: 'site', title: '가족 사진', pv: ['album.html', 'gallery'],
+      why: '사진을 여러 장 한꺼번에 끌어다 놓을 수 있어요. 홈에는 앞의 6장이 나와요.',
+      parts: [{ fields: [{ group: 'album', fields: [
+        A('intro', '앨범 소개 문구 (없어도 돼요)', { rows: 2 }),
+        { type: 'list', key: 'photos', multiDrop: true, itemLabel: i => `사진 ${i + 1}`, addLabel: '사진 1장 추가', fields: [
+          F('file', '사진 파일', 'image'), T('caption', '사진 위에 보일 글', { ph: '예) 시나리오 회의' }),
+          T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진이 안 보이는 분께 읽어 드리는 글이에요.\n사진 속 모습을 한 문장으로 적어요.' })] }] }] }],
+      checks: d => [ck('가족 사진 (파일 + 설명)', best(arr(obj(d.album).photos).map(x => Math.min(st(x.file), st(x.alt)))), false, 'file', 'alt')] },
+    { id: 'making', scope: 'site', title: '메이킹 페이지 공통', pv: ['making.html', 'process'],
+      why: '모든 작품에 공통인 만든 과정과 AI 활용 선언문이에요. 작품별 내용은 1~6단계에 써요.',
+      parts: [
+        { title: '페이지 소개 문구', pv: ['making.html', 'head'], fields: [{ group: 'making', fields: [A('intro', '소개 문구', { rows: 2, ph: '예) 모든 작품에 공통으로 적용한 창작 과정과 AI 활용 방식이에요.' })] }] },
+        { title: '공통 만든 과정', pv: ['making.html', 'process'], fields: [{ group: 'making', fields: [STEPS_LIST('timeline')] }] },
+        { title: '공통 AI 도구·프롬프트', pv: ['making.html', 'tools'], fields: [{ group: 'making', fields: [TOOLS_LIST()] }] },
+        { title: '공통 AI가 한 일·내가 한 일', pv: ['making.html', 'roles'], fields: [{ group: 'making', fields: [ROLES_GROUP()] }] },
+        { title: '책임 있는 AI 활용 선언문', pv: ['making.html', 'declaration'], fields: [{ group: 'making', fields: [{ group: 'declaration', fields: [
+          T('title', '선언문 제목', { hint: '비워 두면 "책임 있는 AI 활용 선언문"으로 나와요.' }),
+          A('text', '선언문', { req: 1, rows: 6, ph: '예) 우리는 생성형 AI를 도구로 사용했으며, 사용한 도구와 프롬프트를 숨기지 않고 공개합니다.\n출연자 전원의 동의를 받은 범위에서만 얼굴과 개인정보를 사용했습니다.', hint: '줄바꿈은 그대로 나와요.' })] }] }] }],
+      checks: d => [ck('공통 만든 과정', best(arr(obj(d.making).timeline).map(p => Math.min(st(p.title), st(p.desc)))), false, 'timeline/title', 'timeline/desc'),
+        ck('책임 있는 AI 활용 선언문', st(obj(obj(d.making).declaration).text), true, 'declaration/text')] },
+    { id: 'about', scope: 'site', title: '소개 페이지', pv: ['about.html', 'producer'],
+      why: '만든 사람, 기획 의도, 사이트 전체의 출처 표, 공모전 안내가 소개 페이지에 나와요.',
+      parts: [
+        { title: '만든 사람 소개', pv: ['about.html', 'producer'], fields: [{ group: 'about', fields: [{ group: 'producer', fields: [
+          T('name', '이름 또는 팀 이름', { ph: '예) 김○○ 가족' }), A('text', '소개', { rows: 4, ph: '예) 누가 어떤 역할로 참여했는지 적어요.' })] }] }] },
+        { title: '사이트 전체 기획 의도', pv: ['about.html', 'intent'], fields: [{ group: 'about', fields: [A('intent', '기획 의도', { rows: 7, ph: '사이트 전체의 기획 의도를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] }] },
+        { title: '사이트 전체 출처·저작권', desc: '글꼴처럼 사이트 전체에 쓰인 자료를 적어요.\n작품별 자료는 6단계에 적어요.', pv: ['about.html', 'sources'], fields: [{ group: 'about', fields: [SOURCES_TABLE()] }] },
+        { title: '공모전 안내', pv: ['about.html', 'contest'], fields: [{ group: 'site', fields: [
+          T('contestName', '공모전 이름'), A('contestInfo', '접수 정보', { rows: 4, ph: '예) 접수 기간: 2026. 10. 1. ~ 10. 31. 접수 방법과 문의처를 적어요.' })] }] }],
+      checks: d => [ck('만든 사람 소개', Math.min(st(obj(obj(d.about).producer).name), st(obj(obj(d.about).producer).text)), false, 'producer/name', 'producer/text'),
+        ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] }
+  ];
+  const stepsFor = () => STEPS;
+  const curScopeOf = step => step.scope === 'work' ? data.works[ui.work] : data;
+
+  /* ---------- 데이터 ---------- */
+  // 글꼴 사용 내역 – 소개 페이지 출처 표의 기본 항목. auto 표시된 행은 필수 체크리스트 판정에서 제외한다.
+  const FONT_ROW = {"item": "글꼴 – Pretendard (본문·제목 전체)", "source": "Pretendard (Kil Hyung-jin) · github.com/orioncactus/pretendard · 파일을 media/fonts/에 포함해 직접 제공", "license": "SIL Open Font License 1.1 – 상업적 이용·재배포 가능, 저작권·라이선스 고지 유지 (media/fonts/Pretendard-LICENSE.txt)", "auto": true};
+  const SECTION_TITLES = { intent: '기획 의도', process: '창작 과정', tools: '사용한 AI 도구와 주요 프롬프트', roles: 'AI가 한 것 vs 직접 한 것', ai: 'AI가 한 것', human: '직접 한 것',
+    sources: '출처 · 저작권', others: '다른 작품 보기', declaration: '책임 있는 AI 활용 선언문', producer: '제작자 소개', contest: '공모전 안내' };
+  const blankTool = () => ({ name: '', purpose: '', prompts: [{ title: '', text: '' }] });
+  function blankWork(id) {
+    return { id, title: '', tagline: '', intent: '',
+      video: { file: '', poster: '', duration: '', captions: '', showDownload: true },
+      process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
+      sources: [{ item: '', source: '', license: '' }] };
+  }
+  const EMPTY = () => ({
+    site: { name: '[사이트 이름]', slogan: '[슬로건]', logoText: '', producer: '[제작자 이름]', email: '[이메일 주소]', sns: [],
+      contestName: '2026 생성형 AI 창작 공모전 · Meta와 함께하는 AI 페스티벌 – AI로 그려낸 가족 이야기', contestInfo: '', footer: '' },
+    sectionTitles: { ...SECTION_TITLES },
+    hero: { mode: 'video', video: '', poster: '', image: '', title: '', text: '', ctaWatch: '지금 관람하기', ctaMaking: '메이킹 보기' },
+    home: { titles: { works: '지금 상영 중', topics: '이 영화들이 담은 것', album: '가족 앨범', making: '메이킹' },
+      topics: TOPIC_LABELS.map(label => ({ label, title: '', text: '' })) },
+    making: { intro: '', timeline: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, declaration: { title: '', text: '' } },
+    album: { intro: '', photos: [{ file: '', caption: '', alt: '' }] },
+    about: { producer: { name: '', text: '' }, intent: '', sources: [{ ...FONT_ROW }, { item: '', source: '', license: '' }] },
+    works: [blankWork('work-1')]
+  });
+  const normTools = a => arr(a).map(t => ({ name: '', purpose: '', ...obj(t), prompts: arr(obj(t).prompts).map(p => ({ title: '', text: '', ...obj(p) })) }));
+  const normSteps = a => arr(a).map(p => ({ title: '', desc: '', ...obj(p) }));
+  const normRoles = r => ({ ...obj(r), ai: arr(obj(r).ai), human: arr(obj(r).human) });
+  function normWork(w) {
+    const b = blankWork(''); w = obj(w);
+    return { ...b, ...w, video: { ...b.video, ...obj(w.video) },
+      process: normSteps(w.process), tools: normTools(w.tools), roles: normRoles(w.roles),
+      // 글꼴 행은 소개 페이지의 사이트 공통 표로 옮겼다 (이전 구조의 auto 행은 제거)
+      sources: arr(w.sources).filter(s => !(s && s.auto)).map(s => ({ item: '', source: '', license: '', ...obj(s) })) };
+  }
+  /** 이전 구조(banner/gallery 기반)를 새 구조로 변환한다 */
+  function migrate(d) {
+    if ('hero' in d || 'making' in d || 'album' in d || 'about' in d) return d;
+    const hm = obj(d.home), b = obj(hm.banner), s = obj(d.site), ti = obj(hm.titles);
+    return { ...d,
+      site: { ...s, slogan: has(s.slogan) ? s.slogan : (b.title || '') },
+      hero: { text: b.text || '' },
+      home: { titles: { works: ti.works, topics: ti.topics, album: ti.gallery }, topics: hm.topics },
+      album: { photos: hm.gallery } };
+  }
+  function normalize(d0) {
+    const base = EMPTY(); if (!d0 || typeof d0 !== 'object' || Array.isArray(d0)) return base;
+    const d = migrate(d0), hm = obj(d.home), mk = obj(d.making), al = obj(d.album), ab = obj(d.about), s = obj(d.site);
+    const out = { ...d };
+    out.site = { ...base.site, ...s, sns: arr(s.sns).map(x => ({ label: '', url: '', ...obj(x) })) };
+    delete out.site.contestShort;
+    out.sectionTitles = { ...base.sectionTitles, ...obj(d.sectionTitles) };
+    out.hero = { ...base.hero, ...obj(d.hero) };
+    out.home = { titles: { ...base.home.titles, ...Object.fromEntries(Object.entries(obj(hm.titles)).filter(([, v]) => v != null)) },
+      topics: [0, 1, 2].map(i => ({ label: TOPIC_LABELS[i], title: '', text: '', ...obj(arr(hm.topics)[i]) })) };
+    out.making = { intro: '', ...mk, timeline: normSteps(mk.timeline), tools: normTools(mk.tools), roles: normRoles(mk.roles),
+      declaration: { title: '', text: '', ...obj(mk.declaration) } };
+    out.album = { intro: '', ...al, photos: arr(al.photos).map(g => ({ file: '', caption: '', alt: '', ...obj(g) })) };
+    const src = arr(ab.sources).map(x => ({ item: '', source: '', license: '', ...obj(x) })).filter(x => !x.auto);
+    out.about = { ...ab, producer: { name: '', text: '', ...obj(ab.producer) }, intent: ab.intent || '', sources: [{ ...FONT_ROW }, ...src] };
+    out.works = Array.isArray(d.works) ? d.works.map(normWork) : base.works;
+    out.works.forEach((w, i) => { if (!has(w.id)) w.id = 'work-' + (i + 1); });
+    return out;
+  }
+  let data;
+  function nextWorkId() {
+    const used = new Set(data.works.map(w => (w.id || '').trim()));
+    let n = 1; while (used.has('work-' + n)) n++; return 'work-' + n;
+  }
+  const workIdOk = w => { const v = (w.id || '').trim(); return /^[a-z0-9][a-z0-9-]*$/.test(v) && data.works.filter(x => (x.id || '').trim() === v).length === 1; };
+
+  /* ---------- 화면 상태 (마지막 탭·작품·열어 둔 섹션 기억) ---------- */
+  let ui = { step: 0, work: 0, open: {}, pvHidden: false };
+  try { ui = { ...ui, ...JSON.parse(localStorage.getItem(UI_KEY)) }; } catch {}
+  const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch {} };
+
+  /* ---------- 토스트 (실행 취소 지원) ---------- */
+  function toast(msg, { undo, ms = 3000 } = {}) {
+    const t = el('div', { class: 'toast' }, el('span', { text: brk(msg) }));
+    if (undo) { t.append(el('button', { type: 'button', text: '실행 취소', onclick: () => { undo(); t.remove(); } })); ms = 5000; }
+    $('toasts').append(t); setTimeout(() => t.remove(), ms);
+  }
+
+  /* ---------- 저장 상태 / 미리보기 전송 ---------- */
+  const targets = new Set();   // 미리보기 창 (iframe, 새 탭)
+  let pushTimer, dirty = false, lastSaved = null, autosavedAt = null;
+  const hhmm = d => d ? d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+  function pushPreview(target) {
+    const send = w => { try { if (w.closed) targets.delete(w); else w.postMessage({ type: 'content', data }, '*'); } catch { targets.delete(w); } };
+    if (target) send(target); else [...targets].forEach(send);
+  }
+  function renderStatus() {
+    $('status').replaceChildren(
+      el('b', { class: dirty ? 'dirty' : 'ok', text: dirty ? '아직 파일에 반영 안 됨' : '저장됨' }),
+      el('small', { text: (lastSaved ? '마지막 저장 ' + hhmm(lastSaved) : '아직 저장 안 함') + (autosavedAt ? ' · 임시저장 ' + hhmm(autosavedAt) : '') }));
+  }
+  function setDirty(v) { dirty = v; renderStatus(); }
+  function changed() {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); autosavedAt = new Date(); }
+    catch { toast('⚠ 자동 저장에 실패했어요. 저장으로 백업하세요.'); }
+    dirty = true; renderStatus(); updateAll();
+    clearTimeout(pushTimer); pushTimer = setTimeout(() => pushPreview(), 150);
+  }
+  window.addEventListener('message', e => {
+    if (e.data && e.data.type === 'preview-ready' && e.source) { targets.add(e.source); pushPreview(e.source); }
+  });
+  window.addEventListener('beforeunload', e => { if (dirty && !dir) { e.preventDefault(); e.returnValue = ''; } });
+
+  /* ---------- DOM 도우미 ---------- */
+  let uid = 0;
+  function el(tag, props = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    }
+    kids.flat(Infinity).forEach(c => c != null && c !== false && e.append(c));
+    return e;
+  }
+  const filled = v => typeof v === 'string' ? has(v) : Array.isArray(v) ? v.some(filled) : v && typeof v === 'object' ? Object.values(v).some(filled) : false;
+  const hintEl = f => f.hint ? el('span', { class: 'hint', text: brk(f.hint) }) : null;
+
+    /* ---------- 폼 렌더 ---------- */
+  // 한글 제목 → 작품 주소(ID)용 영문 (간단한 로마자 표기)
+  const RL = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+  const RV = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
+  const RT = ['','k','k','k','n','n','n','t','l','k','m','l','l','l','p','l','m','p','p','t','t','ng','t','t','k','t','p','t'];
+  const slugKo = s => [...String(s || '').replace(/\[[^\]]*\]/g, '').normalize('NFC')].map(ch => {
+    const c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3) { const i = c - 0xAC00; return RL[Math.floor(i / 588)] + RV[Math.floor(i % 588 / 28)] + RT[i % 28]; }
+    return /[A-Za-z0-9]/.test(ch) ? ch.toLowerCase() : '-';
+  }).join('').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+
+  /** "[예시]" 값은 회색 + "예시" 표시로 보여 주고, 눌러서 들어가면 전체가 선택돼 바로 덮어쓸 수 있다. */
+  function exWrap(input) {
+    const w = el('span', { class: 'exw' }, input, el('span', { class: 'pill', 'aria-hidden': 'true', text: '예시' }));
+    const sync = () => w.classList.toggle('ex', has(input.value) && PH(input.value));
+    sync();
+    input.addEventListener('input', sync);
+    input.addEventListener('focus', () => { if (w.classList.contains('ex')) { input._sel = true; input.select(); } });
+    input.addEventListener('mouseup', e => { if (input._sel) { e.preventDefault(); input._sel = false; } });
+    input.addEventListener('blur', () => { input._sel = false; });
+    return w;
+  }
+
+  function renderFields(fields, o) {
+    return fields.map(f => {
+      if (f.group) {
+        o[f.group] = obj(o[f.group]);
+        return el('div', { class: f.cols === 2 ? 'two' : null, 'data-g': f.group }, renderFields(f.fields, o[f.group]));
+      }
+      if (f.type === 'list') return renderList(f, o);
+      const id = 'f' + (++uid);
+      const lab = (kids, forId) => el('label', { for: forId }, kids, f.req && el('span', { class: 'req', text: '필수' }));
+      if (f.type === 'check') {
+        const cb = el('input', { type: 'checkbox', id, 'data-k': f.key }); cb.checked = !!o[f.key];
+        cb.addEventListener('change', () => { o[f.key] = cb.checked; changed(); });
+        return el('div', { class: 'field' }, el('label', { class: 'cb', for: id }, cb, f.label), hintEl(f));
+      }
+      if (f.type === 'select') {
+        const sel = el('select', { id, class: 'fld', 'data-k': f.key }, f.options.map(([v, l]) => el('option', { value: v, text: l })));
+        sel.value = o[f.key] ?? f.options[0][0];
+        sel.addEventListener('change', () => { o[f.key] = sel.value; changed(); });
+        return el('div', { class: 'field' }, lab(f.label, id), sel, hintEl(f));
+      }
+      if (f.type === 'file') return renderFile(f, o, id);
+      const input = el(f.type === 'area' ? 'textarea' : 'input', { id, type: f.type === 'text' ? 'text' : null, rows: f.rows, placeholder: f.ph, list: f.list,
+        class: f.big ? 'big' : null, spellcheck: f.big ? 'false' : null, 'data-k': f.key, 'data-enter': f.type === 'text' ? '1' : null, autocomplete: f.type === 'text' ? 'off' : null });
+      input.value = o[f.key] ?? '';
+      input.addEventListener('input', () => { o[f.key] = input.value; changed(); });
+      if (f.sanitize) input.addEventListener('change', () => {
+        input.value = o[f.key] = input.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, ''); changed();
+      });
+      if (f.autoId) input.addEventListener('change', () => {   // 제목을 처음 쓰면 작품 주소(ID)를 제목에서 만든다 (이미 바꾼 주소는 건드리지 않는다)
+        if (!/^work-\d+$/.test((o.id || '').trim())) return;
+        const s = slugKo(o.title); if (!s) return;
+        const used = new Set(data.works.filter(w => w !== o).map(w => (w.id || '').trim()));
+        let nid = s, n = 2; while (used.has(nid)) nid = s + '-' + n++;
+        o.id = nid; const idInp = document.querySelector('[data-k="id"]'); if (idInp) idInp.value = nid; changed();
+      });
+      return el('div', { class: 'field' }, lab(f.label, id), exWrap(input), hintEl(f));
+    });
+  }
+
+  /* ---------- 반복 목록 (추가·복제·드래그·실행 취소·Enter 다음 행·표 붙여넣기) ---------- */
+  function renderList(f, o) {
+    o[f.key] = arr(o[f.key]);
+    const host = el('div', { class: 'listhost', 'data-l': f.key });
+    const items = () => o[f.key];
+    let dragIdx = null, rows = [];
+
+    const mkNew = () => f.make ? f.make() : f.str ? '' : blank(f.fields);
+    function addAt(idx, k) { items().splice(idx, 0, mkNew()); changed(); draw(idx, k); }
+    function focusRow(idx, k) {
+      const row = rows[idx]; if (!row) return;
+      const t = (k && row.querySelector(`[data-k="${k}"]`)) || row.querySelector('input:not([type=hidden]):not([type=file]),textarea,button[data-k]');
+      if (t) { t.focus({ preventScroll: true }); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (t.select && t.tagName === 'INPUT') t.select(); }
+    }
+    function remove(i, label) {
+      const item = items()[i]; items().splice(i, 1); changed(); draw();
+      toast(`"${label}"을(를) 삭제했어요.`, { undo: () => { items().splice(Math.min(i, items().length), 0, item); changed(); draw(Math.min(i, items().length - 1)); } });
+    }
+    function move(i, d) { const j = i + d, a = items(); if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; changed(); draw(j); }
+    function dup(i) { items().splice(i + 1, 0, clone(items()[i])); changed(); draw(i + 1); }
+    function dropOn(i) {
+      if (dragIdx == null || dragIdx === i) return;
+      const a = items(), [m] = a.splice(dragIdx, 1); a.splice(i, 0, m); dragIdx = null; changed(); draw(i);
+    }
+
+    function rowTools(i, label, tab) {
+      const mk = (text, aria, fn, o2 = {}) => el('button', { type: 'button', class: 'btn sm' + (o2.danger ? ' danger' : ''), 'aria-label': `${label} ${aria}`, text, tabindex: tab ? '-1' : null, disabled: o2.disabled, onclick: fn });
+      const grip = el('span', { class: 'grip', draggable: 'true', title: '끌어서 순서 변경', 'aria-hidden': 'true', text: '⠿' });
+      grip.addEventListener('dragstart', e => { dragIdx = i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); const r = grip.closest('[data-row]'); if (r) { e.dataTransfer.setDragImage(r, 10, 10); r.classList.add('dragging'); } });
+      grip.addEventListener('dragend', () => { dragIdx = null; host.querySelectorAll('.dragging,.over').forEach(x => x.classList.remove('dragging', 'over')); });
+      return el('div', { class: 'item-tools' }, grip,
+        mk('↑', '위로', () => move(i, -1), { disabled: i === 0 }), mk('↓', '아래로', () => move(i, 1), { disabled: i === items().length - 1 }),
+        mk('복제', '복제', () => dup(i)), mk('삭제', '삭제', () => remove(i, label), { danger: true }));
+    }
+    function wire(row, i, label) {
+      row.setAttribute('data-row', i);
+      row._next = k => (i + 1 < items().length ? focusRow(i + 1, k) : addAt(i + 1, k));
+      row.addEventListener('dragover', e => { if (dragIdx != null) { e.preventDefault(); row.classList.add('over'); } });
+      row.addEventListener('dragleave', e => { if (!row.contains(e.relatedTarget)) row.classList.remove('over'); });
+      row.addEventListener('drop', e => { e.preventDefault(); row.classList.remove('over'); dropOn(i); });
+      rows[i] = row; return row;
+    }
+    // 표: 여러 줄(탭 구분) 붙여넣기
+    function pasteRows(i, k, grid) {
+      const keys = f.fields.map(x => x.key), c0 = Math.max(0, keys.indexOf(k)), a = items();
+      grid.forEach((cells, r) => {
+        while (i + r >= a.length) a.push(mkNew());
+        cells.forEach((v, c) => { if (keys[c0 + c]) a[i + r][keys[c0 + c]] = v.replace(/^"|"$/g, ''); });
+      });
+      changed(); draw(i + grid.length - 1, k);
+    }
+
+    function draw(focusIdx, focusK) {
+      rows = [];
+      let listEl;
+      if (f.table) {
+        const tb = el('tbody');
+        items().forEach((item, i) => {
+          const label = f.itemLabel(i), last = f.fields.length - 1;
+          const tr = el('tr', { class: item && item.auto ? 'auto' : null });
+          f.fields.forEach((fl, ci) => {
+            const inp = el('input', { type: 'text', class: 'cell', 'aria-label': `${label} ${fl.label}`, placeholder: fl.ph, 'data-k': fl.key, 'data-enter': '1', 'data-last': ci === last ? '1' : null, autocomplete: 'off' });
+            inp.value = item[fl.key] ?? '';
+            inp.addEventListener('input', () => { item[fl.key] = inp.value; changed(); });
+            inp.addEventListener('paste', e => {
+              const txt = (e.clipboardData || window.clipboardData).getData('text');
+              if (!/[\t\n]/.test(txt.replace(/\n+$/, ''))) return;
+              e.preventDefault();
+              pasteRows(i, fl.key, txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(r => r.split('\t')));
+            });
+            tr.append(el('td', {}, exWrap(inp)));
+          });
+          tr.append(el('td', { class: 'act' }, rowTools(i, label, true)));
+          tb.append(wire(tr, i, label));
+        });
+        listEl = el('div', { class: 'tbl' }, el('table', {}, el('caption', { class: 'sr', text: f.itemLabel(0).replace(/ ?\d+$/, '') + ' 표' }),
+          el('thead', {}, el('tr', {}, f.fields.map(fl => el('th', { scope: 'col', text: fl.label })), el('th', { class: 'sr', text: '행 도구' }))), tb));
+      } else {
+        listEl = el('div', { class: 'list' });
+        items().forEach((item, i) => {
+          const label = f.itemLabel(i);
+          let body;
+          if (f.str) {
+            const ta = el('textarea', { rows: 2, 'aria-label': label, placeholder: f.ph, 'data-k': f.key, 'data-enter': '1' }); ta.value = item ?? '';
+            ta.addEventListener('input', () => { items()[i] = ta.value; changed(); });
+            body = el('div', { class: 'field' }, exWrap(ta));
+          } else body = renderFields(f.fields, item);
+          const row = el('div', { class: 'item' }, el('div', { class: 'item-head' }, el('b', { text: label }), f.fixed ? null : rowTools(i, label, false)), body);
+          listEl.append(wire(row, i, label));
+        });
+      }
+      const addBtn = f.fixed ? null : el('button', { type: 'button', class: 'btn sm', text: '＋ ' + (f.addLabel || '추가'), onclick: () => addAt(items().length) });
+      host.replaceChildren(...[f.title && el('div', { class: 'sub-title', text: f.title }), f.hint && el('span', { class: 'hint', text: brk(f.hint) }),
+        f.multiDrop ? multiDrop() : null, listEl, addBtn].filter(Boolean));
+      if (focusIdx != null) focusRow(focusIdx, focusK);
+    }
+
+    // 앨범: 여러 장 한 번에 끌어다 놓기
+    function multiDrop() {
+      const pick = el('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true });
+      const zone = el('div', { class: 'dropmulti' }, el('div', { text: '사진을 여러 장 끌어다 놓으면 한 번에 추가돼요.' }),
+        el('button', { type: 'button', class: 'btn sm', text: '사진 여러 장 선택', onclick: () => pick.click() }), pick);
+      const addFiles = async files => {
+        files = [...files].filter(x => /^image\//.test(x.type) || /\.(jpe?g|png|webp|gif|avif)$/i.test(x.name));
+        if (!files.length) return toast('이미지 파일만 추가할 수 있어요.');
+        const a = items(); while (a.length && !filled(a[a.length - 1])) a.pop();
+        let copied = 0;
+        for (const file of files) { const name = await placeFile(file); if (dir) copied++; a.push({ file: name, caption: '', alt: '' }); }
+        changed(); draw(a.length - files.length, 'alt');
+        toast(`사진 ${files.length}장을 추가했어요.${dir ? '' : '\nmedia/ 폴더에 같은 이름으로 직접 넣어 주세요.'}`);
+      };
+      pick.addEventListener('change', () => { addFiles(pick.files); pick.value = ''; });
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+      zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+      return zone;
+    }
+    draw();
+    return host;
+  }
+  function blank(fields) {
+    const o = {};
+    fields.forEach(f => {
+      if (f.type === 'heading') return;
+      if (f.group) { o[f.group] = blank(f.fields); return; }
+      o[f.key] = f.type === 'list' ? [f.fields ? blank(f.fields) : ''] : f.type === 'check' ? false : f.type === 'select' ? f.options[0][0] : '';
+    });
+    return o;
+  }
+
+  // Enter = 다음 행(없으면 추가) · Ctrl+Enter = 큰 입력창에서 다음 행 · 표의 마지막 칸에서 Tab = 행 추가
+  document.addEventListener('keydown', e => {
+    const t = e.target; if (!t || !t.closest) return;
+    const row = t.closest('[data-row]'); if (!row || !row._next) return;
+    if (e.key === 'Enter' && !e.isComposing && !e.shiftKey) {
+      const plain = t.getAttribute('data-enter') === '1';
+      if (plain || ((e.ctrlKey || e.metaKey) && t.tagName === 'TEXTAREA')) { e.preventDefault(); row._next(t.getAttribute('data-k')); }
+    } else if (e.key === 'Tab' && !e.shiftKey && t.getAttribute('data-last') === '1' && row.tagName === 'TR' && !row.nextElementSibling) {
+      e.preventDefault(); row._next(row.querySelector('[data-k]').getAttribute('data-k'));
+    }
+  });
+
+    /* ---------- 프로젝트 폴더 연결 (File System Access API) ---------- */
+  let dir = null, pending = null;
+  const fsOk = typeof window.showDirectoryPicker === 'function';
+  const idb = () => new Promise((res, rej) => { const r = indexedDB.open('familyTheaterAdmin', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const kvGet = async k => { try { const db = await idb(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); } catch { return null; } };
+  const kvSet = async (k, v) => { try { const db = await idb(); await new Promise(res => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; }); } catch {} };
+  const perm = async (h, ask) => {
+    if (!h.queryPermission) return true;
+    if ((await h.queryPermission({ mode: 'readwrite' })) === 'granted') return true;
+    return ask && (await h.requestPermission({ mode: 'readwrite' })) === 'granted';
+  };
+  function folderUi() {
+    const bn = $('folderBanner');
+    if (fsOk && !dir) {
+      bn.hidden = false;
+      bn.replaceChildren(el('span', { text: pending ? '폴더 권한을 다시 확인해야 해요.' : '폴더 연결하면 저장이 파일에 바로 반영돼요.' }),
+        el('button', { type: 'button', class: 'btn sm', text: pending ? '다시 연결' : '폴더 연결' }));
+    } else bn.hidden = true;
+    $('btnSave').title = dir ? '"' + dir.name + '" 폴더의 content.json에 바로 저장해요.' : '폴더를 연결하지 않아서 content.json을 내려받아요.';
+    refreshFiles();
+  }
+  async function connect() {
+    try {
+      if (pending && await perm(pending, true)) { dir = pending; pending = null; folderUi(); return toast('폴더에 다시 연결했어요.'); }
+      const h = await window.showDirectoryPicker({ id: 'ft-project', mode: 'readwrite' });
+      let ok = false;
+      for (const n of ['content.json', 'index.html']) { try { await h.getFileHandle(n); ok = true; break; } catch {} }
+      if (!ok && !confirm(`"${h.name}" 폴더에서 content.json이나 index.html을 찾지 못했어요.\n프로젝트 폴더가 맞나요?`)) return;
+      dir = h; pending = null; await kvSet('dir', h); folderUi(); toast(`"${h.name}" 폴더에 연결했어요.`);
+    } catch (e) { if (e.name !== 'AbortError') toast('폴더 연결 실패: ' + e.message); }
+  }
+  async function writeFile(handleDir, name, text) {
+    const w = await (await handleDir.getFileHandle(name, { create: true })).createWritable(); await w.write(text); await w.close();
+  }
+  const jsonText = () => JSON.stringify(data, null, 2) + '\n';
+  async function saveToFolder() {
+    const text = jsonText();
+    let old = null;
+    try { old = await (await (await dir.getFileHandle('content.json')).getFile()).text(); } catch (e) { if (e.name !== 'NotFoundError') throw e; }
+    if (old != null && old !== text) await writeFile(dir, 'content.backup.json', old);   // 덮어쓰기 직전 이전 버전 보관
+    await writeFile(dir, 'content.json', text);
+  }
+  function download() {
+    const url = URL.createObjectURL(new Blob([jsonText()], { type: 'application/json' }));
+    const a = el('a', { href: url, download: 'content.json' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);   // 바로 해제하면 브라우저가 받기 전에 취소될 수 있다
+    lastSaved = new Date(); setDirty(false); toast('content.json을 내려받았어요.\n이 폴더의 content.json을 교체하세요.');
+  }
+  async function save() {
+    if (!dir) return download();
+    try {
+      if (!await perm(dir, true)) throw new Error('폴더 쓰기 권한이 없어요');
+      await saveToFolder(); lastSaved = new Date(); setDirty(false);
+      toast('content.json을 폴더에 저장했어요.\n이전 버전은 content.backup.json에 보관했어요.');
+    } catch (e) {
+      toast('저장 실패: ' + e.message);
+      if (confirm('폴더에 저장하지 못했어요.\n대신 다운로드로 저장할까요?')) download();
+    }
+  }
+
+  /* ---------- 미디어 파일 입력 ---------- */
+  const fmtSize = n => !n ? '' : n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1024 / 1024).toFixed(1) + ' MB';
+  const safeName = n => {
+    const dot = n.lastIndexOf('.');
+    const raw = dot > 0 ? n.slice(0, dot) : n;
+    let base = raw.replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+    const ext = dot > 0 ? n.slice(dot).toLowerCase().replace(/[^a-z0-9.]/g, '') : '';
+    if (!base) base = 'file-' + Date.now().toString(36);
+    else if (/[^\x00-\x7F]/.test(raw) && !/[A-Za-z]/.test(base)) base = 'file-' + base;   // 한글 이름이 숫자만 남지 않게
+    return base + ext;
+  };
+  /** 폴더가 연결되어 있으면 media/에 복사하고 저장된 파일명을 돌려준다. 아니면 원래 이름만 돌려준다. */
+  async function placeFile(file) {
+    if (!dir) return file.name;
+    try {
+      const md = await dir.getDirectoryHandle('media', { create: true }), base = safeName(file.name);
+      let target = base;
+      for (let n = 1; ; n++) {
+        let ex = null;
+        try { ex = await (await md.getFileHandle(target)).getFile(); } catch (e) { if (e.name !== 'NotFoundError') throw e; }
+        if (!ex) break;
+        if (ex.size === file.size) return target;                       // 같은 파일이 이미 있음
+        const dot = base.lastIndexOf('.');
+        target = dot > 0 ? `${base.slice(0, dot)}-${n}${base.slice(dot)}` : `${base}-${n}`;   // 이름만 같고 다른 파일이면 번호를 붙임
+      }
+      await writeFile(md, target, file);
+      return target;
+    } catch (e) { toast('media/로 복사하지 못했어요: ' + e.message); return file.name; }
+  }
+  let blobUrls = [];
+  async function mediaInfo(name) {
+    name = name.trim().replace(/^(\.?\/)?(media\/)?/, '');
+    if (dir) {
+      try {
+        const md = await dir.getDirectoryHandle('media'), f = await (await md.getFileHandle(name.split('/').pop())).getFile();
+        const url = URL.createObjectURL(f); blobUrls.push(url); return { state: 'ok', size: f.size, url };
+      } catch { return { state: 'missing' }; }
+    }
+    try {
+      const u = 'media/' + encodeURI(name), r = await fetch(u, { method: 'HEAD', cache: 'no-store' });
+      return r.ok ? { state: 'ok', size: +r.headers.get('content-length') || 0, url: u } : { state: 'missing' };
+    } catch { return { state: 'unknown' }; }
+  }
+  const fileRefreshers = new Set();
+  function refreshFiles() { blobUrls.forEach(u => URL.revokeObjectURL(u)); blobUrls = []; fileRefreshers.forEach(fn => fn()); }
+  window.addEventListener('focus', refreshFiles);   // media/에 파일을 직접 넣고 돌아오면 다시 확인
+  // 파일을 입력란 밖에 놓아도 브라우저가 파일을 열어 버리지 않게 한다
+  ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); }));
+
+  function renderFile(f, o, id) {
+    const kind = f.kind, accept = kind === 'video' ? 'video/*,.mp4' : kind === 'vtt' ? '.vtt,text/vtt' : 'image/*';
+    const kindLabel = { video: '영상', image: '이미지', vtt: '자막' }[kind];
+    const box = el('div', { class: 'filebox empty' }), thumb = el('div', { class: 'f-thumb', 'aria-hidden': 'true' });
+    const nameEl = el('div', { class: 'f-name' }), meta = el('div', { class: 'f-meta' });
+    const input = el('input', { type: 'file', accept, hidden: true, tabindex: '-1' });
+    const pickBtn = el('button', { type: 'button', class: 'btn sm', id, 'data-k': f.key, text: '파일 선택', onclick: () => input.click() });
+    const clearBtn = el('button', { type: 'button', class: 'btn sm', text: '지우기', onclick: () => { o[f.key] = ''; changed(); refresh(); } });
+    async function refresh() {
+      const v = (o[f.key] || '').trim();
+      pickBtn.dataset.val = v; box.classList.toggle('empty', !v); clearBtn.hidden = !v; thumb.replaceChildren();
+      if (!v) { nameEl.textContent = '선택된 파일 없음'; meta.className = 'f-meta'; meta.textContent = '여기로 끌어다 놓거나 "파일 선택"을 누르세요.'; thumb.textContent = kindLabel; return; }
+      nameEl.textContent = v; meta.className = 'f-meta'; meta.textContent = '확인 중…'; thumb.textContent = kindLabel;
+      const mi = await mediaInfo(v);
+      if ((o[f.key] || '').trim() !== v) return;
+      const odd = /[^\x00-\x7F]|\s/.test(v) ? ' · 공백·한글 이름은 피하는 게 좋아요.' : '';
+      if (mi.state === 'ok') {
+        meta.className = 'f-meta ok'; meta.textContent = '✓ media/에 있음' + (mi.size ? ' · ' + fmtSize(mi.size) : '') + odd;
+        if (kind === 'image') thumb.replaceChildren(el('img', { src: mi.url, alt: '' }));
+        else if (kind === 'video') { const vd = el('video', { src: mi.url, muted: true, preload: 'metadata', playsinline: true }); vd.muted = true; vd.addEventListener('loadedmetadata', () => { vd.currentTime = Math.min(0.1, vd.duration || 0.1); }); thumb.replaceChildren(vd); }
+        else thumb.textContent = 'VTT';
+      } else if (mi.state === 'missing') {
+        meta.className = 'f-meta bad'; meta.textContent = '⚠ media/ 폴더에 이 파일이 없어요.' + (dir ? '' : ' 같은 이름으로 직접 넣어 주세요.') + odd; thumb.textContent = '없음';
+      } else { meta.className = 'f-meta'; meta.textContent = '폴더를 연결하면 media/에 있는지 확인해요.' + odd; }
+    }
+    async function setFile(file) {
+      if (!file) return;
+      if (kind === 'video' && !/\.mp4$/i.test(file.name)) toast('mp4 파일을 권장해요. 다른 형식은 일부 브라우저에서 재생되지 않을 수 있어요.');
+      const name = await placeFile(file);
+      o[f.key] = name; changed(); await refresh();
+      if (!dir) toast(`파일명 "${name}"을 입력했어요.\nmedia/ 폴더에 같은 이름으로 직접 넣어 주세요.`);
+      else if (name !== file.name) toast(`media/에 "${name}"으로 복사했어요.\n(공백·한글은 영문 이름으로 바꿔요.)`);
+    }
+    input.addEventListener('change', () => { setFile(input.files[0]); input.value = ''; });
+    box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag'); });
+    box.addEventListener('dragleave', () => box.classList.remove('drag'));
+    box.addEventListener('drop', e => { e.preventDefault(); box.classList.remove('drag'); setFile(e.dataTransfer.files[0]); });
+    box.append(thumb, el('div', { class: 'f-info' }, nameEl, meta), el('div', { class: 'f-btns' }, pickBtn, clearBtn), input);
+    fileRefreshers.add(refresh); refresh();
+    return el('div', { class: 'field' }, el('label', { for: id, text: f.label }), box, hintEl(f));
+  }
+
+    /* ---------- 단계 목록 · 지금 단계 ---------- */
+  const STATUS_TXT = { done: '완료', work: '작성 중', empty: '비어 있음' };
+  function itemsOf(step, scope) { return scope && step.checks ? step.checks(scope) : []; }
+  function statusOf(step, scope) {
+    const it = itemsOf(step, scope);
+    return it.every(i => i.s === 2) ? 'done' : it.every(i => i.s === 0) ? 'empty' : 'work';
+  }
+  const workStepsLeft = w => STEPS.filter(s => s.scope === 'work' && statusOf(s, w) !== 'done').length;
+  const allStatus = () => STEPS.map(s => statusOf(s, curScopeOf(s)));
+  const firstLeft = () => allStatus().findIndex(s => s !== 'done');
+
+  function renderNav() {
+    const sts = allStatus(), left = sts.filter(s => s !== 'done').length;
+    const todo = el('button', { type: 'button', class: 'todo' + (left ? '' : ' done'), text: left ? `할 일 ${left}개 남음` : '할 일을 모두 마쳤어요 ✓', disabled: !left,
+      title: left ? '누르면 처음 남은 단계로 가요.' : null, onclick: () => goStep(firstLeft(), true) });
+    const nodes = [todo];
+    let group = null;
+    STEPS.forEach((s, i) => {
+      if (s.scope !== group) { group = s.scope; nodes.push(el('h2', { text: group === 'work' ? '이 작품' : '사이트 공통' })); }
+      const stt = sts[i];
+      nodes.push(el('button', { type: 'button', class: 'stp', 'aria-current': i === ui.step ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.title} (${STATUS_TXT[stt]})`, onclick: () => goStep(i) },
+        el('span', { class: 'ic ' + stt, 'aria-hidden': 'true', text: stt === 'done' ? '✓' : '' }), el('span', { class: 'no', 'aria-hidden': 'true', text: i + 1 }), el('span', { text: s.title })));
+    });
+    $('steps').replaceChildren(...nodes);
+  }
+  function updateHeader() {
+    const sel = $('workSel'), labels = data.works.map((w, i) => {
+      const n = workStepsLeft(w);
+      return `${i + 1}. ${has(w.title) ? w.title : '(제목 없음)'} — ${n ? `${n}개 남음` : '끝'}`;
+    });
+    if (!labels.length) labels.push('(작품 없음)');
+    if (sel.options.length !== labels.length) sel.replaceChildren(...labels.map((l, i) => el('option', { value: String(i), text: l })));
+    else labels.forEach((l, i) => { if (sel.options[i].textContent !== l) sel.options[i].textContent = l; });
+    sel.value = String(ui.work);
+    const names = [...new Set([...data.works.flatMap(w => arr(w.tools)), ...arr(obj(data.making).tools)].map(t => (t.name || '').trim()).filter(Boolean))];
+    const dl = $('dl-tools'); if (dl.children.length !== names.length || names.some((n, i) => dl.children[i].value !== n)) dl.replaceChildren(...names.map(n => el('option', { value: n })));
+  }
+  function updateAll() { renderNav(); updateHeader(); }
+
+  const hasReq = fs => fs.some(f => f.req || (f.fields && hasReq(f.fields)));
+  function renderStep() {
+    blobUrls.forEach(u => URL.revokeObjectURL(u)); blobUrls = []; fileRefreshers.clear();
+    ui.step = Math.max(0, Math.min(ui.step, STEPS.length - 1));
+    ui.work = Math.max(0, Math.min(ui.work, Math.max(0, data.works.length - 1)));
+    const step = STEPS[ui.step], scope = curScopeOf(step);
+    if (step.scope === 'work' && !scope) {
+      $('stepmain').replaceChildren(el('div', { class: 'stephead' }, el('h1', { text: '작품이 아직 없어요' }), el('p', { class: 'why', text: '작품을 추가하면 이 단계부터 입력할 수 있어요.' })),
+        el('button', { type: 'button', class: 'btn primary', text: '＋ 작품 추가', onclick: addWork }));
+      return updateAll();
+    }
+    const head = el('div', { class: 'stephead' }, el('div', { class: 'stepno', text: `${STEPS.length}단계 중 ${ui.step + 1}단계` }), el('h1', { text: step.title }), el('p', { class: 'why', text: brk(step.why) }));
+    const many = step.parts.length >= 3;   // 구역이 여럿이면 첫 구역과 필수 구역만 펼쳐 두어 한 화면에 들어오게 한다
+    const parts = step.parts.map((p, pi) => {
+      const key = `${step.id}:${pi}`, pv = (p.pv || step.pv).join('|');
+      const body = [p.desc && el('p', { class: 'pdesc', text: brk(p.desc) }), renderFields(p.fields, scope)];
+      if (!p.title) return el('div', { 'data-pv': pv }, body);
+      const det = el('details', { class: p.adv ? 'adv' : 'part', 'data-pv': pv });
+      det.open = key in ui.open ? ui.open[key] : p.adv ? false : (!many || pi === 0 || hasReq(p.fields));
+      det.addEventListener('toggle', () => { ui.open[key] = det.open; saveUi(); });
+      det.append(el('summary', { text: p.title }), ...body.flat(Infinity).filter(Boolean));
+      return det;
+    });
+    const prev = el('button', { type: 'button', class: 'btn', text: '← 이전', disabled: ui.step === 0, onclick: () => goStep(ui.step - 1) });
+    const next = ui.step < STEPS.length - 1
+      ? el('button', { type: 'button', class: 'btn primary', text: '다음 →', onclick: () => goStep(ui.step + 1) })
+      : el('span', { class: 'stepno', text: '마지막 단계예요.' });
+    $('stepmain').replaceChildren(head, el('div', { class: 'stepbody' }, parts), el('div', { class: 'stepnav' }, prev, next));
+    updateAll();
+    pvManual = null; setPv(...step.pv);
+  }
+  function goStep(i, focusUnmet) {
+    ui.step = Math.max(0, Math.min(i, STEPS.length - 1)); saveUi(); renderStep();
+    window.scrollTo({ top: 0 });
+    if (focusUnmet) {
+      const step = STEPS[ui.step], un = itemsOf(step, curScopeOf(step)).filter(x => x.s < 2), m = un.find(x => x.req) || un[0];
+      if (m) focusKeys(m.ks);
+    }
+  }
+  function focusKeys(ks) {
+    const root = $('stepmain');
+    const cands = [...root.querySelectorAll(ks.map(k => { const [a, b] = k.includes('/') ? k.split('/') : [null, k];
+      return a ? `[data-g="${a}"] [data-k="${b}"],[data-l="${a}"] [data-k="${b}"]` : `[data-k="${k}"]`; }).join(','))];
+    const val = e => e.tagName === 'BUTTON' ? (e.dataset.val || '') : e.type === 'checkbox' ? 'x' : e.value;
+    const target = cands.find(e => st(val(e)) < 2) || cands[0]; if (!target) return;
+    for (let d = target.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' }); target.focus({ preventScroll: true });
+  }
+
+  /* ---------- 작품 도구 (더보기 메뉴에서 사용) ---------- */
+  function addWork() {
+    data.works.push(blankWork(nextWorkId())); ui.work = data.works.length - 1; ui.step = 0; saveUi(); changed(); renderStep();
+    toast('새 작품을 추가했어요. 1단계부터 채워 보세요.');
+  }
+  function dupWork() {
+    const cur = data.works[ui.work]; if (!cur) return;
+    const w = clone(cur); w.id = nextWorkId(); w.title = (w.title || '') + ' (복사)';
+    data.works.splice(ui.work + 1, 0, w); ui.work++; saveUi(); changed(); renderStep(); toast('작품을 복제했어요. 작품 주소(ID)는 2단계 "고급"에서 확인하세요.');
+  }
+  function swapWork(d) { const j = ui.work + d, a = data.works; if (j < 0 || j >= a.length) return; [a[ui.work], a[j]] = [a[j], a[ui.work]]; ui.work = j; saveUi(); changed(); renderStep(); }
+  function delWork() {
+    const w = data.works[ui.work]; if (!w) return;
+    if (!confirm(`"${has(w.title) ? w.title : '(제목 없음)'}" 작품을 삭제할까요?\n이 작품에 입력한 내용이 모두 사라져요.`)) return;
+    data.works.splice(ui.work, 1); ui.work = Math.max(0, ui.work - 1); saveUi(); changed(); renderStep();
+  }
+  $('workSel').addEventListener('change', () => { ui.work = +$('workSel').value || 0; saveUi(); renderStep(); });
+
+  /* ---------- 더보기(⋯) 메뉴 ---------- */
+  function openMenu() {
+    const mi = (text, fn, o = {}) => el('button', { type: 'button', class: 'mi' + (o.danger ? ' danger' : ''), role: 'menuitem', text, disabled: o.disabled, onclick: () => { closeMenu(); fn(); } });
+    const folderText = !fsOk ? '폴더 연결 (이 브라우저는 지원하지 않아요)' : dir ? `폴더 바꾸기 (연결됨: ${dir.name})` : pending ? `폴더 다시 연결 (${pending.name})` : '프로젝트 폴더 연결';
+    const n = data.works.length, has1 = !!data.works[ui.work];
+    $('menu').replaceChildren(
+      el('div', { class: 'mh', text: '파일' }),
+      mi(folderText, connect, { disabled: !fsOk }), mi('내보내기 (content.json 내려받기)', download), mi('불러오기', () => $('fileImport').click()),
+      el('hr'), el('div', { class: 'mh', text: '작품' }),
+      mi('작품 추가', addWork), mi('이 작품 복제', dupWork, { disabled: !has1 }),
+      mi('이 작품을 앞으로', () => swapWork(-1), { disabled: !has1 || ui.work === 0 }), mi('이 작품을 뒤로', () => swapWork(1), { disabled: !has1 || ui.work >= n - 1 }),
+      mi('이 작품 삭제', delWork, { danger: true, disabled: !has1 }),
+      el('hr'), mi('사용 방법', () => $('intro').showModal()), mi('처음부터 다시', resetAll, { danger: true }));
+    $('menu').hidden = false; $('btnMore').setAttribute('aria-expanded', 'true');
+    $('menu').querySelector('.mi:not(:disabled)').focus();
+  }
+  function closeMenu() { $('menu').hidden = true; $('btnMore').setAttribute('aria-expanded', 'false'); }
+  $('btnMore').addEventListener('click', () => $('menu').hidden ? openMenu() : closeMenu());
+  document.addEventListener('click', e => { if (!$('menu').hidden && !e.target.closest('.moreWrap')) closeMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('menu').hidden) { closeMenu(); $('btnMore').focus(); } });
+  $('introOk').addEventListener('click', () => { $('intro').close(); try { localStorage.setItem('familyTheaterAdmin.intro', '1'); } catch {} });
+
+  /* ---------- 사이트에서 나올 모습 (오른쪽 미리보기 + 입력 위치 강조) ---------- */
+  const PAGES = [['index.html', '홈'], ['works.html', '상영작'], ['watch.html', '상영관'], ['making.html', '메이킹'], ['album.html', '가족 앨범'], ['about.html', '소개']];
+  const workIdAt = i => ((data.works[i] || {}).id || '').trim() || 'work-' + (i + 1);
+  const wide = matchMedia('(min-width:1280px)');
+  let pvWant = { page: 'index.html', sec: null }, pvManual = null;
+  const pageUrl = page => page === 'watch.html' ? `watch.html?preview=1&id=${encodeURIComponent(workIdAt(ui.work))}` : page + '?preview=1';
+  const frameLoc = () => { try { const l = $('frame').contentWindow.location; return l.pathname.split('/').pop() + l.search; } catch { return ''; } };
+  const pvVisible = () => document.body.classList.contains('pv-open') || (wide.matches && !ui.pvHidden);
+  function setPv(page, sec) { pvWant = { page, sec }; showPv(); }
+  function showPv() {
+    document.body.classList.toggle('pv-hidden', !!ui.pvHidden);
+    if (!pvVisible()) return;
+    const page = pvManual || pvWant.page, url = pageUrl(page), fr = $('frame');
+    $('pvPage').value = pvManual || 'auto';
+    if (frameLoc() !== url) fr.src = url;
+    else { pushPreview(fr.contentWindow); fr.contentWindow.postMessage({ type: 'highlight', section: pvManual ? null : pvWant.sec }, '*'); }
+  }
+  // 입력란에 들어가면 그 입력란이 속한 구역을 강조한다
+  $('stepmain').addEventListener('focusin', e => {
+    const p = e.target.closest && e.target.closest('[data-pv]'); if (!p) return;
+    const [pg, sec] = p.dataset.pv.split('|'); if (pg !== pvWant.page || sec !== pvWant.sec) setPv(pg, sec);
+  });
+  $('frame').addEventListener('load', () => {
+    const page = frameLoc().split('?')[0];
+    if (PAGES.some(p => p[0] === page)) $('pvPage').value = (pvManual || pvWant.page) === page ? (pvManual || 'auto') : page;
+  });
+  $('pvPage').replaceChildren(el('option', { value: 'auto', text: '이 단계에 맞는 화면' }), ...PAGES.map(([v, l]) => el('option', { value: v, text: l })));
+  $('pvPage').addEventListener('change', () => { pvManual = $('pvPage').value === 'auto' ? null : $('pvPage').value; showPv(); });
+  const pvLabel = () => { $('btnPV').textContent = wide.matches ? '미리보기' : '사이트에서 보기'; };
+  $('btnPV').addEventListener('click', () => {
+    if (wide.matches) ui.pvHidden = !ui.pvHidden; else document.body.classList.toggle('pv-open');
+    saveUi(); showPv();
+  });
+  $('pvClose').addEventListener('click', () => { document.body.classList.remove('pv-open'); });
+  wide.addEventListener('change', () => { pvLabel(); showPv(); });
+  $('pvTab').addEventListener('click', () => {
+    if (!window.open(frameLoc() || pageUrl(pvManual || pvWant.page), '_blank')) toast('팝업이 차단되었어요.\n팝업을 허용하거나 옆 화면 미리보기를 사용하세요.');
+  });
+  window.addEventListener('message', e => {
+    if (e.data && e.data.type === 'preview-ready' && e.source && e.source === $('frame').contentWindow)
+      e.source.postMessage({ type: 'highlight', section: pvManual ? null : pvWant.sec }, '*');
+  });
+
+  /* ---------- 저장 · 불러오기 · 초기화 ---------- */
+  $('btnSave').addEventListener('click', save);
+  $('folderBanner').addEventListener('click', e => { if (e.target.closest('button')) connect(); });
+  document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); } });
+  $('fileImport').addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('올바른 content.json 형식이 아니에요');
+      if (!confirm('지금 입력한 내용이 불러온 파일로 바뀝니다.\n(필요하면 먼저 저장해서 백업하세요)\n\n계속할까요?')) return;
+      data = normalize(parsed); ui.work = 0; renderStep(); changed(); setDirty(false); toast('content.json을 불러왔어요.');
+    } catch (err) { alert('불러오기 실패: ' + err.message); }
+  });
+  async function fetchFile() {
+    try {
+      if (dir) { try { return JSON.parse(await (await (await dir.getFileHandle('content.json')).getFile()).text()); } catch {} }
+      const r = await fetch('content.json', { cache: 'no-store' }); if (!r.ok) throw 0; return await r.json();
+    } catch { toast('content.json을 자동으로 읽지 못했어요.\n"불러오기"로 파일을 선택하세요.'); return null; }
+  }
+  async function resetAll() {
+    if (!confirm('입력한 내용을 지우고, 이 폴더의 content.json 기준으로 다시 시작할까요?\n(먼저 저장해서 백업해 두세요)')) return;
+    try { localStorage.removeItem(KEY); } catch {}
+    data = normalize(await fetchFile()); ui.work = 0; renderStep(); changed(); setDirty(false); toast('초기 상태로 되돌렸어요.');
+  }
+
+  /* ---------- 시작 ---------- */
+  new ResizeObserver(() => document.documentElement.style.setProperty('--hdr', $('top').offsetHeight + 'px')).observe($('top'));
+  window.__adminConnect = h => { dir = h; pending = null; folderUi(); };   // 시험용: 사용자가 고른 폴더 핸들 대신 임의의 디렉터리 핸들 연결
+  (async () => {
+    let stored = null;
+    try { stored = JSON.parse(localStorage.getItem(KEY)) || JSON.parse(localStorage.getItem(OLD_KEY)); } catch {}
+    const h = fsOk ? await kvGet('dir') : null;
+    if (h) { try { if (await perm(h, false)) dir = h; else pending = h; } catch { pending = null; } }
+    data = normalize(stored || await fetchFile());
+    pvLabel(); folderUi(); renderStatus(); renderStep();
+    if (stored) { dirty = true; renderStatus(); }
+    let seen = false; try { seen = !!localStorage.getItem('familyTheaterAdmin.intro'); } catch {}
+    if (!seen) $('intro').showModal();
+  })();
+})();
+</script>
+</body>
+</html>
