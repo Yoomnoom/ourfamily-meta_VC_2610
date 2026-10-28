@@ -1104,7 +1104,7 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
 
   /* ---------- Supabase: 로그인 · 저장 · 파일 올리기 ---------- */
   const SB_URL = 'https://pkucszwwnwpzvzqczmhh.supabase.co';
-  const SB_KEY = '';   // 공개용(anon/publishable) 키. 비워 두면 예전 방식(내 PC 폴더의 content.json에 저장)으로 동작한다.
+  const SB_KEY = 'sb_publishable_ipfRTlcNU5mwSkgqcAKjmg_i8H0pM94';   // 공개용(anon/publishable) 키. 비워 두면 예전 방식(내 PC 폴더의 content.json에 저장)으로 동작한다.
   const online = !!SB_KEY;
   const BUCKET = 'ourfamilymeta-media', SESSION_KEY = 'ourfamilymeta.session', MAX_UPLOAD = 50 * 1024 * 1024;
   const isUrl = f => /^https?:\/\//i.test(String(f).trim());

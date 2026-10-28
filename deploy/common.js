@@ -31,7 +31,7 @@
   /** 내부 링크 – 미리보기 중에는 preview 플래그를 유지한다 */
   const href = p => previewMode ? p + (p.includes('?') ? '&' : '?') + 'preview=1' : p;
   // Supabase 읽기 전용 설정. key는 공개용(anon/publishable) 키라 코드에 들어가도 된다. 비워 두면 content.json만 쓴다.
-  const SB = { url: 'https://pkucszwwnwpzvzqczmhh.supabase.co', key: '' };
+  const SB = { url: 'https://pkucszwwnwpzvzqczmhh.supabase.co', key: 'sb_publishable_ipfRTlcNU5mwSkgqcAKjmg_i8H0pM94' };
   const isUrl = f => /^https?:\/\//i.test(String(f).trim());
   // 업로드된 파일은 전체 주소, 직접 넣은 파일은 media/ 안의 파일명
   const mediaPath = f => isUrl(f) ? String(f).trim() : 'media/' + encodeURI(String(f).trim().replace(/^(\.?\/)?(media\/)?/, ''));
