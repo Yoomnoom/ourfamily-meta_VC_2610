@@ -165,10 +165,11 @@ dialog#intro h2{font-family:var(--hand);margin:0 0 10px}
 dialog#intro ol{margin:0 0 16px;padding-left:22px}
 dialog#intro li{margin-bottom:6px}
 input[type=email],input[type=password]{width:100%;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:11px 14px}
-dialog#login,dialog#editors{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;width:min(440px,92vw)}
-dialog#login::backdrop,dialog#editors::backdrop{background:rgba(58,47,38,.55)}
-dialog#login h2,dialog#editors h2{font-family:var(--hand);margin:0 0 10px}
-dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+dialog#login,dialog#editors,dialog#confirmDel{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;width:min(440px,92vw)}
+dialog#login::backdrop,dialog#editors::backdrop,dialog#confirmDel::backdrop{background:rgba(58,47,38,.55)}
+dialog#login h2,dialog#editors h2,dialog#confirmDel h2{font-family:var(--hand);margin:0 0 10px}
+dialog#confirmDel input{width:100%;box-sizing:border-box}
+dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 .login-msg{white-space:pre-line;min-height:1.4em;margin:10px 0 0;color:#a3341b;font-size:.95rem}
 .ed-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
 .ed-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;word-break:break-all}
@@ -994,9 +995,26 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
     data.works.splice(ui.work + 1, 0, w); ui.work++; saveUi(); changed(); renderStep(); toast('작품을 복제했어요. 작품 주소(ID)는 2단계 "고급"에서 확인하세요.');
   }
   function swapWork(d) { const j = ui.work + d, a = data.works; if (j < 0 || j >= a.length) return; [a[ui.work], a[j]] = [a[j], a[ui.work]]; ui.work = j; saveUi(); changed(); renderStep(); }
-  function delWork() {
+  /** 되돌리기 어려운 삭제 앞의 안전장치: "삭제"를 직접 입력해야 진행된다. */
+  function confirmDelete(what) {
+    return new Promise(resolve => {
+      const dlg = el('dialog', { id: 'confirmDel', 'aria-labelledby': 'cdT' });
+      const inp = el('input', { type: 'text', placeholder: '삭제', 'aria-label': '확인을 위해 삭제라고 입력', autocomplete: 'off' });
+      const ok = el('button', { type: 'button', class: 'btn primary', text: '삭제하기', disabled: true });
+      const done = v => { dlg.close(); dlg.remove(); resolve(v); };
+      inp.addEventListener('input', () => { ok.disabled = inp.value.trim() !== '삭제'; });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (!ok.disabled) done(true); } });
+      ok.addEventListener('click', () => done(true));
+      dlg.addEventListener('cancel', e => { e.preventDefault(); done(false); });
+      dlg.append(el('h2', { id: 'cdT', text: '정말 삭제할까요?' }), el('p', { text: what, style: 'white-space:pre-line;margin:0 0 12px' }),
+        el('p', { text: '계속하려면 아래 칸에 "삭제"라고 적으세요.', style: 'margin:0 0 8px' }), inp,
+        el('div', { class: 'row' }, ok, el('button', { type: 'button', class: 'btn', text: '취소', onclick: () => done(false) })));
+      document.body.append(dlg); dlg.showModal(); inp.focus();
+    });
+  }
+  async function delWork() {
     const w = data.works[ui.work]; if (!w) return;
-    if (!confirm(`"${has(w.title) ? w.title : '(제목 없음)'}" 작품을 삭제할까요?\n이 작품에 입력한 내용이 모두 사라져요.`)) return;
+    if (!await confirmDelete(`"${has(w.title) ? w.title : '(제목 없음)'}" 작품을 삭제해요.\n이 작품에 입력한 내용이 모두 사라지고, 저장하면 되돌릴 수 없어요.`)) return;
     data.works.splice(ui.work, 1); ui.work = Math.max(0, ui.work - 1); saveUi(); changed(); renderStep();
   }
   $('workSel').addEventListener('change', () => { ui.work = +$('workSel').value || 0; saveUi(); renderStep(); });
@@ -1283,7 +1301,7 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
       list.replaceChildren(...rows.map(r => el('li', {}, el('span', { text: r.email + (r.role === 'admin' ? ' (관리자)' : '') }),
         el('button', { type: 'button', class: 'btn sm', text: '제거', disabled: r.role === 'admin' && admins <= 1, title: r.role === 'admin' && admins <= 1 ? '마지막 관리자는 제거할 수 없어요.' : null,
           onclick: async () => {
-            if (!confirm(`${r.email} 님의 편집 권한을 없앨까요?`)) return;
+            if (!await confirmDelete(`${r.email} 님의 편집 권한을 없애요.\n이 사람은 더 이상 CMS에서 작품을 올리거나 고칠 수 없어요.`)) return;
             try { await sbFetch('/rest/v1/ourfamilymeta_editors?email=eq.' + encodeURIComponent(r.email), { method: 'DELETE' }); await draw(); } catch (e) { toast('제거 실패: ' + e.message); }
           } }))));
     }
