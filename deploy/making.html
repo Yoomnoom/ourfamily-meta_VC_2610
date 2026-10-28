@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>메이킹 – 가상의 가족 극장</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d3202f'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<div id="app"></div>
+<script src="common.js"></script>
+<script>
+(() => {
+  const { h, has, arr, obj, TITLES, section, pagehead, emptyPage, timeline, tools, toolList, roles, href, boot } = App;
+  boot((d, site, av) => {
+    const title = '메이킹 – ' + (has(site.name) ? site.name : '가상의 가족 극장');
+    const mk = obj(d.making), T = { ...TITLES, ...obj(d.sectionTitles) };
+    if (!av.making) return { title, main: emptyPage('메이킹') };
+
+    const tl = timeline(mk.timeline), tl_n = arr(mk.timeline).filter(p => has(p.title) || has(p.desc)).length;
+    const tl_tools = toolList(mk.tools), tl_prompts = tl_tools.flatMap(t => arr(t.prompts)).filter(p => has(p.text)).length;
+    const ro = roles(mk.roles, T);
+    const aiN = arr(obj(mk.roles).ai).filter(has).length, huN = arr(obj(mk.roles).human).filter(has).length;
+    const decl = obj(mk.declaration), declText = has(decl.text) ? decl.text.trim() : '';
+
+    const parts = [];   // [id, 제목, 요약, 본문]
+    if (tl) parts.push(['process', T.process, `${tl_n}단계`, tl]);
+    if (tl_tools.length) parts.push(['tools', T.tools, `AI 도구 ${tl_tools.length}종 · 프롬프트 ${tl_prompts}개`, tools(mk.tools)]);
+    if (ro) parts.push(['roles', T.roles, `AI ${aiN}개 · 직접 ${huN}개`, ro]);
+    if (declText) parts.push(['declaration', has(decl.title) ? decl.title : T.declaration, '', h('div', { class: 'decl' }, h('p', { class: 'prose', text: declText }))]);
+
+    const main = h('main', { id: 'main', class: 'pad' }, pagehead('메이킹', mk.intro));
+    if (parts.length > 1) main.append(h('div', { class: 'wrap' }, h('nav', { class: 'toc card', 'aria-label': '심사 필수 항목 요약' },
+      h('h2', { text: '심사 필수 항목 한눈에 보기' }),
+      h('ol', {}, parts.map(([id, t, sum]) => h('li', {}, h('a', { href: '#' + id }, h('b', { text: t }), has(sum) && h('small', { text: sum }))))))));
+    parts.forEach(([id, t, , body]) => main.append(section(id, t, '', body)));
+    if (av.works) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('works.html') }, '작품별 도구·프롬프트·출처는 상영관에서')));
+    return { title, main };
+  });
+})();
+</script>
+</body>
+</html>

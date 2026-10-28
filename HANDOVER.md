@@ -1,0 +1,79 @@
+# 인수인계 문서
+
+세션이 끝날 때마다 **맨 위에** 새 항목을 추가합니다. 기존 기록은 지우지 않습니다.
+
+---
+
+## 2026-10-27 (저녁 추가) Supabase 테이블·버킷 생성 완료
+
+### 편집자 방식 확정: A (관리자가 CMS에서 추가)
+- 마이그레이션 `ourfamilymeta_admin_role` 적용. `ourfamilymeta_editors`를 **이메일 기준 + role(`admin`/`editor`)** 로 교체함(기존 테이블은 비어 있었음).
+- 쓰기 권한 = "가입·이메일 인증을 마친 계정의 이메일이 편집자 목록에 있음". 인원 제한 없음. 함수 `ourfamilymeta_is_editor()`, `ourfamilymeta_is_admin()`.
+- 편집자 목록의 추가·수정·삭제는 **admin만** 가능. 일반 editor는 자기 행만 읽기.
+- 최초 관리자: `good4056@gmail.com` (이미 가입·인증된 계정).
+- 사람 추가 흐름: 관리자가 admin 화면에 이메일 입력 → 목록에 등록 → 그 사람이 같은 이메일로 가입·인증하면 바로 편집 가능. 미리 등록해도 가입 전에는 권한 없음.
+- 알려진 빈틈: 마지막 admin을 삭제하는 것을 막는 장치는 아직 없음. admin 화면에서 막을 것.
+- admin.html에 만들 것: 로그인/가입 화면, 편집자 관리 탭(admin만 보임), 작품 CRUD, 파일 업로드.
+
+### 한 일
+- MCP 도구가 세션에 안 올라와서, 같은 토큰으로 Supabase 관리 API(`/v1/projects/{ref}/database/migrations`)를 직접 호출해 적용함. 사용자가 토큰 사용을 직접 허락함.
+- 적용 전에 기존 테이블 확인: public 테이블 약 67개(식단 앱 `*_vc2608` 등), 버킷 10개. `ourfamilymeta_` 이름은 없었음.
+- 마이그레이션 `ourfamilymeta_init` 적용 (원본 SQL은 스크래치패드 `ourfamilymeta_init.sql`, 내용은 아래 요약):
+  - 테이블 4개, 모두 RLS 켬: `ourfamilymeta_editors`, `ourfamilymeta_works`, `ourfamilymeta_assets`, `ourfamilymeta_settings`
+  - 함수 `ourfamilymeta_is_editor()`, `ourfamilymeta_touch_updated_at()`
+  - 버킷 `ourfamilymeta-media` (공개 읽기, 파일당 50MB, 허용: mp4·vtt·jpg·png·webp·pdf)
+  - 정책: 공개 항목은 누구나 읽기, 쓰기는 **편집자 목록에 있는 계정만**
+
+### 계획 변경 (중요)
+- 이 Supabase 프로젝트의 **Auth는 다른 앱과 공용**이다. 그래서 "로그인한 사람은 쓰기 가능"으로 하면 다른 앱 사용자도 우리 데이터를 고칠 수 있다.
+- 그래서 `ourfamilymeta_editors` 허용 목록 방식으로 바꿈. 6명을 Auth에 만든 뒤 이 테이블에 넣어야 쓰기가 됨.
+- 앞서 적은 **"자유 가입 끄기"는 하지 않는다.** 다른 앱의 회원가입이 막힘.
+
+### 다음에 할 일 (갱신)
+1. (사용자) 대시보드 Authentication → Users → Add user로 6명 계정 생성. 이메일 주소를 받으면 `insert into ourfamilymeta_editors select id, email from auth.users where email in (…)`로 등록.
+2. admin.html 개편(로그인, DB 저장, 파일 업로드), common.js가 DB에서 읽도록 수정, content.json 데이터 이전.
+3. 공개용 키(`anon` 또는 publishable) 확인 → 사이트 코드에 사용. 비밀 키(service_role)는 코드에 절대 넣지 않음.
+4. Vercel 연결, 6명 실제 업로드 테스트.
+5. 작업 후 Supabase 토큰 `claude` 폐기.
+
+### 결정 사항 (사용자 확인 필요)
+- 게임은 외부 링크, 스토리보드는 이미지+PDF, 영상은 50MB 제한으로 먼저 진행함. 바꾸려면 말해주세요. (영상 5분이 50MB를 넘으면 YouTube 링크 또는 용량 축소 필요)
+
+---
+
+## 2026-10-27
+
+### 이번에 한 일
+- GitHub 업로드 완료: https://github.com/Yoomnoom/ourfamily-meta_VC_2610 (브랜치 `main`, 22개 파일)
+  - 저장소에 이미 `Initial commit`이 있어서 `pull --rebase` 후 push함. force push는 쓰지 않음.
+  - [.gitignore](.gitignore) 신규 생성: `.env`, `.env.*`, `node_modules/`, `.claude/`
+  - 비밀 값(API 키·비밀번호) 검색 결과 없음.
+- Supabase MCP 재연결: 기존 설정의 토큰에 한글이 섞여 `ByteString` 오류가 났음. 새 토큰(30일 만료, 프로젝트 1개 한정)으로 다시 등록함. **VS Code 재시작 후 적용됨.**
+- 문서 신규 작성: HANDOVER.md, CLAUDE.md, README.md, PRD.md
+
+### 왜 이렇게 했는지 (의사결정)
+- 요구사항: 공모전 심사위원이 보는 공개 사이트 + **6명이 온라인에서 업로드하는 CMS**. 업로드 종류는 영상·게임·스토리보드.
+- 현재 admin.html은 `content.json` 내보내기 방식이라 동시 작업과 온라인 업로드가 안 됨. 그래서 **Supabase(DB + Auth + Storage)** 로 옮기기로 함. 구조는 [PRD.md](PRD.md) 참고.
+- GitHub 저장소 1개, Vercel 프로젝트 1개, Supabase 프로젝트 1개. CMS를 별도로 배포하지 않고 같은 사이트의 `/admin.html`로 두되, 쓰기는 로그인(RLS)으로 막음.
+- Supabase 프로젝트는 다른 앱(식단 관련 마이그레이션 `…_dietary_info`)과 공유함. 우리 것은 전부 **`ourfamilymeta_` 접두사**를 붙임. 기존 테이블은 건드리지 않음.
+
+### 다음에 이어서 할 일
+1. VS Code 재시작 후 Supabase MCP 연결 확인 (`list_tables`가 동작해야 함).
+2. 기존 테이블 이름 확인 → `ourfamilymeta_works`, `ourfamilymeta_assets`, `ourfamilymeta_settings` 등 생성, RLS 적용(공개 읽기 / 로그인 6명 쓰기), Storage 버킷 `ourfamilymeta-media` 생성.
+3. 대시보드에서 직접: 자유 가입 끄기(Authentication → Sign In / Providers), 6명 계정 초대(Authentication → Users). Auth Config 권한은 토큰에 주지 않았음.
+4. admin.html 개편(로그인, DB 저장, 파일 업로드), common.js가 DB에서 읽도록 수정, `content.json` 데이터 이전.
+5. `.\build-deploy.ps1` 실행 후 `deploy/` 커밋 → Vercel 연결(Root Directory `deploy`). 단, DB 방식으로 바뀌면 배포 방식을 다시 정함.
+6. 작업 끝나면 Supabase 액세스 토큰 `claude` **폐기(Revoke)**.
+
+### 미해결 이슈 / 사용자 결정 대기
+- 게임 업로드 형태: 외부 링크(권장) / HTML5 파일 업로드 / 다운로드
+- 스토리보드: 이미지 / PDF / 둘 다
+- 영상 보관: Supabase는 **무료 플랜이라 파일당 50MB 제한**. 용량 축소 / 유료(Pro) / YouTube 링크 중 선택 필요
+- 6명 이메일 주소(계정 초대용)
+- 저장소 공개 여부: Public이면 admin.html·원본이 모두 공개됨. Private 권장.
+
+### 실행·테스트 방법과 주의사항
+- 로컬 실행: 프로젝트 폴더에서 `python -m http.server 8000` → http://localhost:8000 (파일을 더블클릭하면 `content.json`을 못 읽을 수 있음)
+- Supabase 프로젝트: ref `pkucszwwnwpzvzqczmhh`, URL `https://pkucszwwnwpzvzqczmhh.supabase.co`, 서울 리전, Free 플랜
+- **액세스 토큰(`sbp_…`)이 대화 중에 노출됨.** 문서·코드·커밋에 넣지 말 것. 작업 후 폐기.
+- 이 문서 작성은 커밋·push하지 않았음. 필요하면 별도로 올릴 것.
