@@ -284,7 +284,7 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
         { fields: [
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
-            F('poster', '포스터 사진', 'image', { hint: '세로로 긴 사진(2:3)이 좋아요. 목록과 상영관에 나와요.' }),
+            F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
@@ -394,7 +394,7 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
         T('title', '연재물 제목', { req: 1, uuid: 1, ph: '예) 우리 가족 이야기' }),
         A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
         S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
-        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로로 긴 사진(2:3)이 좋아요.' })] }] }] }
+        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 잘려요.' })] }] }] }
   ];
   const stepsFor = () => STEPS;
   const curScopeOf = step => step.scope === 'work' ? data.works[ui.work] : data;
