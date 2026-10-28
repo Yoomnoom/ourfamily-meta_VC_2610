@@ -30,7 +30,11 @@
 
   /** 내부 링크 – 미리보기 중에는 preview 플래그를 유지한다 */
   const href = p => previewMode ? p + (p.includes('?') ? '&' : '?') + 'preview=1' : p;
-  const mediaPath = f => 'media/' + encodeURI(String(f).trim().replace(/^(\.?\/)?(media\/)?/, ''));
+  // Supabase 읽기 전용 설정. key는 공개용(anon/publishable) 키라 코드에 들어가도 된다. 비워 두면 content.json만 쓴다.
+  const SB = { url: 'https://pkucszwwnwpzvzqczmhh.supabase.co', key: '' };
+  const isUrl = f => /^https?:\/\//i.test(String(f).trim());
+  // 업로드된 파일은 전체 주소, 직접 넣은 파일은 media/ 안의 파일명
+  const mediaPath = f => isUrl(f) ? String(f).trim() : 'media/' + encodeURI(String(f).trim().replace(/^(\.?\/)?(media\/)?/, ''));
   const workId = (w, i) => has(w && w.id) ? w.id.trim() : 'work-' + (i + 1);
   const watchHref = (w, i) => href('watch.html?id=' + encodeURIComponent(workId(w, i)));
   const safeUrl = u => has(u) && /^https?:\/\//i.test(u.trim()) ? u.trim() : null;
@@ -318,6 +322,45 @@
     if (scroll) { if (hlSection === 'header') window.scrollTo({ top: 0, behavior: 'smooth' }); else t.scrollIntoView({ block: hlSection === 'footer' ? 'end' : 'center', behavior: 'smooth' }); }
   }
   /** render(data)를 호출한다. 미리보기에서는 관리 페이지가 보내는 데이터로 여러 번 호출된다. */
+  /** DB(문구 + 작품 + 연재물)를 content.json과 같은 모양으로 읽는다. 키가 없거나 DB가 비어 있으면 null */
+  async function fromDb() {
+    if (!SB.key) return null;
+    const hd = { apikey: SB.key, Authorization: 'Bearer ' + SB.key };
+    const get = q => fetch(SB.url + '/rest/v1/' + q, { headers: hd, cache: 'no-store' })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    const [st, ser, wk] = await Promise.all([
+      get('ourfamilymeta_settings?key=eq.site&select=value'),
+      get('ourfamilymeta_series?select=id,title,summary,status,poster_path&order=sort_order,created_at'),
+      get('ourfamilymeta_works?select=slug,title,series_id,episode_no,content&order=sort_order,created_at')]);
+    if (!st.length && !wk.length) return null;
+    const d = { ...obj(st[0] && st[0].value) };
+    d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '' }));
+    d.works = wk.map(x => ({ ...obj(x.content), id: x.slug || obj(x.content).id, title: x.title || obj(x.content).title,
+      series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' }));
+    return d;
+  }
+
+  /** 목록용: 단독 작품은 그대로, 연재물은 시리즈 하나로 묶어 첫 회로 연결한다 */
+  function listing(d) {
+    const ws = arr(d.works).filter(w => w && (has(w.id) || has(w.title)));
+    const ser = new Map(arr(d.series).map(x => [x.id, x]));
+    const seen = new Set(), out = [];
+    ws.forEach(w => {
+      const x = has(w.series) ? ser.get(w.series) : null;
+      if (!x) { out.push(w); return; }
+      if (seen.has(x.id)) return;
+      seen.add(x.id);
+      const eps = ws.filter(e => e.series === x.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)), first = eps[0];
+      out.push({ ...first, title: x.title, tagline: has(x.summary) ? x.summary : first.tagline,
+        video: { ...obj(first.video), poster: has(x.poster) ? x.poster : obj(first.video).poster, duration: '' },
+        seriesId: x.id, episodeCount: eps.length, seriesStatus: x.status });
+    });
+    return out;
+  }
+  /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
+  const metaLine = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
+    : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
+
   async function load(app, render) {
     const run = d => { const y = window.scrollY; render(d); reveal(); window.scrollTo(0, y); syncHeader(); hideLoader(); if (previewMode) applyHl(false); };
     if (previewMode) {
@@ -332,9 +375,14 @@
       return;
     }
     try {
-      const r = await fetch('content.json', { cache: 'no-store' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      run(await r.json());
+      let d = null;
+      try { d = await fromDb(); } catch (e) { console.warn('DB를 읽지 못해 content.json을 씁니다:', e.message); }
+      if (!d) {
+        const r = await fetch('content.json', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        d = await r.json();
+      }
+      run(d);
     } catch (e) { showError(app, 'content.json을 읽는 중 문제가 생겼어요. (' + e.message + ')'); }
   }
 
@@ -353,6 +401,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, copyText, TITLES, avail,
+  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, listing, metaLine, copyText, TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, reduced, params };
 })();

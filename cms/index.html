@@ -164,6 +164,14 @@ dialog#intro::backdrop{background:rgba(58,47,38,.45)}
 dialog#intro h2{font-family:var(--hand);margin:0 0 10px}
 dialog#intro ol{margin:0 0 16px;padding-left:22px}
 dialog#intro li{margin-bottom:6px}
+input[type=email],input[type=password]{width:100%;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:11px 14px}
+dialog#login,dialog#editors{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;width:min(440px,92vw)}
+dialog#login::backdrop,dialog#editors::backdrop{background:rgba(58,47,38,.55)}
+dialog#login h2,dialog#editors h2{font-family:var(--hand);margin:0 0 10px}
+dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.login-msg{white-space:pre-line;min-height:1.4em;margin:10px 0 0;color:#a3341b;font-size:.95rem}
+.ed-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
+.ed-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;word-break:break-all}
 </style>
 </head>
 <body>
@@ -203,7 +211,7 @@ dialog#intro li{margin-bottom:6px}
   <ol>
     <li>왼쪽 단계를 위에서부터 차례로 채워요.</li>
     <li>오른쪽 화면에 지금 쓰는 내용이 사이트 어디에 나오는지 보여 줘요.</li>
-    <li>저장(Ctrl+S)을 누르면 content.json이 만들어져요.</li>
+    <li>저장(Ctrl+S)을 눌러야 내용이 저장돼요.</li>
   </ol>
   <button class="btn primary" id="introOk" type="button">시작하기</button>
 </dialog>
@@ -272,6 +280,9 @@ dialog#intro li{margin-bottom:6px}
         T('title', '제목', { req: 1, autoId: 1, ph: '예) 할머니의 부엌' }),
         T('tagline', '한 줄 소개', { ph: '예) 냄새와 소리로 기억하는 할머니의 부엌을 그림으로 되살렸어요.' }),
         A('intent', '기획 의도', { rows: 7, ph: '왜 이 주제를 골랐는지, 영상으로 무엇을 전하고 싶은지, AI를 어떻게 썼는지를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] },
+        { title: '연재물', desc: '연재물이면 시리즈를 고르고 몇 화인지 적어요.\n시리즈는 12단계 "연재물 만들기"에서 먼저 만들어요. 단독 작품이면 그대로 두세요.', fields: [
+          S('series', '연재물', () => [['', '단독 작품 (연재물 아님)'], ...arr(data.series).map(x => [x.id, has(x.title) ? x.title : '(제목 없음)'])]),
+          T('episode', '회차 번호', { ph: '예) 3', hint: '연재물을 골랐을 때만 써요. 1, 2, 3처럼 숫자로 적어요. 총 몇 화일지는 몰라도 돼요.' })] },
         { title: '고급: 작품 주소(ID)', adv: true, fields: [T('id', '작품 주소(ID)', { sanitize: true, ph: 'work-1',
           hint: '제목을 처음 쓰면 자동으로 만들어져요.\n영문 소문자·숫자·하이픈만 쓰고, 작품마다 달라야 해요.\n이미 사이트에 올린 뒤에 바꾸면 작품 주소가 달라져요.' })] }],
       checks: w => [ck('제목', st(w.title), false, 'title'), ck('한 줄 소개', st(w.tagline), false, 'tagline'), ck('기획 의도', st(w.intent), false, 'intent'),
@@ -354,7 +365,14 @@ dialog#intro li{margin-bottom:6px}
         { title: '공모전 안내', pv: ['about.html', 'contest'], fields: [{ group: 'site', fields: [
           T('contestName', '공모전 이름'), A('contestInfo', '접수 정보', { rows: 4, ph: '예) 접수 기간: 2026. 10. 1. ~ 10. 31. 접수 방법과 문의처를 적어요.' })] }] }],
       checks: d => [ck('만든 사람 소개', Math.min(st(obj(obj(d.about).producer).name), st(obj(obj(d.about).producer).text)), false, 'producer/name', 'producer/text'),
-        ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] }
+        ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] },
+    { id: 'series', scope: 'site', title: '연재물 만들기', pv: ['works.html', 'list'],
+      why: '연재물이면 시리즈를 먼저 만들어요. 총 몇 화일지는 몰라도 돼요.\n회차(몇 화)는 "작품 소개 쓰기" 단계에서 작품마다 정해요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고르면 돼요.',
+      parts: [{ fields: [{ type: 'list', key: 'series', itemLabel: i => `연재물 ${i + 1}`, addLabel: '연재물 추가', fields: [
+        T('title', '연재물 제목', { req: 1, uuid: 1, ph: '예) 우리 가족 이야기' }),
+        A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
+        S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
+        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로로 긴 사진(2:3)이 좋아요.' })] }] }] }
   ];
   const stepsFor = () => STEPS;
   const curScopeOf = step => step.scope === 'work' ? data.works[ui.work] : data;
@@ -369,7 +387,7 @@ dialog#intro li{margin-bottom:6px}
     return { id, title: '', tagline: '', intent: '',
       video: { file: '', poster: '', duration: '', captions: '', showDownload: true },
       process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
-      sources: [{ item: '', source: '', license: '' }] };
+      sources: [{ item: '', source: '', license: '' }], series: '', episode: '' };
   }
   const EMPTY = () => ({
     site: { name: '[사이트 이름]', slogan: '[슬로건]', logoText: '', producer: '[제작자 이름]', email: '[이메일 주소]', sns: [],
@@ -381,6 +399,7 @@ dialog#intro li{margin-bottom:6px}
     making: { intro: '', timeline: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, declaration: { title: '', text: '' } },
     album: { intro: '', photos: [{ file: '', caption: '', alt: '' }] },
     about: { producer: { name: '', text: '' }, intent: '', sources: [{ ...FONT_ROW }, { item: '', source: '', license: '' }] },
+    series: [],
     works: [blankWork('work-1')]
   });
   const normTools = a => arr(a).map(t => ({ name: '', purpose: '', ...obj(t), prompts: arr(obj(t).prompts).map(p => ({ title: '', text: '', ...obj(p) })) }));
@@ -418,14 +437,17 @@ dialog#intro li{margin-bottom:6px}
     out.album = { intro: '', ...al, photos: arr(al.photos).map(g => ({ file: '', caption: '', alt: '', ...obj(g) })) };
     const src = arr(ab.sources).map(x => ({ item: '', source: '', license: '', ...obj(x) })).filter(x => !x.auto);
     out.about = { ...ab, producer: { name: '', text: '', ...obj(ab.producer) }, intent: ab.intent || '', sources: [{ ...FONT_ROW }, ...src] };
+    out.series = arr(d.series).map(x => ({ id: '', title: '', summary: '', status: 'ongoing', poster: '', ...obj(x) })).map(x => ({ ...x, id: has(x.id) ? x.id : crypto.randomUUID() }));
     out.works = Array.isArray(d.works) ? d.works.map(normWork) : base.works;
     out.works.forEach((w, i) => { if (!has(w.id)) w.id = 'work-' + (i + 1); });
     return out;
   }
   let data;
   function nextWorkId() {
+    // 여러 명이 동시에 작품을 추가해도 겹치지 않게 무작위 글자를 붙인다
     const used = new Set(data.works.map(w => (w.id || '').trim()));
-    let n = 1; while (used.has('work-' + n)) n++; return 'work-' + n;
+    let id; do { id = 'work-' + Math.random().toString(36).slice(2, 7); } while (used.has(id));
+    return id;
   }
   const workIdOk = w => { const v = (w.id || '').trim(); return /^[a-z0-9][a-z0-9-]*$/.test(v) && data.works.filter(x => (x.id || '').trim() === v).length === 1; };
 
@@ -519,8 +541,10 @@ dialog#intro li{margin-bottom:6px}
         return el('div', { class: 'field' }, el('label', { class: 'cb', for: id }, cb, f.label), hintEl(f));
       }
       if (f.type === 'select') {
-        const sel = el('select', { id, class: 'fld', 'data-k': f.key }, f.options.map(([v, l]) => el('option', { value: v, text: l })));
-        sel.value = o[f.key] ?? f.options[0][0];
+        const opts = typeof f.options === 'function' ? f.options() : f.options;
+        const sel = el('select', { id, class: 'fld', 'data-k': f.key }, opts.map(([v, l]) => el('option', { value: v, text: l })));
+        sel.value = o[f.key] ?? opts[0][0];
+        if (sel.value !== (o[f.key] ?? opts[0][0])) sel.value = opts[0][0];
         sel.addEventListener('change', () => { o[f.key] = sel.value; changed(); });
         return el('div', { class: 'field' }, lab(f.label, id), sel, hintEl(f));
       }
@@ -668,8 +692,9 @@ dialog#intro li{margin-bottom:6px}
     fields.forEach(f => {
       if (f.type === 'heading') return;
       if (f.group) { o[f.group] = blank(f.fields); return; }
-      o[f.key] = f.type === 'list' ? [f.fields ? blank(f.fields) : ''] : f.type === 'check' ? false : f.type === 'select' ? f.options[0][0] : '';
+      o[f.key] = f.type === 'list' ? [f.fields ? blank(f.fields) : ''] : f.type === 'check' ? false : f.type === 'select' ? (typeof f.options === 'function' ? f.options() : f.options)[0][0] : '';
     });
+    if (fields.some(x => x.uuid)) o.id = crypto.randomUUID();
     return o;
   }
 
@@ -698,6 +723,7 @@ dialog#intro li{margin-bottom:6px}
   };
   function folderUi() {
     const bn = $('folderBanner');
+    if (online) { bn.hidden = true; $('btnSave').title = '서버에 저장해요.'; refreshFiles(); return; }
     if (fsOk && !dir) {
       bn.hidden = false;
       bn.replaceChildren(el('span', { text: pending ? '폴더 권한을 다시 확인해야 해요.' : '폴더 연결하면 저장이 파일에 바로 반영돼요.' }),
@@ -735,6 +761,7 @@ dialog#intro li{margin-bottom:6px}
     lastSaved = new Date(); setDirty(false); toast('content.json을 내려받았어요.\n이 폴더의 content.json을 교체하세요.');
   }
   async function save() {
+    if (online) return saveOnline();
     if (!dir) return download();
     try {
       if (!await perm(dir, true)) throw new Error('폴더 쓰기 권한이 없어요');
@@ -759,6 +786,7 @@ dialog#intro li{margin-bottom:6px}
   };
   /** 폴더가 연결되어 있으면 media/에 복사하고 저장된 파일명을 돌려준다. 아니면 원래 이름만 돌려준다. */
   async function placeFile(file) {
+    if (online) return uploadFile(file);
     if (!dir) return file.name;
     try {
       const md = await dir.getDirectoryHandle('media', { create: true }), base = safeName(file.name);
@@ -777,6 +805,7 @@ dialog#intro li{margin-bottom:6px}
   }
   let blobUrls = [];
   async function mediaInfo(name) {
+    if (isUrl(name)) return { state: 'ok', size: 0, url: name.trim() };
     name = name.trim().replace(/^(\.?\/)?(media\/)?/, '');
     if (dir) {
       try {
@@ -807,12 +836,12 @@ dialog#intro li{margin-bottom:6px}
       const v = (o[f.key] || '').trim();
       pickBtn.dataset.val = v; box.classList.toggle('empty', !v); clearBtn.hidden = !v; thumb.replaceChildren();
       if (!v) { nameEl.textContent = '선택된 파일 없음'; meta.className = 'f-meta'; meta.textContent = '여기로 끌어다 놓거나 "파일 선택"을 누르세요.'; thumb.textContent = kindLabel; return; }
-      nameEl.textContent = v; meta.className = 'f-meta'; meta.textContent = '확인 중…'; thumb.textContent = kindLabel;
+      nameEl.textContent = isUrl(v) ? decodeURIComponent(v.split('/').pop()) : v; meta.className = 'f-meta'; meta.textContent = '확인 중…'; thumb.textContent = kindLabel;
       const mi = await mediaInfo(v);
       if ((o[f.key] || '').trim() !== v) return;
-      const odd = /[^\x00-\x7F]|\s/.test(v) ? ' · 공백·한글 이름은 피하는 게 좋아요.' : '';
+      const odd = !isUrl(v) && /[^\x00-\x7F]|\s/.test(v) ? ' · 공백·한글 이름은 피하는 게 좋아요.' : '';
       if (mi.state === 'ok') {
-        meta.className = 'f-meta ok'; meta.textContent = '✓ media/에 있음' + (mi.size ? ' · ' + fmtSize(mi.size) : '') + odd;
+        meta.className = 'f-meta ok'; meta.textContent = (isUrl(v) ? '✓ 올렸어요' : '✓ media/에 있음') + (mi.size ? ' · ' + fmtSize(mi.size) : '') + odd;
         if (kind === 'image') thumb.replaceChildren(el('img', { src: mi.url, alt: '' }));
         else if (kind === 'video') { const vd = el('video', { src: mi.url, muted: true, preload: 'metadata', playsinline: true }); vd.muted = true; vd.addEventListener('loadedmetadata', () => { vd.currentTime = Math.min(0.1, vd.duration || 0.1); }); thumb.replaceChildren(vd); }
         else thumb.textContent = 'VTT';
@@ -824,8 +853,10 @@ dialog#intro li{margin-bottom:6px}
       if (!file) return;
       if (kind === 'video' && !/\.mp4$/i.test(file.name)) toast('mp4 파일을 권장해요. 다른 형식은 일부 브라우저에서 재생되지 않을 수 있어요.');
       const name = await placeFile(file);
+      if (!name) return;
       o[f.key] = name; changed(); await refresh();
-      if (!dir) toast(`파일명 "${name}"을 입력했어요.\nmedia/ 폴더에 같은 이름으로 직접 넣어 주세요.`);
+      if (online) toast('올렸어요. 저장(Ctrl+S)을 눌러야 사이트에 반영돼요.');
+      else if (!dir) toast(`파일명 "${name}"을 입력했어요.\nmedia/ 폴더에 같은 이름으로 직접 넣어 주세요.`);
       else if (name !== file.name) toast(`media/에 "${name}"으로 복사했어요.\n(공백·한글은 영문 이름으로 바꿔요.)`);
     }
     input.addEventListener('change', () => { setFile(input.files[0]); input.value = ''; });
@@ -932,7 +963,7 @@ dialog#intro li{margin-bottom:6px}
   }
   function dupWork() {
     const cur = data.works[ui.work]; if (!cur) return;
-    const w = clone(cur); w.id = nextWorkId(); w.title = (w.title || '') + ' (복사)';
+    const w = clone(cur); w.id = nextWorkId(); w.episode = ''; w.title = (w.title || '') + ' (복사)';
     data.works.splice(ui.work + 1, 0, w); ui.work++; saveUi(); changed(); renderStep(); toast('작품을 복제했어요. 작품 주소(ID)는 2단계 "고급"에서 확인하세요.');
   }
   function swapWork(d) { const j = ui.work + d, a = data.works; if (j < 0 || j >= a.length) return; [a[ui.work], a[j]] = [a[j], a[ui.work]]; ui.work = j; saveUi(); changed(); renderStep(); }
@@ -950,12 +981,13 @@ dialog#intro li{margin-bottom:6px}
     const n = data.works.length, has1 = !!data.works[ui.work];
     $('menu').replaceChildren(
       el('div', { class: 'mh', text: '파일' }),
-      mi(folderText, connect, { disabled: !fsOk }), mi('내보내기 (content.json 내려받기)', download), mi('불러오기', () => $('fileImport').click()),
+      ...(online ? [mi('백업 내려받기 (content.json)', download)] : [mi(folderText, connect, { disabled: !fsOk }), mi('내보내기 (content.json 내려받기)', download), mi('불러오기', () => $('fileImport').click())]),
       el('hr'), el('div', { class: 'mh', text: '작품' }),
       mi('작품 추가', addWork), mi('이 작품 복제', dupWork, { disabled: !has1 }),
       mi('이 작품을 앞으로', () => swapWork(-1), { disabled: !has1 || ui.work === 0 }), mi('이 작품을 뒤로', () => swapWork(1), { disabled: !has1 || ui.work >= n - 1 }),
       mi('이 작품 삭제', delWork, { danger: true, disabled: !has1 }),
-      el('hr'), mi('사용 방법', () => $('intro').showModal()), mi('처음부터 다시', resetAll, { danger: true }));
+      el('hr'), mi('사용 방법', () => $('intro').showModal()), mi(online ? '저장 안 한 내용 버리고 다시 불러오기' : '처음부터 다시', resetAll, { danger: true }),
+      ...(online ? [el('hr'), ...(me.role === 'admin' ? [mi('편집자 관리', openEditors)] : []), mi(`로그아웃 (${me.email})`, signOut)] : []));
     $('menu').hidden = false; $('btnMore').setAttribute('aria-expanded', 'true');
     $('menu').querySelector('.mi:not(:disabled)').focus();
   }
@@ -1032,9 +1064,215 @@ dialog#intro li{margin-bottom:6px}
     } catch { toast('content.json을 자동으로 읽지 못했어요.\n"불러오기"로 파일을 선택하세요.'); return null; }
   }
   async function resetAll() {
+    if (online) {
+      if (!confirm('저장하지 않은 내용은 사라지고, 서버에 저장된 최신 내용을 다시 불러와요.\n계속할까요?')) return;
+      try { const r = await loadOnline(); data = normalize(r.d || await fetchFile()); markSnap(r); ui.work = 0; renderStep(); setDirty(false); toast('최신 내용을 불러왔어요.'); }
+      catch (e) { toast('불러오지 못했어요: ' + e.message); }
+      return;
+    }
     if (!confirm('입력한 내용을 지우고, 이 폴더의 content.json 기준으로 다시 시작할까요?\n(먼저 저장해서 백업해 두세요)')) return;
     try { localStorage.removeItem(KEY); } catch {}
     data = normalize(await fetchFile()); ui.work = 0; renderStep(); changed(); setDirty(false); toast('초기 상태로 되돌렸어요.');
+  }
+
+  /* ---------- Supabase: 로그인 · 저장 · 파일 올리기 ---------- */
+  const SB_URL = 'https://pkucszwwnwpzvzqczmhh.supabase.co';
+  const SB_KEY = '';   // 공개용(anon/publishable) 키. 비워 두면 예전 방식(내 PC 폴더의 content.json에 저장)으로 동작한다.
+  const online = !!SB_KEY;
+  const BUCKET = 'ourfamilymeta-media', SESSION_KEY = 'ourfamilymeta.session', MAX_UPLOAD = 50 * 1024 * 1024;
+  const isUrl = f => /^https?:\/\//i.test(String(f).trim());
+  let session = null, me = { email: '', role: '' };
+  const snap = { site: new Map(), series: new Map(), works: new Map() };   // 마지막으로 불러오거나 저장한 상태 (바뀐 것만 저장하려고)
+  const KO = [[/Invalid login credentials/i, '이메일 또는 비밀번호가 맞지 않아요.'], [/Email not confirmed/i, '메일로 온 인증 링크를 먼저 눌러 주세요.'],
+    [/already registered|already been registered/i, '이미 가입된 이메일이에요. 로그인해 보세요.'], [/Password should be at least/i, '비밀번호는 6자 이상이어야 해요.'],
+    [/rate limit/i, '잠시 후 다시 시도해 주세요. (메일을 너무 자주 보냈어요)'], [/Failed to fetch|NetworkError/i, '인터넷 연결을 확인해 주세요.']];
+  const ko = m => (KO.find(([re]) => re.test(m)) || [0, m])[1];
+
+  function setSession(x) {
+    session = x ? { ...x, expires_at: x.expires_at || Math.floor(Date.now() / 1000) + (x.expires_in || 3600) } : null;
+    try { session ? localStorage.setItem(SESSION_KEY, JSON.stringify(session)) : localStorage.removeItem(SESSION_KEY); } catch {}
+  }
+  async function authCall(path, body) {
+    const r = await fetch(SB_URL + '/auth/v1/' + path, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(ko(j.msg || j.error_description || j.message || 'HTTP ' + r.status));
+    return j;
+  }
+  async function refreshSession() {
+    try { setSession(await authCall('token?grant_type=refresh_token', { refresh_token: session.refresh_token })); }
+    catch { setSession(null); throw new Error('로그인이 만료됐어요. 새로고침해서 다시 로그인하세요.'); }
+  }
+  const ensureFresh = async () => { if (session && session.expires_at - 60 < Date.now() / 1000) await refreshSession(); };
+  async function sbFetch(path, opt = {}, retry = true) {
+    await ensureFresh();
+    const r = await fetch(SB_URL + path, { ...opt, headers: { apikey: SB_KEY, Authorization: 'Bearer ' + (session ? session.access_token : SB_KEY), ...opt.headers } });
+    if (r.status === 401 && retry && session) { await refreshSession(); return sbFetch(path, opt, false); }
+    if (!r.ok) {
+      let m = ''; try { const j = await r.json(); m = j.message || j.error || ''; } catch {}
+      throw new Error(ko(m || 'HTTP ' + r.status));
+    }
+    return r;
+  }
+  const getJson = async q => (await sbFetch('/rest/v1/' + q)).json();
+
+  async function whoAmI() {
+    const rows = await getJson('ourfamilymeta_editors?select=email,role');   // 편집자는 자기 행만, 관리자는 전체가 보인다
+    const mine = rows.find(x => x.email === String(session.user.email || '').toLowerCase());
+    if (!mine) throw new Error('NOT_EDITOR');
+    me = { email: mine.email, role: mine.role };
+  }
+  function askLogin(note) {
+    return new Promise(resolve => {
+      const dlg = el('dialog', { id: 'login', 'aria-labelledby': 'loginT' });
+      const email = el('input', { type: 'email', autocomplete: 'username', placeholder: '이메일', 'aria-label': '이메일' });
+      const pw = el('input', { type: 'password', autocomplete: 'current-password', placeholder: '비밀번호 (6자 이상)', 'aria-label': '비밀번호', style: 'margin-top:10px' });
+      const msg = el('p', { class: 'login-msg', role: 'alert', text: note || '' });
+      const run = async (fn, join) => {
+        if (!email.value.trim() || !pw.value) { msg.textContent = '이메일과 비밀번호를 입력하세요.'; return; }
+        msg.style.color = ''; msg.textContent = '확인 중…';
+        try {
+          await fn(email.value.trim().toLowerCase(), pw.value);
+          if (join && !session) { msg.style.color = 'inherit'; msg.textContent = '가입했어요. 메일로 온 인증 링크를 누른 뒤 로그인하세요.\n그다음 관리자에게 이 이메일을 편집자로 등록해 달라고 요청하세요.'; return; }
+          await whoAmI(); dlg.close(); dlg.remove(); resolve();
+        } catch (e) {
+          if (e.message === 'NOT_EDITOR') { setSession(null); msg.textContent = '이 계정은 아직 편집자로 등록되지 않았어요.\n관리자에게 이 이메일을 등록해 달라고 요청하세요.'; }
+          else msg.textContent = e.message;
+        }
+      };
+      const signIn = async (e, w) => setSession(await authCall('token?grant_type=password', { email: e, password: w }));
+      const signUp = async (e, w) => { const j = await authCall('signup', { email: e, password: w }); if (j.access_token) setSession(j); };
+      dlg.addEventListener('cancel', e => e.preventDefault());
+      dlg.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); run(signIn); } });
+      dlg.append(el('h2', { id: 'loginT', text: '편집자 로그인' }),
+        el('p', { text: '가족 극장 편집자만 들어올 수 있어요.\n처음이면 "가입하기"를 누르세요.', style: 'white-space:pre-line;margin:0 0 12px' }), email, pw, msg,
+        el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: '로그인', onclick: () => run(signIn) }),
+          el('button', { type: 'button', class: 'btn', text: '가입하기', onclick: () => run(signUp, true) })));
+      document.body.append(dlg); dlg.showModal(); email.focus();
+    });
+  }
+  async function ensureLogin() {
+    try { session = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { session = null; }
+    let note = '';
+    if (session) {
+      try { await ensureFresh(); await whoAmI(); return; }
+      catch (e) { setSession(null); note = e.message === 'NOT_EDITOR' ? '이 계정은 편집자로 등록되어 있지 않아요.' : ''; }
+    }
+    await askLogin(note);
+  }
+  const signOut = () => { setSession(null); location.reload(); };
+
+  /** 화면 데이터 <-> DB 행. 작품 한 편이 DB 한 줄이라, 서로 다른 작품은 동시에 고쳐도 덮어쓰지 않는다. */
+  function rowsOf(d) {
+    const sids = new Set(arr(d.series).map(x => x.id));
+    const series = arr(d.series).map((x, i) => ({ id: x.id, title: has(x.title) ? x.title.trim() : '(제목 없음)', summary: has(x.summary) ? x.summary : null,
+      status: x.status === 'completed' ? 'completed' : 'ongoing', poster_path: has(x.poster) ? x.poster.trim() : null, sort_order: i, is_published: true }));
+    const works = arr(d.works).map((w, i) => {
+      const inSeries = has(w.series) && sids.has(w.series);
+      if (inSeries && !(+w.episode >= 1)) throw new Error(`"${has(w.title) ? w.title : w.id}"의 회차 번호를 1 이상의 숫자로 적어 주세요.`);
+      const c = clone(w); delete c.series; delete c.episode;
+      const slug = String(w.id || '').trim();
+      return { slug, kind: 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
+        episode_no: inSeries ? Math.floor(+w.episode) : null, poster_path: has(obj(w.video).poster) ? w.video.poster.trim() : null,
+        sort_order: i, is_published: has(w.title), content: c };
+    });
+    const site = clone(d); delete site.works; delete site.series;
+    return { series, works, site: { key: 'site', value: site } };
+  }
+  async function loadOnline() {
+    const [st, ser, wk] = await Promise.all([getJson('ourfamilymeta_settings?key=eq.site&select=key,value,updated_at'),
+      getJson('ourfamilymeta_series?select=*&order=sort_order,created_at'), getJson('ourfamilymeta_works?select=*&order=sort_order,created_at')]);
+    let d = null;
+    if (st.length || ser.length || wk.length) {
+      d = { ...obj(st[0] && st[0].value),
+        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '' })),
+        works: wk.map(x => ({ ...obj(x.content), id: x.slug, title: x.title, series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' })) };
+    }
+    return { d, st, ser, wk };
+  }
+  function markSnap({ st, ser, wk }) {
+    const rows = rowsOf(data), at = (list, col) => new Map(list.map(x => [x[col], x.updated_at]));
+    const fill = (map, list, col, upd) => { map.clear(); list.forEach(r => { if (upd.has(r[col])) map.set(r[col], { json: JSON.stringify(r), updated: upd.get(r[col]) }); }); };
+    fill(snap.series, rows.series, 'id', at(ser, 'id')); fill(snap.works, rows.works, 'slug', at(wk, 'slug')); fill(snap.site, [rows.site], 'key', at(st, 'key'));
+  }
+  async function writeRows(table, col, rows, map) {
+    for (const r of rows) {
+      const key = r[col], old = map.get(key), json = JSON.stringify(r);
+      if (old && old.json === json) continue;   // 바뀐 것만 저장
+      const q = old ? `?${col}=eq.${encodeURIComponent(key)}&updated_at=eq.${encodeURIComponent(old.updated)}` : '';
+      let out;
+      try {
+        out = await (await sbFetch('/rest/v1/' + table + q, { method: old ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' }, body: JSON.stringify(r) })).json();
+      } catch (e) {
+        if (/ourfamilymeta_works_episode_uq/i.test(e.message)) throw new Error('같은 연재물 안에 회차 번호가 겹쳐요.');
+        if (!old && /duplicate|unique|already/i.test(e.message)) throw new Error(`같은 주소의 항목이 이미 있어요: ${key}\n주소(ID)를 바꾸거나, 새로고침해서 최신 내용을 받으세요.`);
+        throw e;
+      }
+      if (!out.length) throw new Error('다른 사람이 먼저 이 항목을 고쳤어요.\n⋯ 메뉴의 "저장 안 한 내용 버리고 다시 불러오기"로 최신 내용을 받은 뒤 다시 수정하세요.');
+      map.set(key, { json, updated: out[0].updated_at });
+    }
+  }
+  async function removeRows(table, col, keys, map) {
+    if (!keys.length) return;
+    await sbFetch(`/rest/v1/${table}?${col}=in.(${keys.map(k => '"' + k + '"').join(',')})`, { method: 'DELETE' });
+    keys.forEach(k => map.delete(k));
+  }
+  async function saveOnline() {
+    const btn = $('btnSave'); btn.disabled = true;
+    try {
+      const rows = rowsOf(data), slugs = new Set();
+      for (const w of rows.works) {
+        if (!/^[a-z0-9][a-z0-9-]*$/.test(w.slug)) throw new Error(`작품 주소(ID)가 올바르지 않아요: "${w.slug}"\n영문 소문자·숫자·하이픈만 쓸 수 있어요.`);
+        if (slugs.has(w.slug)) throw new Error(`작품 주소(ID)가 겹쳐요: "${w.slug}"`);
+        slugs.add(w.slug);
+      }
+      const sids = new Set(rows.series.map(x => x.id));
+      await writeRows('ourfamilymeta_series', 'id', rows.series, snap.series);
+      await writeRows('ourfamilymeta_works', 'slug', rows.works, snap.works);
+      await removeRows('ourfamilymeta_works', 'slug', [...snap.works.keys()].filter(k => !slugs.has(k)), snap.works);
+      await removeRows('ourfamilymeta_series', 'id', [...snap.series.keys()].filter(k => !sids.has(k)), snap.series);
+      await writeRows('ourfamilymeta_settings', 'key', [rows.site], snap.site);
+      lastSaved = new Date(); setDirty(false); toast('저장했어요. 사이트에 바로 반영돼요.');
+    } catch (e) { toast('저장 실패: ' + e.message, { ms: 8000 }); }
+    finally { btn.disabled = false; }
+  }
+  async function openEditors() {
+    const dlg = el('dialog', { id: 'editors', 'aria-labelledby': 'edT' }), list = el('ul', { class: 'ed-list' });
+    const email = el('input', { type: 'email', placeholder: '추가할 사람의 이메일', 'aria-label': '추가할 이메일' });
+    const role = el('select', { class: 'fld', 'aria-label': '권한', style: 'width:auto' }, el('option', { value: 'editor', text: '편집자' }), el('option', { value: 'admin', text: '관리자' }));
+    async function draw() {
+      const rows = await getJson('ourfamilymeta_editors?select=email,role&order=created_at'), admins = rows.filter(r => r.role === 'admin').length;
+      list.replaceChildren(...rows.map(r => el('li', {}, el('span', { text: r.email + (r.role === 'admin' ? ' (관리자)' : '') }),
+        el('button', { type: 'button', class: 'btn sm', text: '제거', disabled: r.role === 'admin' && admins <= 1, title: r.role === 'admin' && admins <= 1 ? '마지막 관리자는 제거할 수 없어요.' : null,
+          onclick: async () => {
+            if (!confirm(`${r.email} 님의 편집 권한을 없앨까요?`)) return;
+            try { await sbFetch('/rest/v1/ourfamilymeta_editors?email=eq.' + encodeURIComponent(r.email), { method: 'DELETE' }); await draw(); } catch (e) { toast('제거 실패: ' + e.message); }
+          } }))));
+    }
+    const add = async () => {
+      const v = email.value.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { toast('이메일 형식이 맞지 않아요.'); return; }
+      try { await sbFetch('/rest/v1/ourfamilymeta_editors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v, role: role.value }) }); email.value = ''; await draw(); toast('등록했어요.\n그 사람이 이 주소에서 같은 이메일로 가입·로그인하면 바로 편집할 수 있어요.'); }
+      catch (e) { toast('등록 실패: ' + (/duplicate|unique|already/i.test(e.message) ? '이미 등록된 이메일이에요.' : e.message)); }
+    };
+    dlg.append(el('h2', { id: 'edT', text: '편집자 관리' }),
+      el('p', { text: '여기에 등록한 이메일로 가입·로그인한 사람만 올리고 고칠 수 있어요.\n사람 수에는 제한이 없어요.', style: 'white-space:pre-line;margin:0' }),
+      list, email, el('div', { class: 'row' }, role, el('button', { type: 'button', class: 'btn primary', text: '추가', onclick: add }),
+        el('button', { type: 'button', class: 'btn', text: '닫기', onclick: () => { dlg.close(); dlg.remove(); } })));
+    document.body.append(dlg); dlg.showModal();
+    try { await draw(); } catch (e) { toast('목록을 불러오지 못했어요: ' + e.message); }
+  }
+  const MIME = { mp4: 'video/mp4', vtt: 'text/vtt', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+  /** 파일을 Storage에 올리고 공개 주소를 돌려준다. 실패하면 빈 문자열 */
+  async function uploadFile(file) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!MIME[ext]) { toast('올릴 수 없는 파일이에요. (mp4, vtt, jpg, png, webp만 돼요)'); return ''; }
+    if (file.size > MAX_UPLOAD) { toast(`파일이 ${fmtSize(file.size)}예요. 50MB 이하만 올릴 수 있어요.\n영상은 용량을 줄이거나 길이를 나눠 주세요.`, { ms: 7000 }); return ''; }
+    const path = `${new Date().toISOString().slice(0, 7)}/${Date.now().toString(36)}-${safeName(file.name)}`;
+    toast(`"${file.name}" 올리는 중… (${fmtSize(file.size)})`, { ms: 2500 });
+    try {
+      await sbFetch(`/storage/v1/object/${BUCKET}/${path}`, { method: 'POST', headers: { 'Content-Type': MIME[ext], 'x-upsert': 'false' }, body: file });
+      return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+    } catch (e) { toast('올리지 못했어요: ' + e.message, { ms: 6000 }); return ''; }
   }
 
   /* ---------- 시작 ---------- */
@@ -1044,8 +1282,12 @@ dialog#intro li{margin-bottom:6px}
     let stored = null;
     try { stored = JSON.parse(localStorage.getItem(KEY)) || JSON.parse(localStorage.getItem(OLD_KEY)); } catch {}
     const h = fsOk ? await kvGet('dir') : null;
-    if (h) { try { if (await perm(h, false)) dir = h; else pending = h; } catch { pending = null; } }
-    data = normalize(stored || await fetchFile());
+    if (h && !online) { try { if (await perm(h, false)) dir = h; else pending = h; } catch { pending = null; } }
+    if (online) {
+      stored = null;
+      try { await ensureLogin(); const r = await loadOnline(); data = normalize(r.d || await fetchFile()); markSnap(r); }
+      catch (e) { document.body.append(el('p', { text: '불러오지 못했어요: ' + e.message + '\n새로고침해 주세요.', style: 'white-space:pre-line;padding:24px' })); throw e; }
+    } else data = normalize(stored || await fetchFile());
     pvLabel(); folderUi(); renderStatus(); renderStep();
     if (stored) { dirty = true; renderStatus(); }
     let seen = false; try { seen = !!localStorage.getItem('familyTheaterAdmin.intro'); } catch {}

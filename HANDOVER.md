@@ -4,6 +4,30 @@
 
 ---
 
+## 2026-10-28 (이어서) CMS를 Supabase에 연결 (공개 키 입력 전까지는 옛 방식으로 동작)
+
+### 한 일
+- `cms/index.html`: 로그인·가입(이메일), 편집자 확인(`ourfamilymeta_editors`), 저장(바뀐 행만 PATCH, 새 행 POST, 삭제 DELETE), 파일 업로드(Storage `ourfamilymeta-media`, 50MB 제한), 편집자 관리(admin만, ⋯ 메뉴), 12단계 "연재물 만들기", 작품 단계에 연재물 선택·회차 번호 추가.
+- 작품 한 편 = DB 한 줄(`ourfamilymeta_works`, `slug`=작품 주소, `content` jsonb=입력 전체). 사이트 문구 = `ourfamilymeta_settings` key `site`. 동시 수정은 `updated_at` 비교로 막고, 걸리면 "다른 사람이 먼저 고쳤어요"를 띄움.
+- 새 작품 주소는 `work-` + 무작위 5자로 만들어 여러 명이 동시에 추가해도 겹치지 않음.
+- 공개 페이지(`common.js`): DB에서 읽고, 키가 없거나 DB가 비어 있거나 읽기 실패하면 `content.json`으로 대체. 업로드 파일은 전체 URL을 그대로 씀(`mediaPath`).
+- 연재물: 목록(홈 캐러셀·상영작)은 시리즈를 카드 하나로 묶어 "N화까지 공개 · 연재 중/완결" 표시, 상영관에는 회차 목록. `listing()`, `metaLine()`이 `common.js`에 있음.
+- 마이그레이션 추가: `ourfamilymeta_slug_content`(works.slug, works.content).
+
+### 키 입력이 남아 있음 (필수)
+- 아래 두 곳의 `SB_KEY`(또는 `SB.key`)가 비어 있음. 공개용(anon/publishable) 키를 넣어야 DB 연동이 켜짐. 두 곳이 같은 값이어야 함.
+  - `cms/index.html`의 `const SB_KEY = '';`
+  - `common.js`의 `const SB = { url: ..., key: '' };` (넣은 뒤 `deploy/common.js`로도 복사)
+- 키 위치: Supabase 대시보드 Project Settings → API Keys.
+
+### 확인한 것 / 못 한 것
+- 확인: 연재물 샘플 데이터로 상영작 목록(시리즈 묶음)과 상영관(회차 목록)이 맞게 나옴. CMS 화면이 열리고 12단계·연재물 입력·작품의 연재물 선택 칸이 나옴. JS 문법 검사 통과.
+- **못 한 것: 로그인·DB 저장·업로드는 키가 없어 실제로 돌려 보지 못함.** 키를 넣은 뒤 가입 → admin이 편집자 등록 → 저장 → 업로드 순서로 시험할 것.
+- 알려진 한계: 마지막 admin 삭제는 화면에서만 막음(DB 규칙 없음). 게임·스토리보드 종류는 아직 화면에 없음(DB `kind`만 준비됨). 같은 연재물 안에서 회차 번호를 서로 맞바꾸면 저장이 걸림(번호 중복 검사).
+- `build-deploy.ps1`은 이번에 실행하지 않고 공개 파일 9개를 `deploy/`로 직접 복사함. 이 스크립트는 `common.js`의 Supabase 주소를 "외부 도메인 링크"로 경고할 수 있음(의도된 것).
+
+---
+
 ## 2026-10-28 연재물 지원 + CMS 별도 배포
 
 - Vercel 프로젝트 2개로 분리. 공개 사이트 `ourfamily-meta-vc2610`(Root `deploy`, 주소 ourfamily-metavc2610.vercel.app), CMS `ourfamily-meta-cms-vc2610`(Root `cms`, 주소 ourfamily-meta-cms-vc2610.vercel.app). GitHub 저장소는 1개. admin.html은 `cms/index.html`로 이동.

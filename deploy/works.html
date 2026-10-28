@@ -13,18 +13,18 @@
 <script src="common.js"></script>
 <script>
 (() => {
-  const { h, has, arr, obj, watchHref, poster, pagehead, emptyPage, boot } = App;
+  const { h, has, arr, obj, watchHref, poster, pagehead, emptyPage, boot, listing, metaLine } = App;
   boot((d, site, av) => {
     const name = has(site.name) ? site.name : '가상의 가족 극장';
     const title = '상영작 – ' + name;
-    const works = arr(d.works).map((w, i) => [w, i]).filter(([w]) => w && (has(w.id) || has(w.title)));
+    const works = listing(d).map((w, i) => [w, i]);
     if (!works.length) return { title, main: emptyPage('상영작') };
     return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작'),
       h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' },
         h('ul', { class: 'works-grid' }, works.map(([w, i]) => h('li', {},
           h('a', { class: 'wcard', href: watchHref(w, i) }, poster(w),
             h('h3', { text: has(w.title) ? w.title : '제목 미정' }),
-            has(w.video && w.video.duration) && h('p', { class: 'meta', text: '러닝타임 ' + w.video.duration.trim() })))))))) };
+            has(metaLine(w)) && h('p', { class: 'meta', text: metaLine(w) })))))))) };
   });
 })();
 </script>

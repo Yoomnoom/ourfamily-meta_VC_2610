@@ -68,7 +68,7 @@
         pLink,
         h('div', { class: 'slide-info' },
           h('h3', { text: title }),
-          has(w.video && w.video.duration) && h('p', { class: 'meta', text: '러닝타임 ' + w.video.duration.trim() }),
+          has(App.metaLine(w)) && h('p', { class: 'meta', text: App.metaLine(w) }),
           link));
       slide.addEventListener('click', e => {
         if (swallow) { e.preventDefault(); return; }
@@ -125,7 +125,7 @@
   /* ---------- 렌더 ---------- */
   boot((d, site, av) => {
     const home = obj(d.home), T = { ...T0, ...obj(home.titles) };
-    const works = arr(d.works).filter(w => w && (has(w.id) || has(w.title)));
+    const works = App.listing(d);
     const main = h('main', { id: 'main' });
     main.append(hero(d, site, av));
 
