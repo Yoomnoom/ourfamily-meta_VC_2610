@@ -10,7 +10,7 @@ python -m http.server 8000
 
 ## 구성
 - 공개 페이지: index, works, watch, making, album, about
-- 관리 페이지: admin.html (콘텐츠 등록·수정)
+- 관리 페이지: cms/index.html (콘텐츠 등록·수정)
 - 데이터: content.json (DB 방식으로 이전 예정, [PRD.md](PRD.md) 참고)
 - 미디어: media/ ([media/README.txt](media/README.txt))
 

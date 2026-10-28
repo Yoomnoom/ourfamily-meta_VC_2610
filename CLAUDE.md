@@ -14,7 +14,7 @@
 | making.html | 메이킹 (창작 과정·AI 도구·선언문) |
 | album.html | 가족 앨범 |
 | about.html | 소개 (제작자·기획 의도·출처 표·공모전 안내) |
-| admin.html | CMS (현재: `content.json` 편집·내보내기 방식. DB 방식으로 개편 예정) |
+| cms/index.html | CMS (현재: `content.json` 편집·내보내기 방식. DB 방식으로 개편 예정) |
 | common.js | 공개 페이지 공통 스크립트 |
 | theme.css | 공개 페이지 스타일 (Pretendard `@font-face` 포함) |
 | content.json | 문구·작품 데이터 (현재 데이터 원본) |
