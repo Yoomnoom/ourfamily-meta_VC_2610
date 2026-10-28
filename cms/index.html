@@ -1171,13 +1171,25 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
       dlg.addEventListener('cancel', e => e.preventDefault());
       dlg.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); run(signIn); } });
       dlg.append(el('h2', { id: 'loginT', text: '편집자 로그인' }),
-        el('p', { text: '가족 극장 편집자만 들어올 수 있어요.\n처음이면 "가입하기"를 누르세요.', style: 'white-space:pre-line;margin:0 0 12px' }), email, pw, msg,
+        el('p', { text: '가족 극장 편집자만 들어올 수 있어요.\nGoogle 계정이면 "Google로 로그인"을, 아니면 이메일로 로그인하세요.\n처음이면 "가입하기"를 누르세요.', style: 'white-space:pre-line;margin:0 0 12px' }), email, pw, msg,
         el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: '로그인', onclick: () => run(signIn) }),
-          el('button', { type: 'button', class: 'btn', text: '가입하기', onclick: () => run(signUp, true) })));
+          el('button', { type: 'button', class: 'btn', text: '가입하기', onclick: () => run(signUp, true) }),
+          el('button', { type: 'button', class: 'btn', text: 'Google로 로그인', onclick: googleLogin })));
       document.body.append(dlg); dlg.showModal(); email.focus();
     });
   }
+  /** 구글 로그인 후 돌아오면 주소 뒤(#)에 토큰이 붙어 온다. 받아서 저장하고 주소는 깨끗하게 되돌린다. */
+  async function takeOAuthHash() {
+    const h = new URLSearchParams(location.hash.slice(1));
+    if (!h.get('access_token')) return;
+    const tok = { access_token: h.get('access_token'), refresh_token: h.get('refresh_token'), expires_in: +h.get('expires_in') || 3600 };
+    history.replaceState(null, '', location.pathname + location.search);
+    const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok.access_token } });
+    if (r.ok) setSession({ ...tok, user: await r.json() });
+  }
+  const googleLogin = () => { location.href = SB_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
   async function ensureLogin() {
+    try { await takeOAuthHash(); } catch {}
     try { session = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { session = null; }
     let note = '';
     if (session) {
