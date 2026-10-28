@@ -327,3 +327,9 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 .eps a{display:block;padding:12px 16px;border:1px solid var(--line,rgba(255,255,255,.18));border-radius:12px;text-decoration:none;color:var(--text)}
 .eps a:hover{background:rgba(255,255,255,.06)}
 .eps a[aria-current="true"]{border-color:var(--red,#d3202f);font-weight:700}
+
+/* 게임·스토리보드 상영관 */
+.game-frame{display:block;width:100%;aspect-ratio:16/9;border:0;background:#000;border-radius:12px}
+.game-cta{margin:14px 0 0;text-align:center}
+.game-how{margin:14px auto 0;max-width:62ch;white-space:pre-line}
+.sb-frame{padding:8px}

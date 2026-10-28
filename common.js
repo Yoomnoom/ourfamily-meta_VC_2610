@@ -331,11 +331,11 @@
     const [st, ser, wk] = await Promise.all([
       get('ourfamilymeta_settings?key=eq.site&select=value'),
       get('ourfamilymeta_series?select=id,title,summary,status,poster_path&order=sort_order,created_at'),
-      get('ourfamilymeta_works?select=slug,title,series_id,episode_no,content&order=sort_order,created_at')]);
+      get('ourfamilymeta_works?select=slug,kind,title,series_id,episode_no,content&order=sort_order,created_at')]);
     if (!st.length && !wk.length) return null;
     const d = { ...obj(st[0] && st[0].value) };
     d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '' }));
-    d.works = wk.map(x => ({ ...obj(x.content), id: x.slug || obj(x.content).id, title: x.title || obj(x.content).title,
+    d.works = wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug || obj(x.content).id, title: x.title || obj(x.content).title,
       series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' }));
     return d;
   }
@@ -359,6 +359,7 @@
   }
   /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
   const metaLine = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
+    : w.kind === 'game' ? '게임' : w.kind === 'storyboard' ? '스토리보드'
     : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
 
   async function load(app, render) {
@@ -401,6 +402,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, listing, metaLine, copyText, TITLES, avail,
+  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, copyText, TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, reduced, params };
 })();
