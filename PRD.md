@@ -28,6 +28,8 @@ GitHub 1 + Vercel 1 + Supabase 1. CMS는 같은 사이트의 `/admin.html`이고
 
 ## 데이터 모델 (모든 이름에 `ourfamilymeta_` 접두사)
 - `ourfamilymeta_works`: 작품 공통. `kind` = `video` / `game` / `storyboard`, 제목, 설명, 제작자, 포스터, 순서, 공개 여부
+- `ourfamilymeta_series`: 연재물. 제목, 소개, 포스터, 상태(연재 중/완결). 총 편수는 두지 않고 회차를 계속 추가한다
+- `ourfamilymeta_works.series_id`, `episode_no`: 연재 회차 연결. 단독 작품은 비워 둔다
 - `ourfamilymeta_assets`: 작품에 딸린 파일·링크 (영상 mp4, 자막 vtt, 스토리보드 이미지/PDF, 게임 링크)
 - `ourfamilymeta_settings`: 사이트 문구(홈·소개·메이킹 등). 현재 content.json의 문구 부분
 - Storage 버킷: `ourfamilymeta-media`

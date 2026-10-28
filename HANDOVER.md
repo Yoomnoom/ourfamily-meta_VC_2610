@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-10-28 연재물 지원 + CMS 별도 배포
+
+- Vercel 프로젝트 2개로 분리. 공개 사이트 `ourfamily-meta-vc2610`(Root `deploy`, 주소 ourfamily-metavc2610.vercel.app), CMS `ourfamily-meta-cms-vc2610`(Root `cms`, 주소 ourfamily-meta-cms-vc2610.vercel.app). GitHub 저장소는 1개. admin.html은 `cms/index.html`로 이동.
+- CMS 미리보기는 공개 사이트 주소를 불러옴(`cms/index.html`의 `PUBLIC_SITE`). 공개 주소를 바꾸면 그 한 줄을 고칠 것.
+- 연재물 지원(마이그레이션 `ourfamilymeta_series`): `ourfamilymeta_series` 테이블(제목·소개·포스터·status `ongoing`/`completed`)과 `ourfamilymeta_works.series_id`, `episode_no` 추가. 시리즈 소속이면 회차 번호 필수, 단독 작품은 둘 다 비움. 같은 시리즈 안 회차 번호 중복 불가. **총 편수는 저장하지 않음**(완결 시점을 모르기 때문). 사이트에는 "N화까지 공개"로 표시할 것.
+- 다음: cms/index.html에 로그인, 시리즈·회차 등록, Supabase 저장·업로드 구현. Supabase 공개 키(`sb_publishable_…`)가 필요함.
+
+---
+
 ## 2026-10-27 (저녁 추가) Supabase 테이블·버킷 생성 완료
 
 ### 편집자 방식 확정: A (관리자가 CMS에서 추가)
