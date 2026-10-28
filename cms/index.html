@@ -970,8 +970,12 @@ dialog#intro li{margin-bottom:6px}
   const workIdAt = i => ((data.works[i] || {}).id || '').trim() || 'work-' + (i + 1);
   const wide = matchMedia('(min-width:1280px)');
   let pvWant = { page: 'index.html', sec: null }, pvManual = null;
+  // 공개 사이트는 별도 Vercel 프로젝트라 미리보기 창은 그 주소를 불러온다 (주소가 바뀌면 여기만 고친다)
+  const PUBLIC_SITE = 'https://ourfamily-metavc2610.vercel.app/';
   const pageUrl = page => page === 'watch.html' ? `watch.html?preview=1&id=${encodeURIComponent(workIdAt(ui.work))}` : page + '?preview=1';
-  const frameLoc = () => { try { const l = $('frame').contentWindow.location; return l.pathname.split('/').pop() + l.search; } catch { return ''; } };
+  // 다른 주소의 창은 location을 읽을 수 없으므로 마지막으로 연 주소를 기억해 둔다
+  let frameUrl = '';
+  const frameLoc = () => frameUrl;
   const pvVisible = () => document.body.classList.contains('pv-open') || (wide.matches && !ui.pvHidden);
   function setPv(page, sec) { pvWant = { page, sec }; showPv(); }
   function showPv() {
@@ -979,7 +983,7 @@ dialog#intro li{margin-bottom:6px}
     if (!pvVisible()) return;
     const page = pvManual || pvWant.page, url = pageUrl(page), fr = $('frame');
     $('pvPage').value = pvManual || 'auto';
-    if (frameLoc() !== url) fr.src = url;
+    if (frameLoc() !== url) { frameUrl = url; fr.src = PUBLIC_SITE + url; }
     else { pushPreview(fr.contentWindow); fr.contentWindow.postMessage({ type: 'highlight', section: pvManual ? null : pvWant.sec }, '*'); }
   }
   // 입력란에 들어가면 그 입력란이 속한 구역을 강조한다
@@ -1001,7 +1005,7 @@ dialog#intro li{margin-bottom:6px}
   $('pvClose').addEventListener('click', () => { document.body.classList.remove('pv-open'); });
   wide.addEventListener('change', () => { pvLabel(); showPv(); });
   $('pvTab').addEventListener('click', () => {
-    if (!window.open(frameLoc() || pageUrl(pvManual || pvWant.page), '_blank')) toast('팝업이 차단되었어요.\n팝업을 허용하거나 옆 화면 미리보기를 사용하세요.');
+    if (!window.open(PUBLIC_SITE + (frameLoc() || pageUrl(pvManual || pvWant.page)), '_blank')) toast('팝업이 차단되었어요.\n팝업을 허용하거나 옆 화면 미리보기를 사용하세요.');
   });
   window.addEventListener('message', e => {
     if (e.data && e.data.type === 'preview-ready' && e.source && e.source === $('frame').contentWindow)
