@@ -1110,8 +1110,8 @@ dialog#login .row,dialog#editors .row{display:flex;gap:10px;margin-top:12px;flex
   const isUrl = f => /^https?:\/\//i.test(String(f).trim());
   let session = null, me = { email: '', role: '' };
   const snap = { site: new Map(), series: new Map(), works: new Map() };   // 마지막으로 불러오거나 저장한 상태 (바뀐 것만 저장하려고)
-  const KO = [[/Invalid login credentials/i, '이메일 또는 비밀번호가 맞지 않아요.'], [/Email not confirmed/i, '메일로 온 인증 링크를 먼저 눌러 주세요.'],
-    [/already registered|already been registered/i, '이미 가입된 이메일이에요. 로그인해 보세요.'], [/Password should be at least/i, '비밀번호는 6자 이상이어야 해요.'],
+  const KO = [[/Invalid login credentials/i, '이메일 또는 비밀번호가 맞지 않아요. 이미 다른 앱에 가입한 이메일이면 그때 정한 비밀번호를 넣으세요.'], [/Email not confirmed/i, '메일로 온 인증 링크를 먼저 눌러 주세요.'],
+    [/already registered|already been registered/i, '이미 가입된 이메일이에요. 다른 앱과 같은 계정이라, 그 앱에서 쓰던 비밀번호로 "로그인"하세요.'], [/Password should be at least/i, '비밀번호는 6자 이상이어야 해요.'],
     [/rate limit/i, '잠시 후 다시 시도해 주세요. (메일을 너무 자주 보냈어요)'], [/Failed to fetch|NetworkError/i, '인터넷 연결을 확인해 주세요.']];
   const ko = m => (KO.find(([re]) => re.test(m)) || [0, m])[1];
 
