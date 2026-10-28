@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-10-28 (키 입력) Supabase 공개 키 연결 + 테이블 권한(GRANT) 부여
+
+- 공개 키(`sb_publishable_…`)를 브라우저로 대시보드에서 읽어 `cms/index.html`의 `SB_KEY`, `common.js`·`deploy/common.js`의 `SB.key`에 넣고 push(66cb6cd). 공개용 키라 코드에 넣어도 되며, secret/service_role 키는 아님. Vercel 두 프로젝트 모두 새 키가 반영된 것 확인.
+- 키를 넣고 읽어 보니 401(42501): 테이블에 anon/authenticated 권한(GRANT)이 없었음. RLS 정책만으로는 부족하고 GRANT도 필요함. SQL 편집기에서 우리 테이블 5개에만 부여: anon은 works·series·settings·assets 읽기, authenticated는 위 4개 읽기·쓰기와 editors 읽기·쓰기(행 단위는 RLS가 편집자·관리자만 허용). 이 GRANT는 마이그레이션 SQL 파일에 없으므로 DB를 새로 만들 때는 같이 실행해야 함.
+- 확인: anon 읽기 works·series·settings 200(현재 비어 있음), anon의 editors 조회·works 쓰기는 거부(42501). 첫 관리자 good4056@gmail.com은 `ourfamilymeta_editors`에 admin으로 등록돼 있음.
+- **못 한 것: 실제 가입·메일 인증·로그인, DB 저장, 파일 업로드, 편집자 추가.** 가입 확인 메일은 본인이 눌러야 함. 다음: CMS에서 가입 → 메일 링크 → 로그인 → 저장·업로드 시험.
+- 공개 주소는 `ourfamily-metavc2610.vercel.app`(새 이름 `ourfamily-meta-vc2610` 도메인은 아직 없음, 404). 바꾸면 `cms/index.html`의 `PUBLIC_SITE`도 함께 바꿔야 함.
+
+---
+
 ## 2026-10-28 (추가) 1단계를 "작품 올리기"로 개편: 종류 선택 + 연재물 결정 + 게임·스토리보드
 
 - 연재물 여부는 1단계에서 정함. 맨 위에서 종류(영상/게임/스토리보드)와 "연재물인가요?"를 고르고, 목록에 "＋ 새 연재물 만들기…"를 고르면 그 자리에서 시리즈를 만들고 다음 회차 번호를 제안함. 12단계는 "연재물 정보 고치기"(소개·상태·대표 포스터)로 바뀜.
