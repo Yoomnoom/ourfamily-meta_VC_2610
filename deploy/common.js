@@ -330,20 +330,63 @@
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
     const [st, ser, wk] = await Promise.all([
       get('ourfamilymeta_settings?key=eq.site&select=value'),
-      get('ourfamilymeta_series?select=id,title,summary,status,poster_path&order=sort_order,created_at'),
+      get('ourfamilymeta_series?select=id,title,summary,status,poster_path,solo,common&order=sort_order,created_at'),
       get('ourfamilymeta_works?select=slug,kind,title,series_id,episode_no,content&order=sort_order,created_at')]);
     if (!st.length && !wk.length) return null;
     const d = { ...obj(st[0] && st[0].value) };
-    d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '' }));
+    d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', solo: !!x.solo, common: obj(x.common) }));
     d.works = wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug || obj(x.content).id, title: x.title || obj(x.content).title,
       series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' }));
     return d;
   }
 
-  /** 목록용: 단독 작품은 그대로, 연재물은 시리즈 하나로 묶어 첫 회로 연결한다 */
+  /* ---------- 제작 기록 합치기 ----------
+     연재물 공통 제작 정보(series.common) + 이 회차에서 추가한 것(작품의 process·tools·roles·sources)을 합친다.
+     CMS 미리보기와 공개 상영관이 이 함수 하나를 같이 쓰므로 두 화면의 결과가 달라질 수 없다.
+     - 단독 작품(solo 연재물): 연재물의 공통 정보가 곧 그 작품의 제작 기록이다. 비어 있으면 작품에 직접 적힌 값을 쓴다.
+     - 연재 회차: 기본은 "공통 + 회차 추가분". 회차가 useCommon === false면 공통 정보는 무시하고 회차 자체 정보만 쓴다.
+     - 중복 판단: 단계는 이름+설명, 도구는 이름, 프롬프트는 문장, 출처는 항목+출처(공백·대소문자·한글 정규화 후 같으면 같은 것)이다. 먼저 나온 것을 남긴다. */
+  const norm = s => String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+  const uniqBy = (list, key) => { const seen = new Set(); return list.filter(x => { const k = key(x); if (seen.has(k)) return false; seen.add(k); return true; }); };
+  const prodOf = o => { o = obj(o); return { process: arr(o.process), tools: arr(o.tools), roles: obj(o.roles), sources: arr(o.sources) }; };
+  const srcRow = s => has(obj(s).item) || has(obj(s).source) || has(obj(s).license);
+  const prodHas = p => p.process.some(x => has(obj(x).title) || has(obj(x).desc)) || toolList(p.tools).length
+    || arr(p.roles.ai).some(has) || arr(p.roles.human).some(has) || p.sources.some(srcRow);
+  const srcKey = s => [obj(s).item, obj(s).source].map(norm).join('|') === '|' ? 'lic:' + norm(obj(s).license) : [obj(s).item, obj(s).source].map(norm).join('|');
+  function mergeTools(a, b) {
+    const out = [], idx = new Map();
+    [...toolList(a), ...toolList(b)].forEach(t => {
+      const k = norm(t.name), prompts = arr(t.prompts).filter(p => has(p.text));
+      if (k && idx.has(k)) {
+        const cur = idx.get(k);
+        cur.prompts = uniqBy([...cur.prompts, ...prompts], p => norm(p.text));
+        if (!has(cur.purpose) && has(t.purpose)) cur.purpose = t.purpose;
+        return;
+      }
+      const c = { ...t, prompts: uniqBy(prompts, p => norm(p.text)) };
+      out.push(c); if (k) idx.set(k, c);
+    });
+    return out;
+  }
+  function production(w, d) {
+    w = obj(w);
+    const own = prodOf(w), ser = has(w.series) ? arr(obj(d).series).find(x => x && x.id === w.series) : null;
+    if (!ser) return own;
+    const cm = prodOf(ser.common);
+    if (ser.solo) return prodHas(cm) ? cm : own;
+    if (w.useCommon === false) return own;
+    return {
+      process: uniqBy([...cm.process, ...own.process].filter(p => has(obj(p).title) || has(obj(p).desc)), p => norm(obj(p).title) + '|' + norm(obj(p).desc)),
+      tools: mergeTools(cm.tools, own.tools),
+      roles: { ai: uniqBy([...arr(cm.roles.ai), ...arr(own.roles.ai)].filter(has), norm), human: uniqBy([...arr(cm.roles.human), ...arr(own.roles.human)].filter(has), norm) },
+      sources: uniqBy([...cm.sources, ...own.sources].filter(srcRow), srcKey)
+    };
+  }
+
+  /** 목록용: 단독 작품은 그대로, 연재물은 시리즈 하나로 묶어 첫 회로 연결한다 (solo 연재물은 연재물로 보이지 않는다) */
   function listing(d) {
     const ws = arr(d.works).filter(w => w && (has(w.id) || has(w.title)));
-    const ser = new Map(arr(d.series).map(x => [x.id, x]));
+    const ser = new Map(arr(d.series).filter(x => x && !x.solo).map(x => [x.id, x]));
     const seen = new Set(), out = [];
     ws.forEach(w => {
       const x = has(w.series) ? ser.get(w.series) : null;
@@ -358,9 +401,11 @@
     return out;
   }
   /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
-  const metaLine = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
+  const credit = w => has(w.creator) ? '© ' + w.creator.trim() : '';
+  const metaLine0 = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
     : w.kind === 'game' ? '게임' : w.kind === 'storyboard' ? '스토리보드'
     : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
+  const metaLine = w => [metaLine0(w), credit(w)].filter(Boolean).join(' · ');
 
   async function load(app, render) {
     const run = d => { const y = window.scrollY; render(d); reveal(); window.scrollTo(0, y); syncHeader(); hideLoader(); if (previewMode) applyHl(false); };
@@ -402,6 +447,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, copyText, TITLES, avail,
+  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, reduced, params };
 })();

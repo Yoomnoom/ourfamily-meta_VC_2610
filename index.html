@@ -14,7 +14,7 @@
 <script src="common.js"></script>
 <script>
 (() => {
-  const { h, has, arr, obj, mediaPath, watchHref, href, poster, section, gallery, tools: _t, toolList, boot, reduced } = App;
+  const { h, has, arr, obj, mediaPath, watchHref, href, poster, section, gallery, tools: _t, toolList, boot, reduced, production } = App;
   const T0 = { works: '지금 상영 중', topics: '이 영화들이 담은 것', album: '가족 앨범', making: '메이킹' };
   let current = 0;           // 카로셀 위치는 다시 그려도 유지한다
 
@@ -143,7 +143,7 @@
       h('a', { class: 'btn ghost', href: href('album.html') }, '앨범 전체보기')));
 
     if (av.making) {
-      const names = [...new Set([...toolList(obj(d.making).tools), ...works.flatMap(w => toolList(w.tools))].map(t => (t.name || '').trim()).filter(Boolean))];
+      const names = [...new Set([...toolList(obj(d.making).tools), ...works.flatMap(w => toolList(production(w, d).tools))].map(t => (t.name || '').trim()).filter(Boolean))];
       main.append(section('making', T.making, '',
         names.length && h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n }))),
         h('a', { class: 'btn ghost', href: href('making.html') }, '메이킹 전체보기')));

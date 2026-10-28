@@ -170,6 +170,12 @@ dialog#login::backdrop,dialog#editors::backdrop,dialog#confirmDel::backdrop{back
 dialog#login h2,dialog#editors h2,dialog#confirmDel h2{font-family:var(--hand);margin:0 0 10px}
 dialog#confirmDel input{width:100%;box-sizing:border-box}
 dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.prodbar{margin:0 0 16px;padding:12px 16px;border:2px solid var(--line);border-radius:16px;background:var(--paper);display:grid;gap:8px}
+.prodrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;flex-wrap:wrap;gap:6px}
+fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
+.ro-note{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:var(--warn-bg);font-weight:700;white-space:pre-line}
+.ro-row{opacity:.78}
 .login-msg{white-space:pre-line;min-height:1.4em;margin:10px 0 0;color:#a3341b;font-size:.95rem}
 .ed-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
 .ed-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;word-break:break-all}
@@ -270,18 +276,14 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
       why: '작품 종류를 고르고, 연재물이면 시리즈를 정해요. 그다음 영상(또는 게임·스토리보드)과 포스터를 올리면 오른쪽에서 상영관 모습을 바로 볼 수 있어요.',
       parts: [{ fields: [
         S('kind', '작품 종류', [['video', '영상'], ['game', '게임'], ['storyboard', '스토리보드']], { rerender: true, hint: '영상은 mp4 파일, 게임은 게임 주소, 스토리보드는 이미지 여러 장(또는 PDF)을 올려요.' }),
-        S('series', '연재물인가요?', () => [['', '단독 작품 (연재물 아님)'], ...arr(data.series).map(x => [x.id, has(x.title) ? x.title : '(제목 없음)']), ['__new', '＋ 새 연재물 만들기…']],
+        S('series', '연재물인가요?', () => {
+          const w = data.works[ui.work] || {};
+          return [['', '단독 작품 (연재물 아님)'], ...data.series.filter(x => mine(x) || x.id === w.series).map(x => { const c = (data.works.find(y => y.series === x.id && has(y.creator)) || {}).creator; return [x.id, (has(x.title) ? x.title : '(제목 없음)') + (has(c) ? ` (© ${c})` : '')]; }), ['__new', '＋ 새 연재물 만들기…']];
+        },
           { rerender: true, hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 12단계에서 고쳐요.',
-            onChange: (v, o) => {
-              if (v === '__new') {
-                const t = (prompt('새 연재물 제목을 적어 주세요.\n예) 우리 가족 이야기') || '').trim();
-                if (!t) { o.series = ''; o.episode = ''; return; }
-                const x = { id: crypto.randomUUID(), title: t, summary: '', status: 'ongoing', poster: '' }; data.series.push(x); o.series = x.id;
-              }
-              if (o.series && !has(o.episode)) o.episode = String(Math.max(0, ...data.works.filter(w => w !== o && w.series === o.series).map(w => +w.episode || 0)) + 1);   // 다음 회차 번호를 제안
-              if (!o.series) o.episode = '';
-            } }),
-        T('episode', '회차 번호 (몇 화)', { ph: '예) 3', show: () => !!(data.works[ui.work] || {}).series, hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' })] },
+            onChange: (v, o) => setSeriesFor(o, v) }),
+        T('episode', '회차 번호 (몇 화)', { ph: '예) 3', show: () => { const w = data.works[ui.work] || {}; return !!w.series && !isSolo(w); },
+          hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' })] },
         { fields: [
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
@@ -304,25 +306,26 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
       why: '제목과 한 줄 소개, 기획 의도가 상영관 영상 아래에 나와요.',
       parts: [{ pv: [WATCH, 'info'], fields: [
         T('title', '제목', { req: 1, autoId: 1, ph: '예) 할머니의 부엌' }),
+        T('creator', '제작자 이름 (© 표시)', { ph: '예) 김○○ 가족', hint: '상영관과 목록에 "© 이름"으로 나와요. 로그인 이메일은 공개되지 않아요.' }),
         T('tagline', '한 줄 소개', { ph: '예) 냄새와 소리로 기억하는 할머니의 부엌을 그림으로 되살렸어요.' }),
         A('intent', '기획 의도', { rows: 7, ph: '왜 이 주제를 골랐는지, 영상으로 무엇을 전하고 싶은지, AI를 어떻게 썼는지를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] },
         { title: '고급: 작품 주소(ID)', adv: true, fields: [T('id', '작품 주소(ID)', { sanitize: true, ph: 'work-1',
           hint: '제목을 처음 쓰면 자동으로 만들어져요.\n영문 소문자·숫자·하이픈만 쓰고, 작품마다 달라야 해요.\n이미 사이트에 올린 뒤에 바꾸면 작품 주소가 달라져요.' })] }],
       checks: w => [ck('제목', st(w.title), false, 'title'), ck('한 줄 소개', st(w.tagline), false, 'tagline'), ck('기획 의도', st(w.intent), false, 'intent'),
         ck('작품 주소(ID) – 영문·숫자·하이픈, 중복 없음', workIdOk(w) ? 2 : 0, false, 'id')] },
-    { id: 'process', scope: 'work', title: '만든 과정 쓰기', pv: [WATCH, 'process'],
+    { id: 'process', scope: 'work', prod: true, title: '만든 과정 쓰기', pv: [WATCH, 'process'],
       why: '이 작품을 어떻게 만들었는지 순서대로 적어요. 모든 작품에 공통인 과정은 10단계에 써요.',
       parts: [{ fields: [STEPS_LIST('process')] }],
       checks: w => [ck('만든 과정 1단계 이상', best(arr(w.process).map(p => Math.min(st(p.title), st(p.desc)))), false, 'title', 'desc')] },
-    { id: 'tools', scope: 'work', title: 'AI 도구·프롬프트', pv: [WATCH, 'tools'],
+    { id: 'tools', scope: 'work', prod: true, title: 'AI 도구·프롬프트', pv: [WATCH, 'tools'],
       why: '심사에서 꼭 보는 항목이에요. 어떤 AI를 썼고 어떤 문장을 넣었는지 그대로 적어요.',
       parts: [{ fields: [TOOLS_LIST()] }],
       checks: w => [ck('사용한 AI 도구', best(arr(w.tools).map(t => st(t.name))), true, 'name'), ck('주요 프롬프트', best(arr(w.tools).flatMap(t => arr(t.prompts)).map(p => st(p.text))), true, 'text')] },
-    { id: 'roles', scope: 'work', title: 'AI가 한 일·내가 한 일', pv: [WATCH, 'roles'],
+    { id: 'roles', scope: 'work', prod: true, title: 'AI가 한 일·내가 한 일', pv: [WATCH, 'roles'],
       why: '심사에서 꼭 보는 항목이에요. 구체적인 작업 단위로 나눠 적어요.\n예) AI: 장면별 일러스트 12장 만들기 / 내가: 시나리오 쓰기, 영상 편집',
       parts: [{ fields: [ROLES_GROUP()] }],
       checks: w => [ck('AI가 한 일·내가 한 일 나누기', Math.min(best(arr(obj(w.roles).ai).map(st)), best(arr(obj(w.roles).human).map(st))), true, 'ai', 'human')] },
-    { id: 'sources', scope: 'work', title: '출처·저작권', pv: [WATCH, 'sources'],
+    { id: 'sources', scope: 'work', prod: true, title: '출처·저작권', pv: [WATCH, 'sources'],
       why: '심사에서 꼭 보는 항목이에요. 음악·사진 등 직접 만들지 않은 자료를 모두 적어요.\n엑셀에서 복사한 여러 줄을 칸에 붙여 넣으면 한 번에 채워져요.',
       parts: [{ fields: [SOURCES_TABLE()] }],
       checks: w => [ck('외부 자료 출처·저작권', best(arr(w.sources).filter(s => !s.auto).map(s => Math.min(st(s.item), st(s.source)))), true, 'item', 'source')] },
@@ -398,7 +401,8 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
         F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 잘려요.' })] }] }] }
   ];
   const stepsFor = () => STEPS;
-  const curScopeOf = step => step.scope === 'work' ? data.works[ui.work] : data;
+  // 제작 기록(3~6단계)은 단독 작품이면 연재물 공통 정보를, 연재 회차는 '이번 회차 추가분'(또는 공통 내용)을 고친다
+  const curScopeOf = step => step.scope === 'work' ? (step.prod ? prodTarget() : data.works[ui.work]) : data;
 
   /* ---------- 데이터 ---------- */
   // 글꼴 사용 내역 – 소개 페이지 출처 표의 기본 항목. auto 표시된 행은 필수 체크리스트 판정에서 제외한다.
@@ -407,12 +411,13 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     sources: '출처 · 저작권', others: '다른 작품 보기', declaration: '책임 있는 AI 활용 선언문', producer: '제작자 소개', contest: '공모전 안내' };
   const kindOf = () => { const k = (data.works[ui.work] || {}).kind; return k === 'game' || k === 'storyboard' ? k : 'video'; };
   const blankTool = () => ({ name: '', purpose: '', prompts: [{ title: '', text: '' }] });
+  const blankCommon = () => ({ process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, sources: [{ item: '', source: '', license: '' }] });
   function blankWork(id) {
-    return { id, kind: 'video', title: '', tagline: '', intent: '',
+    return { id, kind: 'video', title: '', creator: '', tagline: '', intent: '',
       game: { url: '', embed: false, howto: '' }, storyboard: { pages: [{ file: '', caption: '', alt: '' }], pdf: '' },
       video: { file: '', poster: '', duration: '', captions: '', showDownload: true },
       process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
-      sources: [{ item: '', source: '', license: '' }], series: '', episode: '' };
+      sources: [{ item: '', source: '', license: '' }], series: '', episode: '', useCommon: true, owner: '' };
   }
   const EMPTY = () => ({
     site: { name: '[사이트 이름]', slogan: '[슬로건]', logoText: '', producer: '[제작자 이름]', email: '[이메일 주소]', sns: [],
@@ -424,12 +429,38 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     making: { intro: '', timeline: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, declaration: { title: '', text: '' } },
     album: { intro: '', photos: [{ file: '', caption: '', alt: '' }] },
     about: { producer: { name: '', text: '' }, intent: '', sources: [{ ...FONT_ROW }, { item: '', source: '', license: '' }] },
-    series: [],
+    series: [], solos: [],
     works: [blankWork('work-1')]
   });
   const normTools = a => arr(a).map(t => ({ name: '', purpose: '', ...obj(t), prompts: arr(obj(t).prompts).map(p => ({ title: '', text: '', ...obj(p) })) }));
   const normSteps = a => arr(a).map(p => ({ title: '', desc: '', ...obj(p) }));
   const normRoles = r => ({ ...obj(r), ai: arr(obj(r).ai), human: arr(obj(r).human) });
+  /** 제작 기록(과정·도구·역할·출처)에 실제로 적은 내용이 있는가 */
+  const ownProd = o => { o = obj(o); return arr(o.process).some(x => has(obj(x).title) || has(obj(x).desc))
+    || arr(o.tools).some(t => has(obj(t).name) || arr(obj(t).prompts).some(q => has(obj(q).text)))
+    || arr(obj(o.roles).ai).some(has) || arr(obj(o.roles).human).some(has)
+    || arr(o.sources).some(x => has(obj(x).item) || has(obj(x).source) || has(obj(x).license)); };
+  const one = (a, mk) => a.length ? a : [mk()];
+  const normCommon = c => {
+    c = obj(c); const r = normRoles(c.roles);
+    return { process: one(normSteps(c.process), () => ({ title: '', desc: '' })), tools: one(normTools(c.tools), blankTool),
+      roles: { ...r, ai: one(r.ai, () => ''), human: one(r.human, () => '') },
+      sources: one(arr(c.sources).map(x => ({ item: '', source: '', license: '', ...obj(x) })), () => ({ item: '', source: '', license: '' })) };
+  };
+  const normSeries = x => { x = obj(x); return { id: '', title: '', summary: '', status: 'ongoing', poster: '', owner: '', ...x, solo: !!x.solo, common: normCommon(x.common) }; };
+  /** 단독 작품이 속하는 숨은 연재물. 기존에 작품에 직접 적은 제작 기록이 있으면 공통 정보로 복사해 둔다. */
+  const newSolo = w => ({ id: crypto.randomUUID(), title: has(w.title) ? w.title : '', summary: '', status: 'ongoing', poster: '', owner: has(w.owner) ? w.owner : '', solo: true,
+    common: ownProd(w) ? normCommon({ process: clone(arr(w.process)), tools: clone(arr(w.tools)), roles: clone(obj(w.roles)), sources: clone(arr(w.sources)) }) : blankCommon() });
+  /** 모든 작품이 연재물(또는 solo 연재물)에 속하도록 맞춘다. 단독 작품의 회차 번호는 1로 고정한다. */
+  function ensureSolos(d) {
+    const known = new Set([...arr(d.series), ...arr(d.solos)].map(x => x.id));
+    d.works.forEach(w => {
+      if (!has(w.series) || !known.has(w.series)) { const x = newSolo(w); d.solos.push(x); known.add(x.id); w.series = x.id; w.episode = '1'; }
+      else if (d.solos.some(x => x.id === w.series)) w.episode = '1';
+    });
+    d.solos = d.solos.filter(x => d.works.some(w => w.series === x.id));
+    return d;
+  }
   function normWork(w) {
     const b = blankWork(''); w = obj(w);
     const sb = obj(w.storyboard);
@@ -437,6 +468,7 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
       game: { ...b.game, ...obj(w.game) },
       storyboard: { pdf: '', ...sb, pages: (arr(sb.pages).length ? arr(sb.pages) : b.storyboard.pages).map(x => ({ file: '', caption: '', alt: '', ...obj(x) })) },
       process: normSteps(w.process), tools: normTools(w.tools), roles: normRoles(w.roles),
+      useCommon: typeof w.useCommon === 'boolean' ? w.useCommon : !ownProd(w), owner: has(w.owner) ? w.owner : '',
       // 글꼴 행은 소개 페이지의 사이트 공통 표로 옮겼다 (이전 구조의 auto 행은 제거)
       sources: arr(w.sources).filter(s => !(s && s.auto)).map(s => ({ item: '', source: '', license: '', ...obj(s) })) };
   }
@@ -450,7 +482,7 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
       home: { titles: { works: ti.works, topics: ti.topics, album: ti.gallery }, topics: hm.topics },
       album: { photos: hm.gallery } };
   }
-  function normalize(d0) {
+  function normalize0(d0) {
     const base = EMPTY(); if (!d0 || typeof d0 !== 'object' || Array.isArray(d0)) return base;
     const d = migrate(d0), hm = obj(d.home), mk = obj(d.making), al = obj(d.album), ab = obj(d.about), s = obj(d.site);
     const out = { ...d };
@@ -465,17 +497,98 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     out.album = { intro: '', ...al, photos: arr(al.photos).map(g => ({ file: '', caption: '', alt: '', ...obj(g) })) };
     const src = arr(ab.sources).map(x => ({ item: '', source: '', license: '', ...obj(x) })).filter(x => !x.auto);
     out.about = { ...ab, producer: { name: '', text: '', ...obj(ab.producer) }, intent: ab.intent || '', sources: [{ ...FONT_ROW }, ...src] };
-    out.series = arr(d.series).map(x => ({ id: '', title: '', summary: '', status: 'ongoing', poster: '', ...obj(x) })).map(x => ({ ...x, id: has(x.id) ? x.id : crypto.randomUUID() }));
+    const sers = [...arr(d.series), ...arr(d.solos)].map(normSeries).map(x => ({ ...x, id: has(x.id) ? x.id : crypto.randomUUID() }));
+    out.series = sers.filter(x => !x.solo); out.solos = sers.filter(x => x.solo);
     out.works = Array.isArray(d.works) ? d.works.map(normWork) : base.works;
     out.works.forEach((w, i) => { if (!has(w.id)) w.id = 'work-' + (i + 1); });
     return out;
   }
+  const normalize = d0 => ensureSolos(normalize0(d0));
   let data;
   function nextWorkId() {
     // 여러 명이 동시에 작품을 추가해도 겹치지 않게 무작위 글자를 붙인다
     const used = new Set(data.works.map(w => (w.id || '').trim()));
     let id; do { id = 'work-' + Math.random().toString(36).slice(2, 7); } while (used.has(id));
     return id;
+  }
+  const allSeries = () => [...data.series, ...data.solos];
+  const seriesOf = w => allSeries().find(x => x.id === (w || {}).series);
+  const isSolo = w => data.solos.some(x => x.id === (w || {}).series);
+  const isAdmin = () => !!me && me.role === 'admin';
+  /** 이 항목(작품·연재물)을 내가 고칠 수 있는가. 담당자가 비어 있으면(방금 만든 것) 내 것이다. */
+  const mine = o => !online || isAdmin() || !has(o && o.owner) || String(o.owner).toLowerCase() === String(me.email || '').toLowerCase();
+  const pickProd = o => ({ process: arr(obj(o).process), tools: arr(obj(o).tools), roles: normRoles(obj(o).roles), sources: arr(obj(o).sources) });
+  /** 완성도 점검용: 공개 화면과 같은 규칙으로 합친 제작 기록 (표시용 병합은 common.js의 production) */
+  function effProd(w) {
+    const x = seriesOf(w), own = pickProd(w);
+    if (!x) return own;
+    const cm = pickProd(x.common);
+    if (x.solo) return ownProd(cm) ? cm : own;
+    if (w.useCommon === false) return own;
+    return { process: [...cm.process, ...own.process], tools: [...cm.tools, ...own.tools],
+      roles: { ai: [...cm.roles.ai, ...own.roles.ai], human: [...cm.roles.human, ...own.roles.human] }, sources: [...cm.sources, ...own.sources] };
+  }
+  let editCommon = false;   // 연재 회차에서 3~6단계가 '이번 회차 추가분' 대신 '연재물 공통 내용'을 고치는 중인가
+  function prodTarget() {
+    const w = data.works[ui.work]; if (!w) return w;
+    const x = seriesOf(w);
+    return x && (x.solo || (editCommon && w.useCommon !== false)) ? x.common : w;
+  }
+  const newSeries = t => ({ id: crypto.randomUUID(), title: t, summary: '', status: 'ongoing', poster: '', owner: (me && me.email) || '', solo: false, common: blankCommon() });
+  function prevEpisode(w) {
+    const x = seriesOf(w); if (!x || x.solo) return null;
+    const me2 = +w.episode || Infinity, sibs = data.works.filter(y => y !== w && y.series === w.series).sort((a, b) => (+a.episode || 0) - (+b.episode || 0));
+    const lower = sibs.filter(y => (+y.episode || 0) < me2);
+    return lower.length ? lower[lower.length - 1] : sibs[sibs.length - 1] || null;
+  }
+  /** 이전 회차 불러오기는 복사다. 공통 사용 회차면 추가분만, 독립 회차면 전체를 복사하고, 이후 원본이 바뀌어도 따라가지 않는다. */
+  function importPrev(w) {
+    const q = prevEpisode(w); if (!q) return;
+    if (!confirm(`"${has(q.title) ? q.title : '이전 회차'}"의 제작 정보를 이 회차로 복사해요.\n지금 이 회차에 적은 제작 정보는 바뀌어요.\n계속할까요?`)) return;
+    Object.assign(w, normCommon({ process: clone(arr(q.process)), tools: clone(arr(q.tools)), roles: clone(obj(q.roles)), sources: clone(arr(q.sources)) }));
+    w.useCommon = q.useCommon !== false; editCommon = false; changed(); renderStep();
+    toast(w.useCommon ? '이전 회차에서 추가한 내용만 복사했어요. 공통 정보는 그대로 쓰여요.' : '이전 회차의 제작 정보를 모두 복사했어요.');
+  }
+  /** 3~6단계 맨 위 막대: 연재 회차에서만 보인다 (단독 작품은 이 작품의 제작 기록을 바로 적는다) */
+  function prodBar() {
+    const w = data.works[ui.work], x = seriesOf(w);
+    if (!w || !x || x.solo) return null;
+    const use = w.useCommon !== false, q = prevEpisode(w), lock = !mine(w);   // 남의 작품이면 바꿀 수 없다
+    const cb = el('input', { type: 'checkbox', id: 'useCommon' }); cb.checked = use; cb.disabled = lock;
+    cb.addEventListener('change', () => { w.useCommon = cb.checked; if (!cb.checked) editCommon = false; changed(); renderStep(); });
+    const seg = (label, on, fn) => el('button', { type: 'button', class: 'btn sm' + (on ? ' primary' : ''), 'aria-pressed': on ? 'true' : 'false', text: label, onclick: fn });
+    return el('div', { class: 'prodbar' },
+      el('label', { class: 'cb', for: 'useCommon' }, cb, '연재물 공통 제작 정보 사용'),
+      el('span', { class: 'hint', text: brk(use ? '연재물에 적어 둔 공통 제작 정보가 이 회차에 자동으로 나와요. 이번 회차에서 새로 쓴 것만 따로 적으면 돼요.' : '이 회차는 공통 정보를 쓰지 않아요. 아래에 적은 제작 정보만 나와요.') }),
+      el('div', { class: 'prodrow' },
+        use && el('span', { class: 'seg', role: 'group', 'aria-label': '고칠 내용' }, seg('이번 회차에서 추가한 내용', !editCommon, () => { editCommon = false; renderStep(); }), seg('연재물 공통 내용', editCommon, () => { editCommon = true; renderStep(); })),
+        el('button', { type: 'button', class: 'btn sm', text: '이전 회차에서 불러오기', disabled: !q || lock, title: q ? null : '같은 연재물에 다른 회차가 아직 없어요.', onclick: () => importPrev(w) })));
+  }
+  /** 읽기 전용이어야 하면 이유를 돌려준다 (실제 막는 것은 DB 권한이고, 이 표시는 안내용이다) */
+  function readOnlyInfo(step) {
+    if (!online || isAdmin()) return null;
+    if (step.scope === 'site') return step.id === 'series' ? null : '사이트 공통 정보는 관리자만 수정할 수 있어요.\n지금은 볼 수만 있어요.';
+    const w = data.works[ui.work]; if (!w) return null;
+    if (step.prod) { const x = seriesOf(w); if (x && prodTarget() === x.common) return mine(x) ? null : '이 연재물은 담당자만 수정할 수 있어요.\n지금은 볼 수만 있어요.'; }
+    return mine(w) ? null : '이 작품은 담당자만 수정할 수 있어요.\n지금은 볼 수만 있어요.';
+  }
+  const permMsg = table => /series$/.test(table) ? '이 연재물은 담당자만 수정할 수 있어요.' : /settings$/.test(table) ? '사이트 공통 정보는 관리자만 수정할 수 있어요.' : '이 작품은 담당자만 수정할 수 있어요.';
+  function setSeriesFor(o, v) {
+    if (v === '__new') {
+      const t = (prompt('새 연재물 제목을 적어 주세요.\n예) 우리 가족 이야기') || '').trim();
+      if (t) { const x = newSeries(t); data.series.push(x); v = x.id; } else v = '';
+    }
+    o.series = v;
+    const used = new Set(data.works.map(w => w.series)), old = data.solos.find(x => !used.has(x.id));   // 방금 떠난 단독 작품용 숨은 연재물
+    if (!v) {
+      if (old) o.series = old.id; else { const x = newSolo(o); data.solos.push(x); o.series = x.id; }
+      o.episode = '1'; o.useCommon = true;
+    } else {
+      o.episode = String(Math.max(0, ...data.works.filter(w => w !== o && w.series === v).map(w => +w.episode || 0)) + 1);   // 다음 회차 번호를 제안
+      if (old && ownProd(old.common)) { Object.assign(o, normCommon(clone(old.common))); o.useCommon = false; } else o.useCommon = true;   // 단독 때 적은 제작 기록은 이 회차 것으로 옮긴다
+    }
+    const used2 = new Set(data.works.map(w => w.series)); data.solos = data.solos.filter(x => used2.has(x.id));
+    editCommon = false;
   }
   const workIdOk = w => { const v = (w.id || '').trim(); return /^[a-z0-9][a-z0-9-]*$/.test(v) && data.works.filter(x => (x.id || '').trim() === v).length === 1; };
 
@@ -495,8 +608,9 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
   const targets = new Set();   // 미리보기 창 (iframe, 새 탭)
   let pushTimer, dirty = false, lastSaved = null, autosavedAt = null;
   const hhmm = d => d ? d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+  const previewData = () => { const { solos, ...rest } = data; return { ...rest, series: [...data.series, ...data.solos] }; };
   function pushPreview(target) {
-    const send = w => { try { if (w.closed) targets.delete(w); else w.postMessage({ type: 'content', data }, '*'); } catch { targets.delete(w); } };
+    const send = w => { try { if (w.closed) targets.delete(w); else w.postMessage({ type: 'content', data: previewData() }, '*'); } catch { targets.delete(w); } };
     if (target) send(target); else [...targets].forEach(send);
   }
   function renderStatus() {
@@ -908,8 +1022,10 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     const it = itemsOf(step, scope);
     return it.every(i => i.s === 2) ? 'done' : it.every(i => i.s === 0) ? 'empty' : 'work';
   }
-  const workStepsLeft = w => STEPS.filter(s => s.scope === 'work' && statusOf(s, w) !== 'done').length;
-  const allStatus = () => STEPS.map(s => statusOf(s, curScopeOf(s)));
+  // 제작 기록 단계는 '지금 고치는 대상'이 아니라 공통 + 추가분을 합친 결과로 완성도를 본다
+  const scopeForStatus = (s, w) => s.scope !== 'work' ? data : s.prod ? (w && effProd(w)) : w;
+  const workStepsLeft = w => STEPS.filter(s => s.scope === 'work' && statusOf(s, scopeForStatus(s, w)) !== 'done').length;
+  const allStatus = () => STEPS.map(s => statusOf(s, scopeForStatus(s, data.works[ui.work])));
   const firstLeft = () => allStatus().findIndex(s => s !== 'done');
 
   function renderNav() {
@@ -929,13 +1045,13 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
   function updateHeader() {
     const sel = $('workSel'), labels = data.works.map((w, i) => {
       const n = workStepsLeft(w);
-      return `${i + 1}. ${has(w.title) ? w.title : '(제목 없음)'} — ${n ? `${n}개 남음` : '끝'}`;
+      return `${i + 1}. ${has(w.title) ? w.title : '(제목 없음)'} — ${n ? `${n}개 남음` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`;
     });
     if (!labels.length) labels.push('(작품 없음)');
     if (sel.options.length !== labels.length) sel.replaceChildren(...labels.map((l, i) => el('option', { value: String(i), text: l })));
     else labels.forEach((l, i) => { if (sel.options[i].textContent !== l) sel.options[i].textContent = l; });
     sel.value = String(ui.work);
-    const names = [...new Set([...data.works.flatMap(w => arr(w.tools)), ...arr(obj(data.making).tools)].map(t => (t.name || '').trim()).filter(Boolean))];
+    const names = [...new Set([...data.works.flatMap(w => arr(w.tools)), ...allSeries().flatMap(x => arr(obj(x.common).tools)), ...arr(obj(data.making).tools)].map(t => (t.name || '').trim()).filter(Boolean))];
     const dl = $('dl-tools'); if (dl.children.length !== names.length || names.some((n, i) => dl.children[i].value !== n)) dl.replaceChildren(...names.map(n => el('option', { value: n })));
   }
   function updateAll() { renderNav(); updateHeader(); }
@@ -967,7 +1083,15 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     const next = ui.step < STEPS.length - 1
       ? el('button', { type: 'button', class: 'btn primary', text: '다음 →', onclick: () => goStep(ui.step + 1) })
       : el('span', { class: 'stepno', text: '마지막 단계예요.' });
-    $('stepmain').replaceChildren(head, el('div', { class: 'stepbody' }, parts), el('div', { class: 'stepnav' }, prev, next));
+    const roText = readOnlyInfo(step), body = el('div', { class: 'stepbody' }, parts);
+    $('stepmain').replaceChildren(...[head, step.prod ? prodBar() : null, roText && el('p', { class: 'ro-note', role: 'status', text: brk(roText) }),
+      roText ? el('fieldset', { class: 'ro', disabled: true }, body) : body, el('div', { class: 'stepnav' }, prev, next)].filter(Boolean));
+    if (step.id === 'series' && online && !isAdmin()) {   // 12단계: 남의 연재물 줄은 읽기만
+      $('stepmain').querySelectorAll('[data-l="series"] [data-row]').forEach(r => {
+        const x = data.series[+r.getAttribute('data-row')];
+        if (x && !mine(x)) { r.classList.add('ro-row'); r.querySelectorAll('input,textarea,select,button').forEach(c => { c.disabled = true; }); }
+      });
+    }
     updateAll();
     pvManual = null; setPv(...step.pv);
   }
@@ -991,13 +1115,15 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
 
   /* ---------- 작품 도구 (더보기 메뉴에서 사용) ---------- */
   function addWork() {
-    data.works.push(blankWork(nextWorkId())); ui.work = data.works.length - 1; ui.step = 0; saveUi(); changed(); renderStep();
+    const nw = blankWork(nextWorkId()); nw.owner = online ? (me.email || '') : ''; data.works.push(nw); ensureSolos(data); editCommon = false;
+    ui.work = data.works.length - 1; ui.step = 0; saveUi(); changed(); renderStep();
     toast('새 작품을 추가했어요. 1단계부터 채워 보세요.');
   }
   function dupWork() {
     const cur = data.works[ui.work]; if (!cur) return;
-    const w = clone(cur); w.id = nextWorkId(); w.episode = ''; w.title = (w.title || '') + ' (복사)';
-    data.works.splice(ui.work + 1, 0, w); ui.work++; saveUi(); changed(); renderStep(); toast('작품을 복제했어요. 작품 주소(ID)는 2단계 "고급"에서 확인하세요.');
+    const w = clone(cur), x0 = seriesOf(cur); w.id = nextWorkId(); w.episode = ''; w.title = (w.title || '') + ' (복사)'; w.owner = online ? (me.email || '') : '';
+    if (!x0 || x0.solo || !mine(x0)) w.series = '';   // 단독 작품(또는 남의 연재물)의 복제본은 새 단독 작품이 된다
+    data.works.splice(ui.work + 1, 0, w); ensureSolos(data); if (x0 && x0.solo) seriesOf(w).common = clone(x0.common); editCommon = false; ui.work++; saveUi(); changed(); renderStep(); toast('작품을 복제했어요. 작품 주소(ID)는 2단계 "고급"에서 확인하세요.');
   }
   function swapWork(d) { const j = ui.work + d, a = data.works; if (j < 0 || j >= a.length) return; [a[ui.work], a[j]] = [a[j], a[ui.work]]; ui.work = j; saveUi(); changed(); renderStep(); }
   /** 되돌리기 어려운 삭제 앞의 안전장치: "삭제"를 직접 입력해야 진행된다. */
@@ -1019,10 +1145,12 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
   }
   async function delWork() {
     const w = data.works[ui.work]; if (!w) return;
+    if (!mine(w)) { toast('이 작품은 담당자만 삭제할 수 있어요.'); return; }
     if (!await confirmDelete(`"${has(w.title) ? w.title : '(제목 없음)'}" 작품을 삭제해요.\n이 작품에 입력한 내용이 모두 사라지고, 저장하면 되돌릴 수 없어요.`)) return;
-    data.works.splice(ui.work, 1); ui.work = Math.max(0, ui.work - 1); saveUi(); changed(); renderStep();
+    data.works.splice(ui.work, 1); data.solos = data.solos.filter(x => data.works.some(y => y.series === x.id));
+    ui.work = Math.max(0, ui.work - 1); editCommon = false; saveUi(); changed(); renderStep();
   }
-  $('workSel').addEventListener('change', () => { ui.work = +$('workSel').value || 0; saveUi(); renderStep(); });
+  $('workSel').addEventListener('change', () => { ui.work = +$('workSel').value || 0; editCommon = false; saveUi(); renderStep(); });
 
   /* ---------- 더보기(⋯) 메뉴 ---------- */
   function openMenu() {
@@ -1035,7 +1163,7 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
       el('hr'), el('div', { class: 'mh', text: '작품' }),
       mi('작품 추가', addWork), mi('이 작품 복제', dupWork, { disabled: !has1 }),
       mi('이 작품을 앞으로', () => swapWork(-1), { disabled: !has1 || ui.work === 0 }), mi('이 작품을 뒤로', () => swapWork(1), { disabled: !has1 || ui.work >= n - 1 }),
-      mi('이 작품 삭제', delWork, { danger: true, disabled: !has1 }),
+      mi('이 작품 삭제', delWork, { danger: true, disabled: !has1 || !mine(data.works[ui.work] || {}) }),
       el('hr'), mi('사용 방법', () => $('intro').showModal()), mi(online ? '저장 안 한 내용 버리고 다시 불러오기' : '처음부터 다시', resetAll, { danger: true }),
       ...(online ? [el('hr'), ...(me.role === 'admin' ? [mi('편집자 관리', openEditors)] : []), mi(`로그아웃 (${me.email})`, signOut)] : []));
     $('menu').hidden = false; $('btnMore').setAttribute('aria-expanded', 'true');
@@ -1135,7 +1263,7 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
   const snap = { site: new Map(), series: new Map(), works: new Map() };   // 마지막으로 불러오거나 저장한 상태 (바뀐 것만 저장하려고)
   const KO = [[/Invalid login credentials/i, '이메일 또는 비밀번호가 맞지 않아요. 이미 다른 앱에 가입한 이메일이면 그때 정한 비밀번호를 넣으세요.'], [/Email not confirmed/i, '메일로 온 인증 링크를 먼저 눌러 주세요.'],
     [/already registered|already been registered/i, '이미 가입된 이메일이에요. 다른 앱과 같은 계정이라, 그 앱에서 쓰던 비밀번호로 "로그인"하세요.'], [/Password should be at least/i, '비밀번호는 6자 이상이어야 해요.'],
-    [/rate limit/i, '잠시 후 다시 시도해 주세요. (메일을 너무 자주 보냈어요)'], [/Failed to fetch|NetworkError/i, '인터넷 연결을 확인해 주세요.']];
+    [/rate limit/i, '잠시 후 다시 시도해 주세요. (메일을 너무 자주 보냈어요)'], [/row-level security|42501/i, '이 항목은 담당자(또는 관리자)만 수정할 수 있어요.'], [/Failed to fetch|NetworkError/i, '인터넷 연결을 확인해 주세요.']];
   const ko = m => (KO.find(([re]) => re.test(m)) || [0, m])[1];
 
   function setSession(x) {
@@ -1225,19 +1353,26 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
 
   /** 화면 데이터 <-> DB 행. 작품 한 편이 DB 한 줄이라, 서로 다른 작품은 동시에 고쳐도 덮어쓰지 않는다. */
   function rowsOf(d) {
-    const sids = new Set(arr(d.series).map(x => x.id));
-    const series = arr(d.series).map((x, i) => ({ id: x.id, title: has(x.title) ? x.title.trim() : '(제목 없음)', summary: has(x.summary) ? x.summary : null,
-      status: x.status === 'completed' ? 'completed' : 'ongoing', poster_path: has(x.poster) ? x.poster.trim() : null, sort_order: i, is_published: true }));
+    const used = new Set(arr(d.works).map(w => w.series));
+    const solos = arr(d.solos).filter(x => used.has(x.id)), soloIds = new Set(solos.map(x => x.id));
+    const all = [...arr(d.series), ...solos], sids = new Set(all.map(x => x.id));
+    const series = all.map((x, i) => {
+      const solo = soloIds.has(x.id), w0 = solo ? arr(d.works).find(w => w.series === x.id) : null;   // solo 연재물의 제목·포스터는 그 작품 것을 따른다
+      return { id: x.id, title: solo ? (w0 && has(w0.title) ? w0.title.trim() : '(제목 없음)') : has(x.title) ? x.title.trim() : '(제목 없음)',
+        summary: has(x.summary) ? x.summary : null, status: x.status === 'completed' ? 'completed' : 'ongoing',
+        poster_path: solo ? (w0 && has(obj(w0.video).poster) ? w0.video.poster.trim() : null) : has(x.poster) ? x.poster.trim() : null,
+        sort_order: i, is_published: true, solo, common: clone(normCommon(x.common)) };   // 담당자(owner)는 보내지 않는다 – DB가 로그인한 사람으로 기록한다
+    });
     const works = arr(d.works).map((w, i) => {
-      const inSeries = has(w.series) && sids.has(w.series);
-      if (inSeries && !(+w.episode >= 1)) throw new Error(`"${has(w.title) ? w.title : w.id}"의 회차 번호를 1 이상의 숫자로 적어 주세요.`);
-      const c = clone(w); delete c.series; delete c.episode;
+      const inSeries = has(w.series) && sids.has(w.series), solo = soloIds.has(w.series);
+      if (inSeries && !solo && !(+w.episode >= 1)) throw new Error(`"${has(w.title) ? w.title : w.id}"의 회차 번호를 1 이상의 숫자로 적어 주세요.`);
+      const c = clone(w); delete c.series; delete c.episode; delete c.owner;
       const slug = String(w.id || '').trim();
       return { slug, kind: w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
-        episode_no: inSeries ? Math.floor(+w.episode) : null, poster_path: has(obj(w.video).poster) ? w.video.poster.trim() : null,
+        episode_no: inSeries ? (solo ? 1 : Math.floor(+w.episode)) : null, poster_path: has(obj(w.video).poster) ? w.video.poster.trim() : null,
         sort_order: i, is_published: has(w.title), content: c };
     });
-    const site = clone(d); delete site.works; delete site.series;
+    const site = clone(d); delete site.works; delete site.series; delete site.solos;
     return { series, works, site: { key: 'site', value: site } };
   }
   async function loadOnline() {
@@ -1246,8 +1381,8 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     let d = null;
     if (st.length || ser.length || wk.length) {
       d = { ...obj(st[0] && st[0].value),
-        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '' })),
-        works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: x.title, series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' })) };
+        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
+        works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: x.title, series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
     }
     return { d, st, ser, wk };
   }
@@ -1267,15 +1402,23 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
       } catch (e) {
         if (/ourfamilymeta_works_episode_uq/i.test(e.message)) throw new Error('같은 연재물 안에 회차 번호가 겹쳐요.');
         if (!old && /duplicate|unique|already/i.test(e.message)) throw new Error(`같은 주소의 항목이 이미 있어요: ${key}\n주소(ID)를 바꾸거나, 새로고침해서 최신 내용을 받으세요.`);
+        if (/row-level security|42501|permission denied|담당자/i.test(e.message)) throw new Error(permMsg(table));
         throw e;
       }
-      if (!out.length) throw new Error('다른 사람이 먼저 이 항목을 고쳤어요.\n⋯ 메뉴의 "저장 안 한 내용 버리고 다시 불러오기"로 최신 내용을 받은 뒤 다시 수정하세요.');
+      if (!out.length) {   // 0줄이 바뀐 이유: 담당자가 아니라서(권한) / 그 사이 다른 사람이 고쳐서(동시 수정)
+        let cur = []; try { cur = await getJson(`${table}?${col}=eq.${encodeURIComponent(key)}&select=owner`); } catch {}
+        if (cur.length && !isAdmin() && String(cur[0].owner || '').toLowerCase() !== String(me.email || '').toLowerCase()) throw new Error(permMsg(table));
+        throw new Error('다른 사람이 먼저 이 항목을 고쳤어요.\n⋯ 메뉴의 "저장 안 한 내용 버리고 다시 불러오기"로 최신 내용을 받은 뒤 다시 수정하세요.');
+      }
       map.set(key, { json, updated: out[0].updated_at });
     }
   }
   async function removeRows(table, col, keys, map) {
     if (!keys.length) return;
-    await sbFetch(`/rest/v1/${table}?${col}=in.(${keys.map(k => '"' + k + '"').join(',')})`, { method: 'DELETE' });
+    const q = ks => `${col}=in.(${ks.map(k => '"' + k + '"').join(',')})`;
+    const out = await (await sbFetch(`/rest/v1/${table}?${q(keys)}`, { method: 'DELETE', headers: { Prefer: 'return=representation' } })).json();
+    const gone = new Set(out.map(r => r[col])), left = keys.filter(k => !gone.has(k));
+    if (left.length && (await getJson(`${table}?${q(left)}&select=${col}`)).length) throw new Error(permMsg(table));   // 남아 있다면 권한이 없어서 못 지운 것
     keys.forEach(k => map.delete(k));
   }
   async function saveOnline() {
@@ -1288,11 +1431,12 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
         slugs.add(w.slug);
       }
       const sids = new Set(rows.series.map(x => x.id));
-      await writeRows('ourfamilymeta_series', 'id', rows.series, snap.series);
-      await writeRows('ourfamilymeta_works', 'slug', rows.works, snap.works);
+      const okS = new Set(allSeries().filter(mine).map(x => x.id)), okW = new Set(data.works.filter(mine).map(w => String(w.id || '').trim()));   // 남의 것은 보내지 않는다
+      await writeRows('ourfamilymeta_series', 'id', rows.series.filter(r => okS.has(r.id)), snap.series);
+      await writeRows('ourfamilymeta_works', 'slug', rows.works.filter(r => okW.has(r.slug)), snap.works);
       await removeRows('ourfamilymeta_works', 'slug', [...snap.works.keys()].filter(k => !slugs.has(k)), snap.works);
       await removeRows('ourfamilymeta_series', 'id', [...snap.series.keys()].filter(k => !sids.has(k)), snap.series);
-      await writeRows('ourfamilymeta_settings', 'key', [rows.site], snap.site);
+      if (isAdmin()) await writeRows('ourfamilymeta_settings', 'key', [rows.site], snap.site);   // 사이트 공통 문구는 관리자만
       lastSaved = new Date(); setDirty(false); toast('저장했어요. 사이트에 바로 반영돼요.');
     } catch (e) { toast('저장 실패: ' + e.message, { ms: 8000 }); }
     finally { btn.disabled = false; }
@@ -1329,7 +1473,7 @@ dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     if (!MIME[ext]) { toast('올릴 수 없는 파일이에요. (mp4, vtt, pdf, jpg, png, webp만 돼요)'); return ''; }
     if (file.size > MAX_UPLOAD) { toast(`파일이 ${fmtSize(file.size)}예요. 50MB 이하만 올릴 수 있어요.\n영상은 용량을 줄이거나 길이를 나눠 주세요.`, { ms: 7000 }); return ''; }
-    const path = `${new Date().toISOString().slice(0, 7)}/${Date.now().toString(36)}-${safeName(file.name)}`;
+    const path = `${new Date().toISOString().slice(0, 7)}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}-${safeName(file.name)}`;
     toast(`"${file.name}" 올리는 중… (${fmtSize(file.size)})`, { ms: 2500 });
     try {
       await sbFetch(`/storage/v1/object/${BUCKET}/${path}`, { method: 'POST', headers: { 'Content-Type': MIME[ext], 'x-upsert': 'false' }, body: file });
