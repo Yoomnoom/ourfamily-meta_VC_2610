@@ -220,7 +220,8 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .ep-side .eps a{flex-direction:column;align-items:stretch;gap:8px;padding:8px;height:100%}
 .ep-side .ep-thumb{width:100%}
 }
-.movie h1{font-size:clamp(2rem,6vw,3.4rem);margin-bottom:10px}
+.movie h1{font-size:clamp(1.7rem,4.4vw,2.8rem);margin-bottom:10px}
+.movie-grid.has-side>h1{grid-column:1/-1;margin:0}
 .movie .meta{color:var(--muted);margin:0 0 14px}
 .tagline{font-size:1.2rem;margin-bottom:16px}
 .movie h2{font-size:1.4rem;color:var(--accent-hi);margin:20px 0 6px}
