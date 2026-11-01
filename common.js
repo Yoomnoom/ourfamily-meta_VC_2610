@@ -93,7 +93,8 @@
       img.addEventListener('error', () => img.remove());
       box.append(img);
     }
-    if (has(work.tagline)) box.append(h('p', { class: 'poster-peek', 'aria-hidden': 'true', raw: true, text: work.tagline.trim() }));   // 마우스를 올리면 한 줄 소개가 나온다
+    const peek = has(work.intent) ? work.intent : work.tagline;   // 마우스를 올리면 기획 의도(없으면 한 줄 소개)가 나온다
+    if (has(peek)) box.append(h('p', { class: 'poster-peek', 'aria-hidden': 'true', raw: true, text: peek.trim().replace(/\s*\n\s*/g, ' ') }));
     return box;
   }
 
