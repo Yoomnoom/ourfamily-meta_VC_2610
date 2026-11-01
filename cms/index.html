@@ -1096,7 +1096,10 @@ dialog#editors{width:min(680px,94vw)}
     const names = [...new Set([...data.works.flatMap(w => arr(w.tools)), ...allSeries().flatMap(x => arr(obj(x.common).tools)), ...arr(obj(data.making).tools)].map(t => (t.name || '').trim()).filter(Boolean))];
     const dl = $('dl-tools'); if (dl.children.length !== names.length || names.some((n, i) => dl.children[i].value !== n)) dl.replaceChildren(...names.map(n => el('option', { value: n })));
   }
-  function updateAll() { renderNav(); updateHeader(); }
+  function updateAll() {
+    renderNav(); updateHeader();
+    const ph = document.getElementById('eppanel'); if (ph) ph.replaceWith(episodePanel());   // 12단계에서 연재물을 고치거나 지우면 회차 목록도 바로 맞춘다
+  }
 
   const hasReq = fs => fs.some(f => f.req || (f.fields && hasReq(f.fields)));
   function renderStep() {
@@ -1166,9 +1169,8 @@ dialog#editors{width:min(680px,94vw)}
   }
   /** 12단계 아래에 붙는 회차 목록. 내 연재물이 있을 때만 나온다 */
   function episodePanel() {
-    const mineSeries = data.series.filter(x => mine(x));
-    if (!mineSeries.length) return null;
-    return el('div', { class: 'eppanel' }, mineSeries.map(x => {
+    const mineSeries = data.series.filter(x => mine(x) && (has(x.title) || data.works.some(w => w.series === x.id)));   // 제목도 회차도 없는 빈 연재물은 목록에서 뺀다
+    return el('div', { id: 'eppanel', class: 'eppanel' }, mineSeries.map(x => {
       const eps = data.works.map((w, i) => ({ w, i })).filter(o => o.w.series === x.id).sort((a, b) => (+a.w.episode || 0) - (+b.w.episode || 0));
       return el('section', { class: 'epbox' }, el('h3', { text: (has(x.title) ? x.title : '(제목 없음)') + ' 회차' }),
         eps.length ? el('ul', { class: 'eplist' }, eps.map(o => el('li', {}, el('span', { text: `${has(o.w.episode) ? o.w.episode + '화' : '회차 미정'} · ${has(o.w.title) ? o.w.title : '(제목 없음)'}` }),
