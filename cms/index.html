@@ -34,7 +34,7 @@ button,.btn{font:inherit;cursor:pointer}
 header.top{position:sticky;top:0;z-index:40;background:rgba(255,248,236,.98);border-bottom:2px solid var(--line)}
 .top-in{display:flex;gap:10px 14px;align-items:center;padding:8px 20px}
 .top-in .grow{flex:1}
-.top-in select{max-width:min(380px,40vw);font-weight:700}
+.top-in select{max-width:min(380px,36vw);font-weight:700}
 .status{font-size:.9rem;line-height:1.35;text-align:right}
 .status b.ok{color:var(--ok)} .status b.dirty{color:var(--bad)}
 .status small{display:block;color:var(--muted);font-size:.8rem}
@@ -197,6 +197,8 @@ dialog#editors{width:min(680px,94vw)}
   <div class="top-in">
     <label for="workSel" style="position:absolute;left:-9999px">작품 선택</label>
     <select id="workSel"></select>
+    <label for="epSel" style="position:absolute;left:-9999px">회차 선택</label>
+    <select id="epSel" hidden></select>
     <span class="grow"></span>
     <div class="status" id="status" aria-live="polite"></div>
     <button class="btn" id="btnPV" type="button">미리보기</button>
@@ -1059,15 +1061,38 @@ dialog#editors{width:min(680px,94vw)}
     });
     $('steps').replaceChildren(...nodes);
   }
+  /** 맨 위 목록은 '큰 제목'만 보여 준다: 연재물은 하나로 묶고, 단독 작품은 작품마다 한 줄. 회차는 옆 목록에서 고른다 */
+  function groupsOf() {
+    const gs = [], seen = new Map();
+    data.works.forEach((w, i) => {
+      const x = seriesOf(w);
+      if (x && !x.solo) {
+        if (!seen.has(x.id)) { const g = { key: 's:' + x.id, title: has(x.title) ? x.title : '(제목 없음)', series: x, idx: [] }; seen.set(x.id, g); gs.push(g); }
+        seen.get(x.id).idx.push(i);
+      } else gs.push({ key: 'w:' + i, title: has(w.title) ? w.title : '(제목 없음)', series: null, idx: [i] });
+    });
+    gs.forEach(g => g.idx.sort((a, b) => (+data.works[a].episode || 0) - (+data.works[b].episode || 0)));
+    return gs;
+  }
+  const epLabel = (w, i) => { const n = workStepsLeft(w); return `${has(w.episode) ? w.episode + '화' : '회차 미정'}${has(w.title) ? ' · ' + w.title : ''} — ${n ? `${n}개 남음` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`; };
   function updateHeader() {
-    const sel = $('workSel'), labels = data.works.map((w, i) => {
-      const n = workStepsLeft(w);
-      return `${i + 1}. ${has(w.title) ? w.title : '(제목 없음)'} — ${n ? `${n}개 남음` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`;
+    const sel = $('workSel'), ep = $('epSel'), gs = groupsOf(), cur = gs.find(g => g.idx.includes(ui.work));
+    const labels = gs.map(g => {
+      if (g.series) { const left = g.idx.reduce((a, i) => a + (workStepsLeft(data.works[i]) ? 1 : 0), 0); return `${g.title} — 연재 ${g.idx.length}편${left ? ` · ${left}편 작성 중` : ''}`; }
+      const w = data.works[g.idx[0]], n = workStepsLeft(w);
+      return `${g.title} — ${n ? `${n}개 남음` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`;
     });
     if (!labels.length) labels.push('(작품 없음)');
-    if (sel.options.length !== labels.length) sel.replaceChildren(...labels.map((l, i) => el('option', { value: String(i), text: l })));
-    else labels.forEach((l, i) => { if (sel.options[i].textContent !== l) sel.options[i].textContent = l; });
-    sel.value = String(ui.work);
+    if (sel.options.length !== labels.length) sel.replaceChildren(...labels.map((l, i) => el('option', { value: gs[i] ? gs[i].key : '', text: l })));
+    else labels.forEach((l, i) => { if (sel.options[i].textContent !== l) sel.options[i].textContent = l; sel.options[i].value = gs[i] ? gs[i].key : ''; });
+    sel.value = cur ? cur.key : '';
+    const showEp = !!(cur && cur.series);
+    ep.hidden = !showEp;
+    if (showEp) {
+      const els = cur.idx.map(i => el('option', { value: String(i), text: epLabel(data.works[i], i) }));
+      if (ep.options.length !== els.length || els.some((o, k) => ep.options[k].textContent !== o.textContent || ep.options[k].value !== o.value)) ep.replaceChildren(...els);
+      ep.value = String(ui.work);
+    }
     const names = [...new Set([...data.works.flatMap(w => arr(w.tools)), ...allSeries().flatMap(x => arr(obj(x.common).tools)), ...arr(obj(data.making).tools)].map(t => (t.name || '').trim()).filter(Boolean))];
     const dl = $('dl-tools'); if (dl.children.length !== names.length || names.some((n, i) => dl.children[i].value !== n)) dl.replaceChildren(...names.map(n => el('option', { value: n })));
   }
@@ -1187,7 +1212,11 @@ dialog#editors{width:min(680px,94vw)}
     data.works.splice(ui.work, 1); data.solos = data.solos.filter(x => data.works.some(y => y.series === x.id));
     ui.work = Math.max(0, ui.work - 1); editCommon = false; saveUi(); changed(); renderStep();
   }
-  $('workSel').addEventListener('change', () => { ui.work = +$('workSel').value || 0; editCommon = false; saveUi(); renderStep(); });
+  $('workSel').addEventListener('change', () => {
+    const g = groupsOf().find(x => x.key === $('workSel').value); if (!g) return;
+    ui.work = g.idx[g.idx.length - 1]; editCommon = false; saveUi(); renderStep();   // 연재물은 가장 최근 회차로 열린다
+  });
+  $('epSel').addEventListener('change', () => { ui.work = +$('epSel').value || 0; editCommon = false; saveUi(); renderStep(); });
 
   /* ---------- 더보기(⋯) 메뉴 ---------- */
   function openMenu() {
