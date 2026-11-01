@@ -344,3 +344,11 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 .prompt-table table{border-collapse:collapse;width:100%;font-size:.92rem}
 .prompt-table th,.prompt-table td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid rgba(128,128,128,.3)}
 .prompt-table th{font-weight:700;border-bottom-width:2px}
+/* 모바일에서도 프롬프트 표는 표 모양 유지 (위쪽 모바일 카드형 규칙을 되돌림) */
+.prompt-table table{display:table;min-width:420px}
+.prompt-table thead{display:table-header-group;position:static}
+.prompt-table tbody{display:table-row-group}
+.prompt-table tr{display:table-row;padding:0;border-top:0}
+.prompt-table th,.prompt-table td{display:table-cell;padding:8px 12px;border-top:0}
+.prompt-table thead th{background:none;font-family:inherit;font-size:.92rem;letter-spacing:0}
+.prompt-table td::before{content:none}
