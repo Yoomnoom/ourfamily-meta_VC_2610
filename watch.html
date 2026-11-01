@@ -70,10 +70,11 @@
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
       h('h1', { text: title }),
       h('div', {},
-        ser && h('p', { class: 'meta', text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),
-        has(v.duration) && h('p', { class: 'meta', text: '러닝타임 ' + v.duration.trim() }),
-        has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
-        has(credit(w)) && h('p', { class: 'meta', text: credit(w) })), side || null)));
+        h('p', { class: 'meta meta-line' },
+          ser && h('span', { text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),
+          has(v.duration) && h('span', { text: '러닝타임 ' + v.duration.trim() }),
+          has(credit(w)) && h('span', { text: credit(w) })),
+        has(w.tagline) && h('p', { class: 'tagline', text: w.tagline })), side || null)));
 
     if (howto) main.append(h('section', { class: 'howto-sec', 'data-section': 'howto', 'aria-label': '게임 방법' }, h('div', { class: 'wrap' }, howto)));
 
