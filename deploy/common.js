@@ -139,6 +139,25 @@
     return items.length ? h('ol', { class: 'timeline' }, items.map(p => h('li', {}, has(p.title) && h('h3', { text: p.title }), has(p.desc) && h('p', { text: p.desc })))) : null;
   };
   const toolList = items => arr(items).filter(t => has(t.name) || arr(t.prompts).some(p => has(p.text)));
+  /** 프롬프트 글 안의 마크다운 표(| 로 구분)는 표로, 나머지는 쓴 그대로 보여 준다. 복사하면 원문 그대로 복사된다 */
+  function promptBody(text) {
+    const lines = String(text).split(/\r?\n/), out = [], isRow = l => /^\s*\|.*\|\s*$/.test(l), isSep = l => isRow(l) && /^[\s|:-]+$/.test(l) && l.includes('---');
+    const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+    let buf = [], found = false;
+    const flush = () => { const t = buf.join('\n').replace(/^\n+|\n+$/g, ''); if (t) out.push(h('pre', {}, h('code', { text: t, raw: true }))); buf = []; };
+    for (let i = 0; i < lines.length; i++) {
+      if (isRow(lines[i]) && i + 1 < lines.length && isSep(lines[i + 1])) {
+        flush(); found = true;
+        const head = cells(lines[i]), rows = []; let j = i + 2;
+        while (j < lines.length && isRow(lines[j])) rows.push(cells(lines[j++]));
+        out.push(h('div', { class: 'prompt-table' }, h('table', {}, h('thead', {}, h('tr', {}, head.map(c => h('th', { text: c })))),
+          h('tbody', {}, rows.map(r => h('tr', {}, r.map(c => h('td', { text: c }))))))));
+        i = j - 1;
+      } else buf.push(lines[i]);
+    }
+    if (!found) return [h('pre', {}, h('code', { text: String(text), raw: true }))];
+    flush(); return out;
+  }
   function tools(items) {
     items = toolList(items);
     if (!items.length) return null;
@@ -154,7 +173,7 @@
           btn.addEventListener('click', () => copyText(p.text, btn));
           return h('div', { class: 'prompt' },
             h('div', { class: 'prompt-head' }, h('h4', { text: has(p.title) ? p.title : '프롬프트' }), btn),
-            h('pre', {}, h('code', { text: p.text, raw: true })),
+            promptBody(p.text),
             refs.length && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
         }) : h('p', { text: '공개된 프롬프트가 없습니다.' })));
     }));

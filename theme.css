@@ -338,3 +338,9 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 .prompt-refs{margin-top:12px}
 .prompt-refs-title{margin:0 0 8px;font-size:.85rem;opacity:.75}
 .prompt-refs .gallery{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));grid-auto-rows:110px;gap:8px;margin:0}
+
+/* 프롬프트 안의 표 */
+.prompt-table{overflow-x:auto;margin:10px 0}
+.prompt-table table{border-collapse:collapse;width:100%;font-size:.92rem}
+.prompt-table th,.prompt-table td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid rgba(128,128,128,.3)}
+.prompt-table th{font-weight:700;border-bottom-width:2px}
