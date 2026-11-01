@@ -350,8 +350,9 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 
 /* 게임·스토리보드 상영관 */
 .game-frame{display:block;width:100%;aspect-ratio:16/9;border:0;background:#000;border-radius:12px}
-.game-cta{margin:14px 0 0;text-align:center}
-.game-how{margin:14px auto 0;max-width:62ch;white-space:pre-line}
+.game-cta{margin:14px 0;text-align:center}
+.game-how{max-width:1100px;margin:24px auto 0}
+.game-how h2{font-size:1.4rem;color:var(--accent-hi);margin:0 0 10px}
 .sb-frame{padding:8px}
 
 /* 프롬프트에 함께 넣은 참고 이미지 */
