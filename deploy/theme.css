@@ -198,6 +198,10 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .dl{display:flex;justify-content:flex-end;max-width:1100px;margin:10px auto 0}
 .movie{padding:28px 0 8px}
 .movie-grid>*{min-width:0}
+.movie-grid.has-side{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,400px);gap:20px 40px;align-items:start}
+.ep-side h2{margin-top:6px}
+.ep-side .ep-thumb{width:104px}
+@media (max-width:860px){.movie-grid.has-side{grid-template-columns:minmax(0,1fr)}}
 .movie h1{font-size:clamp(2rem,6vw,3.4rem);margin-bottom:10px}
 .movie .meta{color:var(--muted);margin:0 0 14px}
 .tagline{font-size:1.2rem;margin-bottom:16px}

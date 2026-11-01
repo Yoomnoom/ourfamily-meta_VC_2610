@@ -66,8 +66,13 @@
     main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl, nextbar)));
 
     // 영화 정보
+    const side = ser && h('aside', { class: 'ep-side', id: 'episodes', 'aria-label': ser.title + ' 회차' },
+      h('h2', { text: ser.title + ' 회차' }),
+      h('ol', { class: 'eps' }, epList.map(e =>
+        h('li', {}, h('a', { href: watchHref(e, works.indexOf(e)), 'aria-current': e === w ? 'true' : null },
+          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` }))))));
     const jumps = [];
-    main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' },
+    main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
       h('div', {},
         h('h1', { text: title }),
         ser && h('p', { class: 'meta', text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),
@@ -75,8 +80,9 @@
         has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
         has(credit(w)) && h('p', { class: 'meta', text: credit(w) }),
         has(w.intent) && h('div', { id: 'intent' }, h('h2', { text: T.intent }), h('p', { class: 'prose', raw: true, text: w.intent.trim() })),
-        h('nav', { class: 'jump', 'aria-label': '이 작품의 섹션 이동', id: 'jump' })))));
+        h('nav', { class: 'jump', 'aria-label': '이 작품의 섹션 이동', id: 'jump' })), side || null)));
     if (has(w.intent)) jumps.push(['intent', T.intent]);
+    if (side) jumps.push(['episodes', '회차']);
 
     const add = (id, label, body) => { main.append(section(id, label, '', body)); jumps.push([id, label]); };
     const tl = timeline(pr.process); if (tl) add('process', T.process, tl);
@@ -86,12 +92,6 @@
 
     if (av.making) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('making.html') }, '이 작품의 메이킹 더 보기')));
 
-    if (ser) {   // 연재물: 회차 목록
-      const eps = works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0));
-      main.append(section('episodes', ser.title + ' 회차', '', h('ol', { class: 'eps' }, eps.map(e =>
-        h('li', {}, h('a', { href: watchHref(e, works.indexOf(e)), 'aria-current': e === w ? 'true' : null },
-          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` }))))))); jumps.push(['episodes', '회차']);
-    }
     const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
     if (others.length) { main.append(section('others', T.others, '', h('div', { class: 'mini' }, others.map(([o, i]) =>
       h('a', { href: watchHref(o, i) }, poster(o),
