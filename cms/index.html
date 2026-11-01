@@ -166,6 +166,15 @@ details.adv[open]{padding-bottom:10px}
 #toasts{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:90;display:grid;gap:8px;justify-items:center;max-width:92vw}
 .toast{background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.95rem;display:flex;gap:12px;align-items:center;white-space:pre-line}
 .toast button{background:var(--yellow);color:var(--ink);border:0;border-radius:999px;font-weight:700;padding:4px 14px;min-height:32px}
+dialog#pickPrev{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:22px 26px;width:min(680px,94vw);max-height:86vh;overflow:auto}
+dialog#pickPrev::backdrop{background:rgba(58,47,38,.55)}
+dialog#pickPrev h2{font-family:var(--hand);margin:0 0 6px}
+dialog#pickPrev .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;position:sticky;bottom:-22px;background:var(--paper);padding:10px 0}
+.pk-group{margin:12px 0}
+.pk-group h3{font-size:1.05rem;margin:0 0 4px}
+.pk-row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;background:#fff;margin-top:6px;cursor:pointer}
+.pk-row input{margin-top:4px;flex:none}
+.pk-row small{display:block;color:var(--muted);margin-top:2px}
 dialog#intro{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;max-width:min(520px,92vw)}
 dialog#intro::backdrop{background:rgba(58,47,38,.45)}
 dialog#intro h2{font-family:var(--hand);margin:0 0 10px}
@@ -559,13 +568,53 @@ dialog#editors{width:min(680px,94vw)}
     const lower = sibs.filter(y => (+y.episode || 0) < me2);
     return lower.length ? lower[lower.length - 1] : sibs[sibs.length - 1] || null;
   }
-  /** 이전 회차 불러오기는 복사다. 공통 사용 회차면 추가분만, 독립 회차면 전체를 복사하고, 이후 원본이 바뀌어도 따라가지 않는다. */
-  function importPrev(w) {
+  /** 이전 회차에서 가져오기: 지금 단계에 해당하는 항목만 보여 주고, 고른 것만 복사한다. 이미 있는 항목은 건너뛴다. */
+  function pickPrev(w) {
     const q = prevEpisode(w); if (!q) return;
-    if (!confirm(`"${has(q.title) ? q.title : '이전 회차'}"의 제작 정보를 이 회차로 복사해요.\n지금 이 회차에 적은 제작 정보는 바뀌어요.\n계속할까요?`)) return;
-    Object.assign(w, normCommon({ process: clone(arr(q.process)), tools: clone(arr(q.tools)), roles: clone(obj(q.roles)), sources: clone(arr(q.sources)) }));
-    w.useCommon = q.useCommon !== false; editCommon = false; changed(); renderStep();
-    toast(w.useCommon ? '이전 회차에서 추가한 내용만 복사했어요. 공통 정보는 그대로 쓰여요.' : '이전 회차의 제작 정보를 모두 복사했어요.');
+    const step = STEPS[ui.step], sid = step.id, t = prodTarget();
+    const nk = v => String(v == null ? '' : v).normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+    const cut = (v, n = 90) => { v = String(v || '').replace(/\s+/g, ' ').trim(); return v.length > n ? v.slice(0, n) + '…' : v; };
+    const groups = [];
+    if (sid === 'process') groups.push({ rows: arr(q.process).filter(x => has(obj(x).title) || has(obj(x).desc)).map(x => ({ label: has(x.title) ? x.title : '(제목 없음)', detail: cut(x.desc),
+      apply: tg => { tg.process = arr(tg.process).filter(p => has(obj(p).title) || has(obj(p).desc)); const k = nk(x.title) + '|' + nk(x.desc);
+        if (tg.process.some(p => nk(p.title) + '|' + nk(p.desc) === k)) return false; tg.process.push({ title: x.title || '', desc: x.desc || '' }); return true; } })) });
+    if (sid === 'tools') arr(q.tools).forEach(tl => {
+      tl = obj(tl); const ps = arr(tl.prompts).filter(p => has(obj(p).text)); if (!has(tl.name) && !ps.length) return;
+      const ensure = tg => { tg.tools = arr(tg.tools).filter(x => has(obj(x).name) || arr(obj(x).prompts).some(p => has(obj(p).text)));
+        let m = tg.tools.find(x => nk(x.name) === nk(tl.name)); if (!m) { m = { name: tl.name || '', purpose: tl.purpose || '', prompts: [] }; tg.tools.push(m); }
+        m.prompts = arr(m.prompts).filter(p => has(obj(p).text)); return m; };
+      const rows = ps.length ? ps.map(p => ({ label: has(p.title) ? p.title : cut(p.text, 40), detail: cut(p.text),
+        apply: tg => { const m = ensure(tg); if (m.prompts.some(y => nk(y.text) === nk(p.text))) return false; m.prompts.push(clone(p)); return true; } }))
+        : [{ label: '프롬프트 없이 도구만 가져오기', detail: cut(tl.purpose), apply: tg => { const had = arr(tg.tools).some(x => nk(obj(x).name) === nk(tl.name)); ensure(tg); return !had; } }];
+      groups.push({ title: tl.name, sub: tl.purpose, rows });
+    });
+    if (sid === 'roles') [['ai', 'AI가 한 일'], ['human', '내가 한 일']].forEach(([k, label]) => { const items = arr(obj(q.roles)[k]).filter(has);
+      if (items.length) groups.push({ title: label, rows: items.map(v => ({ label: v, detail: '', apply: tg => { tg.roles = { ai: arr(obj(tg.roles).ai).filter(has), human: arr(obj(tg.roles).human).filter(has) };
+        if (tg.roles[k].some(y => nk(y) === nk(v))) return false; tg.roles[k].push(v); return true; } })) }); });
+    if (sid === 'sources') groups.push({ rows: arr(q.sources).filter(x => has(obj(x).item) || has(obj(x).source)).map(x => ({ label: has(x.item) ? x.item : '(항목 없음)', detail: cut([x.source, x.license].filter(has).join(' · ')),
+      apply: tg => { tg.sources = arr(tg.sources).filter(r => has(obj(r).item) || has(obj(r).source)); const k = nk(x.item) + '|' + nk(x.source);
+        if (tg.sources.some(r => nk(r.item) + '|' + nk(r.source) === k)) return false; tg.sources.push(clone(x)); return true; } })) });
+    const rowsAll = groups.flatMap(g => g.rows), boxes = [];
+    const dlg = el('dialog', { id: 'pickPrev', 'aria-labelledby': 'pkT' });
+    const ok = el('button', { type: 'button', class: 'btn primary', text: '가져오기', disabled: true });
+    const all = el('button', { type: 'button', class: 'btn', text: '모두 선택' });
+    const done = () => { dlg.close(); dlg.remove(); };
+    const sync = () => { const n = boxes.filter(b => b.checked).length; ok.disabled = !n; ok.textContent = n ? `선택한 ${n}개 가져오기` : '가져오기'; all.textContent = n === boxes.length ? '선택 해제' : '모두 선택'; };
+    all.addEventListener('click', () => { const on = boxes.some(b => !b.checked); boxes.forEach(b => { b.checked = on; }); sync(); });
+    ok.addEventListener('click', () => {
+      let added = 0, skipped = 0; rowsAll.forEach((r, i) => { if (boxes[i].checked) (r.apply(t) ? added++ : skipped++); });
+      done(); changed(); renderStep(); toast(`${added}개를 가져왔어요.${skipped ? `\n${skipped}개는 이미 있어서 건너뛰었어요.` : ''}`);
+    });
+    const body = groups.filter(g => g.rows.length).map(g => el('section', { class: 'pk-group' },
+      g.title ? el('h3', { text: g.title }) : null, has(g.sub) ? el('p', { class: 'hint', text: g.sub }) : null,
+      g.rows.map(r => { const cb = el('input', { type: 'checkbox' }); boxes.push(cb); cb.addEventListener('change', sync);
+        return el('label', { class: 'pk-row' }, cb, el('span', {}, el('b', { text: r.label }), r.detail ? el('small', { text: r.detail }) : null)); })));
+    dlg.append(el('h2', { id: 'pkT', text: `${has(q.title) ? q.title : '이전 회차'}에서 가져오기` }),
+      el('p', { class: 'hint', text: `"${step.title}" 단계의 내용 중 가져올 것을 골라요.\n이미 있는 내용은 건너뛰어요.`, style: 'white-space:pre-line;margin:0 0 10px' }),
+      ...(rowsAll.length ? [...body, el('div', { class: 'row' }, ok, all, el('button', { type: 'button', class: 'btn', text: '닫기', onclick: done }))]
+        : [el('p', { text: '이전 회차에 이 단계에서 가져올 내용이 없어요.' }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: '닫기', onclick: done }))]));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); done(); });
+    document.body.append(dlg); dlg.showModal();
   }
   /** 3~6단계 맨 위 막대: 연재 회차에서만 보인다 (단독 작품은 이 작품의 제작 기록을 바로 적는다) */
   function prodBar() {
@@ -580,7 +629,7 @@ dialog#editors{width:min(680px,94vw)}
       el('span', { class: 'hint', text: brk(use ? '연재물에 적어 둔 공통 제작 정보가 이 회차에 자동으로 나와요. 이번 회차에서 새로 쓴 것만 따로 적으면 돼요.' : '이 회차는 공통 정보를 쓰지 않아요. 아래에 적은 제작 정보만 나와요.') }),
       el('div', { class: 'prodrow' },
         use && el('span', { class: 'seg', role: 'group', 'aria-label': '고칠 내용' }, seg('이번 회차에서 추가한 내용', !editCommon, () => { editCommon = false; renderStep(); }), seg('연재물 공통 내용', editCommon, () => { editCommon = true; renderStep(); })),
-        el('button', { type: 'button', class: 'btn sm', text: '이전 회차에서 불러오기', disabled: !q || lock, title: q ? null : '같은 연재물에 다른 회차가 아직 없어요.', onclick: () => importPrev(w) })));
+        el('button', { type: 'button', class: 'btn sm', text: '이전 회차에서 골라 가져오기', disabled: !q || lock, title: q ? null : '같은 연재물에 다른 회차가 아직 없어요.', onclick: () => pickPrev(w) })));
   }
   /** 읽기 전용이어야 하면 이유를 돌려준다 (실제 막는 것은 DB 권한이고, 이 표시는 안내용이다) */
   function readOnlyInfo(step) {
