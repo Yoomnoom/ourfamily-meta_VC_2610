@@ -54,6 +54,11 @@
     // 다음 화·이전 화 (연재물) / 다른 작품으로 이동
     const epList = ser ? works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)) : [];
     const at = epList.indexOf(w), nextEp = at >= 0 ? epList[at + 1] : null, prevEp = at > 0 ? epList[at - 1] : null;
+    const epThumb = e => {   // 회차 썸네일: 가로 표지가 있으면 그것, 없으면 포스터
+      const f = obj(e.video).cover || obj(e.video).poster, box = h('span', { class: 'ep-thumb', 'aria-hidden': 'true' });
+      if (has(f)) { const img = h('img', { src: mediaPath(f), alt: '', loading: 'lazy', draggable: 'false' }); img.addEventListener('error', () => img.remove()); box.append(img); }
+      return box;
+    };
     const epName = e => `${has(e.episode) ? e.episode + '화' : '다음 이야기'}${has(e.title) ? ' · ' + e.title : ''}`;
     const nextbar = h('div', { class: 'nextbar' },
       prevEp ? h('a', { class: 'btn ghost sm', href: watchHref(prevEp, works.indexOf(prevEp)) }, '← 이전 화') : h('span'),
@@ -84,8 +89,8 @@
     if (ser) {   // 연재물: 회차 목록
       const eps = works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0));
       main.append(section('episodes', ser.title + ' 회차', '', h('ol', { class: 'eps' }, eps.map(e =>
-        h('li', {}, h('a', { href: watchHref(e, works.indexOf(e)), 'aria-current': e === w ? 'true' : null,
-          text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` })))))); jumps.push(['episodes', '회차']);
+        h('li', {}, h('a', { href: watchHref(e, works.indexOf(e)), 'aria-current': e === w ? 'true' : null },
+          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` }))))))); jumps.push(['episodes', '회차']);
     }
     const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
     if (others.length) { main.append(section('others', T.others, '', h('div', { class: 'mini' }, others.map(([o, i]) =>
