@@ -355,8 +355,12 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 .prompt-table td::before{content:none}
 
 /* 포스터에 마우스를 올리면 나오는 한 줄 소개 */
-.poster-peek{position:absolute;inset:0;margin:0;padding:20px 18px;font-size:1.05rem;line-height:1.65;color:#fff;text-align:left;
-  background:rgba(0,0,0,.9);opacity:0;transition:opacity .25s;pointer-events:none;
-  display:-webkit-box;-webkit-line-clamp:11;-webkit-box-orient:vertical;overflow:hidden}
+.poster-peek{position:absolute;inset:0;margin:0;padding:20px 18px;color:#fff;text-align:left;background:rgba(0,0,0,.9);box-shadow:inset 0 0 0 2px var(--accent);
+  opacity:0;transition:opacity .3s;pointer-events:none;overflow:hidden}
+.peek-label{display:block;color:var(--accent-hi);font-size:.8rem;font-weight:700;letter-spacing:.08em;margin-bottom:10px}
+.peek-label::before{content:"";display:block;width:28px;height:3px;border-radius:2px;background:var(--accent);margin-bottom:8px}
+.peek-text{margin:0;font-size:1.05rem;line-height:1.65;display:-webkit-box;-webkit-line-clamp:10;-webkit-box-orient:vertical;overflow:hidden;
+  opacity:0;transform:translateY(12px);transition:opacity .3s .05s,transform .3s .05s}
+a:hover>.poster .peek-text,a:focus-visible>.poster .peek-text,.poster:hover .peek-text{opacity:1;transform:none}
 a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover .poster-peek{opacity:1}
 @media (hover:none){.poster-peek{display:none}}
