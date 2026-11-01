@@ -145,7 +145,7 @@
     if (av.making) {
       const names = [...new Set([...toolList(obj(d.making).tools), ...works.flatMap(w => toolList(production(w, d).tools))].map(t => (t.name || '').trim()).filter(Boolean))];
       main.append(section('making', T.making, '',
-        names.length && h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n }))),
+        names.length > 0 && h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n }))),
         h('a', { class: 'btn ghost', href: href('making.html') }, '메이킹 전체보기')));
     }
 

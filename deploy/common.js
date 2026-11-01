@@ -174,14 +174,14 @@
           return h('div', { class: 'prompt' },
             h('div', { class: 'prompt-head' }, h('h4', { text: has(p.title) ? p.title : '프롬프트' }), btn),
             promptBody(p.text),
-            refs.length && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
+            refs.length > 0 && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
         }) : h('p', { text: '공개된 프롬프트가 없습니다.' })));
     }));
   }
   function roles(r, T) {
     const ai = arr(r && r.ai).filter(has), human = arr(r && r.human).filter(has);
     if (!ai.length && !human.length) return null;
-    return h('div', { class: 'roles' }, [['ai', ai], ['human', human]].map(([k, items]) => items.length && h('article', { class: 'role ' + k },
+    return h('div', { class: 'roles' }, [['ai', ai], ['human', human]].map(([k, items]) => items.length > 0 && h('article', { class: 'role ' + k },
       h('h3', { text: T[k] }), h('ul', {}, items.map(x => h('li', { text: x }))))));
   }
   function sourcesTable(rows, caption) {
@@ -282,8 +282,8 @@
       h('div', { class: 'foot-brand' },
         h('a', { class: 'brand', href: href('index.html') }, logoSvg(markText(site)), h('span', { text: has(site.name) ? site.name : '가상의 가족 극장' })),
         has(site.footer) && h('p', { text: site.footer })),
-      info.length && h('dl', { class: 'foot-info' }, info),
-      sns.length && h('ul', { class: 'foot-sns', 'aria-label': 'SNS' }, sns.map(s =>
+      info.length > 0 && h('dl', { class: 'foot-info' }, info),
+      sns.length > 0 && h('ul', { class: 'foot-sns', 'aria-label': 'SNS' }, sns.map(s =>
         h('li', {}, h('a', { href: s.url.trim(), target: '_blank', rel: 'noopener noreferrer', text: has(s.label) ? s.label : new URL(s.url.trim()).hostname }))))));
   }
 
