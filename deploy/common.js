@@ -106,7 +106,7 @@
   function buildVideo(v, title, onFail) {
     const slot = h('div');
     if (!has(v.file)) { slot.append(videoFallback(v, title)); return slot; }
-    const video = h('video', { controls: true, playsinline: true, preload: 'metadata', src: mediaPath(v.file) + '#t=' + (+v.coverAt > 0 ? +v.coverAt : 0.1), title, 'aria-label': title + ' 영상' });
+    const video = h('video', { controls: true, playsinline: true, preload: 'metadata', src: mediaPath(v.file) + (has(v.cover) ? '' : '#t=' + (+v.coverAt > 0 ? +v.coverAt : 0.1)), title, 'aria-label': title + ' 영상' });
     if (has(v.cover)) video.setAttribute('poster', mediaPath(v.cover));   // 세로 포스터는 목록용이라 쓰지 않는다 (없으면 영상 첫 장면)
     if (has(v.captions)) video.append(h('track', { kind: 'captions', srclang: 'ko', label: '한국어', src: mediaPath(v.captions), default: true }));
     video.addEventListener('error', () => { video.replaceWith(videoFallback(v, title)); if (onFail) onFail(); });
