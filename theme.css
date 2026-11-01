@@ -206,8 +206,8 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .movie .meta{color:var(--muted);margin:0 0 14px}
 .tagline{font-size:1.2rem;margin-bottom:16px}
 .movie h2{font-size:1.4rem;color:var(--accent-hi);margin:20px 0 6px}
-.jump{display:flex;gap:8px;overflow-x:auto;padding:6px 0 10px;margin-top:8px;scrollbar-width:thin}
-.jump a{flex:none;text-decoration:none;color:var(--text);border:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:.92rem;min-height:40px;display:inline-flex;align-items:center;transition:border-color .2s,color .2s}
+.jump{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0 10px;margin-top:8px}
+.jump a{text-decoration:none;color:var(--text);border:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:.92rem;min-height:40px;display:inline-flex;align-items:center;transition:border-color .2s,color .2s}
 .jump a:hover{border-color:var(--accent-hi);color:var(--accent-hi)}
 
 .timeline{list-style:none;margin:0;padding:0;position:relative;counter-reset:step}
