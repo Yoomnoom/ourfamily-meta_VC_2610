@@ -178,10 +178,11 @@ fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
 .ro-row{opacity:.78}
 .login-msg{white-space:pre-line;min-height:1.4em;margin:10px 0 0;color:#a3341b;font-size:.95rem}
 .ed-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
-.ed-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;word-break:break-all}
-.ed-who{display:grid;gap:2px;justify-items:start}
-.ed-who strong{font-size:1.05em}
-.ed-who .btn.sm{margin-top:4px;padding:2px 8px;font-size:.8em}
+dialog#editors{width:min(680px,94vw)}
+.ed-list li{display:grid;grid-template-columns:7em minmax(0,1fr) auto auto;gap:10px;align-items:center;word-break:break-all}
+.ed-who{display:contents}
+.ed-who strong{font-size:1.05em;word-break:keep-all}
+.ed-who .btn.sm{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1455,7 +1456,7 @@ fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
       try { rows = await getJson('ourfamilymeta_editors?select=email,role,memo&order=created_at'); }
       catch (e) { hasMemo = false; rows = await getJson('ourfamilymeta_editors?select=email,role&order=created_at'); }   // memo 칸이 아직 없으면 예전 방식
       const admins = rows.filter(r => r.role === 'admin').length;
-      list.replaceChildren(...rows.map(r => el('li', {}, el('span', { class: 'ed-who' }, r.memo ? el('strong', { text: r.memo }) : null, el('span', { text: r.email + (r.role === 'admin' ? ' (관리자)' : '') }),
+      list.replaceChildren(...rows.map(r => el('li', {}, el('span', { class: 'ed-who' }, el('strong', { text: r.memo || '' }), el('span', { text: r.email + (r.role === 'admin' ? ' (관리자)' : '') }),
           hasMemo ? el('button', { type: 'button', class: 'btn sm', text: r.memo ? '이름 수정' : '이름 적기', onclick: async () => {
             const v = prompt('이름이나 메모를 적어 주세요.\n비우면 지워요.', r.memo || ''); if (v === null) return;
             try { await sbFetch('/rest/v1/ourfamilymeta_editors?email=eq.' + encodeURIComponent(r.email), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ memo: v.trim() || null }) }); await draw(); } catch (e) { toast('저장 실패: ' + e.message); }
