@@ -232,11 +232,11 @@ details.tool[open] summary::after{content:"접기 －"}
 
 .roles{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
 .role{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;position:relative;overflow:hidden}
-.role.human::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:var(--accent)}
 .role h3{font-size:1.5rem;margin-bottom:12px}
-.role ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
-.role li{background:var(--surface2);border-radius:12px;padding:10px 14px 10px 36px;position:relative}
-.role li::before{content:"";position:absolute;left:14px;top:1.1em;width:9px;height:9px;border-radius:50%;background:var(--accent-hi)}
+.role ul{margin:0;padding:0;list-style:none;display:grid;gap:0}
+.role li{padding:12px 0 12px 22px;position:relative}
+.role li+li{border-top:1px solid var(--line)}
+.role li::before{content:"";position:absolute;left:2px;top:1.4em;width:8px;height:8px;border-radius:50%;background:var(--accent-hi)}
 
 .table-wrap{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
 table{width:100%;border-collapse:collapse}
