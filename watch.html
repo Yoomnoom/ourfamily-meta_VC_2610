@@ -59,7 +59,7 @@
       if (has(f)) { const img = h('img', { src: mediaPath(f), alt: '', loading: 'lazy', draggable: 'false' }); img.addEventListener('error', () => img.remove()); box.append(img); }
       return box;
     };
-    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl, howto)));
+    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl)));
 
     const side = ser && h('aside', { class: 'ep-side', id: 'episodes', 'aria-label': ser.title + ' 회차' },
       h('h2', { text: ser.title + ' 회차' }),
@@ -74,6 +74,8 @@
         has(v.duration) && h('p', { class: 'meta', text: '러닝타임 ' + v.duration.trim() }),
         has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
         has(credit(w)) && h('p', { class: 'meta', text: credit(w) })), side || null)));
+
+    if (howto) main.append(h('section', { class: 'howto-sec', 'data-section': 'howto', 'aria-label': '게임 방법' }, h('div', { class: 'wrap' }, howto)));
 
     // 작품 설명: 탭 (기획 의도 / 창작 과정 / AI 도구·프롬프트 / 역할·출처)
     const tabs = [];   // [id, 이름, 내용]
