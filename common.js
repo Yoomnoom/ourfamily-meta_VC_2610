@@ -163,7 +163,7 @@
     if (!items.length) return null;
     return h('div', { class: 'tools' }, items.map((t, i) => {
       const prompts = arr(t.prompts).filter(p => has(p.text));
-      return h('details', { class: 'tool', open: i === 0 },
+      return h('details', { class: 'tool' },
         h('summary', {}, h('span', {},
           h('span', { class: 'tool-name', text: has(t.name) ? t.name : '(이름 없음)' }),
           has(t.purpose) && h('span', { class: 'tool-purpose', text: t.purpose }))),
