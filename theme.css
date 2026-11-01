@@ -366,9 +366,7 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 @media (hover:none){.poster-peek{display:none}}
 
 /* 다음 화 / 다른 작품 이동 */
-.titlerow{display:flex;justify-content:space-between;align-items:flex-start;gap:16px 24px;flex-wrap:wrap}
-.titlerow h1{flex:1 1 20ch}
-.nextbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:none;margin-top:8px}
+.nextbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
 
 .ep-thumb{flex:none;width:128px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--surface2)}
 .ep-thumb img{display:block;width:100%;height:100%;object-fit:cover}
