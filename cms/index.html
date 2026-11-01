@@ -123,6 +123,10 @@ details.adv[open]{padding-bottom:10px}
 .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
 .item-head b{font-family:var(--hand);font-size:1.2rem}
 .item-tools{display:flex;gap:6px;flex-wrap:wrap}
+.epbox{border:1.5px solid var(--line);border-radius:16px;background:#fffaf0;padding:14px;margin-top:14px}
+.epbox h3{font-family:var(--hand);font-size:1.2rem;margin:0 0 8px}
+.eplist{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.eplist li{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .grip{cursor:grab;user-select:none;padding:4px 8px;border-radius:8px;color:var(--muted);font-size:1.1rem;line-height:1;border:1.5px dashed var(--line);background:#fff}
 .over{outline:3px dashed var(--sky-d);outline-offset:2px}
 .dragging{opacity:.45}
@@ -290,7 +294,8 @@ dialog#editors{width:min(680px,94vw)}
           const w = data.works[ui.work] || {};
           return [['', '단독 작품 (연재물 아님)'], ...data.series.filter(x => mine(x) || x.id === w.series).map(x => { const c = (data.works.find(y => y.series === x.id && has(y.creator)) || {}).creator; return [x.id, (has(x.title) ? x.title : '(제목 없음)') + (has(c) ? ` (© ${c})` : '')]; }), ['__new', '＋ 새 연재물 만들기…']];
         },
-          { rerender: true, hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 12단계에서 고쳐요.',
+          { rerender: true, show: () => !online || isAdmin() || data.series.some(x => mine(x)) || !!(data.works[ui.work] || {}).series,
+            hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 12단계에서 고쳐요.',
             onChange: (v, o) => setSeriesFor(o, v) }),
         T('episode', '회차 번호 (몇 화)', { ph: '예) 3', show: () => { const w = data.works[ui.work] || {}; return !!w.series && !isSolo(w); },
           hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' })] },
@@ -403,7 +408,7 @@ dialog#editors{width:min(680px,94vw)}
       checks: d => [ck('만든 사람 소개', Math.min(st(obj(obj(d.about).producer).name), st(obj(obj(d.about).producer).text)), false, 'producer/name', 'producer/text'),
         ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] },
     { id: 'series', scope: 'site', title: '연재물 정보 고치기', pv: ['works.html', 'list'],
-      why: '시리즈는 1단계에서 작품을 올릴 때 만들어요. 여기서는 시리즈 소개, 연재 중·완결 상태, 대표 포스터를 고쳐요.',
+      why: '시리즈는 1단계에서 작품을 올릴 때 만들어요. 여기서는 시리즈 소개, 연재 중·완결 상태, 대표 포스터를 고치고, 아래 회차 목록에서 다음 회차를 추가해요.',
       parts: [{ fields: [{ type: 'list', key: 'series', itemLabel: i => `연재물 ${i + 1}`, addLabel: '연재물 추가', fields: [
         T('title', '연재물 제목', { req: 1, uuid: 1, ph: '예) 우리 가족 이야기' }),
         A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
@@ -1095,7 +1100,7 @@ dialog#editors{width:min(680px,94vw)}
       : el('span', { class: 'stepno', text: '마지막 단계예요.' });
     const roText = readOnlyInfo(step), body = el('div', { class: 'stepbody' }, parts);
     $('stepmain').replaceChildren(...[head, step.prod ? prodBar() : null, roText && el('p', { class: 'ro-note', role: 'status', text: brk(roText) }),
-      roText ? el('fieldset', { class: 'ro', disabled: true }, body) : body, el('div', { class: 'stepnav' }, prev, next)].filter(Boolean));
+      roText ? el('fieldset', { class: 'ro', disabled: true }, body) : body, step.id === 'series' ? episodePanel() : null, el('div', { class: 'stepnav' }, prev, next)].filter(Boolean));
     if (step.id === 'series' && online && !isAdmin()) {   // 12단계: 남의 연재물 줄은 읽기만
       $('stepmain').querySelectorAll('[data-l="series"] [data-row]').forEach(r => {
         const x = data.series[+r.getAttribute('data-row')];
@@ -1124,6 +1129,26 @@ dialog#editors{width:min(680px,94vw)}
   }
 
   /* ---------- 작품 도구 (더보기 메뉴에서 사용) ---------- */
+  const nextEpisodeNo = x => Math.max(0, ...data.works.filter(w => w.series === x.id).map(w => +w.episode || 0)) + 1;
+  /** 내 연재물에 다음 회차를 만들고 1단계로 이동한다 (다른 사람의 작품·연재물은 건드리지 않는다) */
+  function addEpisode(x) {
+    const nw = blankWork(nextWorkId()); nw.owner = online ? (me.email || '') : ''; nw.series = x.id; nw.episode = String(nextEpisodeNo(x));
+    data.works.push(nw); ensureSolos(data); editCommon = false;
+    ui.work = data.works.length - 1; ui.step = 0; saveUi(); changed(); renderStep();
+    toast(`${nw.episode}화를 추가했어요. 영상과 포스터부터 올려 보세요.`);
+  }
+  /** 12단계 아래에 붙는 회차 목록. 내 연재물이 있을 때만 나온다 */
+  function episodePanel() {
+    const mineSeries = data.series.filter(x => mine(x));
+    if (!mineSeries.length) return null;
+    return el('div', { class: 'eppanel' }, mineSeries.map(x => {
+      const eps = data.works.map((w, i) => ({ w, i })).filter(o => o.w.series === x.id).sort((a, b) => (+a.w.episode || 0) - (+b.w.episode || 0));
+      return el('section', { class: 'epbox' }, el('h3', { text: (has(x.title) ? x.title : '(제목 없음)') + ' 회차' }),
+        eps.length ? el('ul', { class: 'eplist' }, eps.map(o => el('li', {}, el('span', { text: `${has(o.w.episode) ? o.w.episode + '화' : '회차 미정'} · ${has(o.w.title) ? o.w.title : '(제목 없음)'}` }),
+          el('button', { type: 'button', class: 'btn sm', text: '입력하러 가기', disabled: !mine(o.w), onclick: () => { ui.work = o.i; ui.step = 0; saveUi(); renderStep(); window.scrollTo({ top: 0 }); } })))) : null,
+        el('button', { type: 'button', class: 'btn primary', text: `＋ ${nextEpisodeNo(x)}화 추가`, onclick: () => addEpisode(x) }));
+    }));
+  }
   function addWork() {
     const nw = blankWork(nextWorkId()); nw.owner = online ? (me.email || '') : ''; data.works.push(nw); ensureSolos(data); editCommon = false;
     ui.work = data.works.length - 1; ui.step = 0; saveUi(); changed(); renderStep();
