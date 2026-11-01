@@ -359,7 +359,7 @@
     if (!st.length && !wk.length) return null;
     const d = { ...obj(st[0] && st[0].value) };
     d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', solo: !!x.solo, common: obj(x.common) }));
-    d.works = wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug || obj(x.content).id, title: x.title || obj(x.content).title,
+    d.works = wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug || obj(x.content).id, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''),
       series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' }));
     return d;
   }

@@ -51,7 +51,14 @@
       dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, h('a', { class: 'btn ghost sm', href: mediaPath(v.file), download: '' }, '영상 다운로드'));
       screen = h('div', { class: 'screen-frame' }, buildVideo(v, title, () => dl && dl.remove()));
     }
-    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl)));
+    // 다음 화·이전 화 (연재물) / 다른 작품으로 이동
+    const epList = ser ? works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)) : [];
+    const at = epList.indexOf(w), nextEp = at >= 0 ? epList[at + 1] : null, prevEp = at > 0 ? epList[at - 1] : null;
+    const epName = e => `${has(e.episode) ? e.episode + '화' : '다음 이야기'}${has(e.title) ? ' · ' + e.title : ''}`;
+    const nextbar = h('div', { class: 'nextbar' },
+      prevEp ? h('a', { class: 'btn ghost sm', href: watchHref(prevEp, works.indexOf(prevEp)) }, '← 이전 화') : h('span'),
+      nextEp ? h('a', { class: 'btn', href: watchHref(nextEp, works.indexOf(nextEp)) }, '다음 화 보기 → ' + epName(nextEp)) : h('a', { class: 'btn ghost', href: href('works.html') }, '다른 작품 보기'));
+    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl, nextbar)));
 
     // 영화 정보
     const jumps = [];

@@ -364,3 +364,6 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 a:hover>.poster .peek-text,a:focus-visible>.poster .peek-text,.poster:hover .peek-text{opacity:1;transform:none}
 a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover .poster-peek{opacity:1}
 @media (hover:none){.poster-peek{display:none}}
+
+/* 다음 화 / 다른 작품 이동 */
+.nextbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}

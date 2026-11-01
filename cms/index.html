@@ -1449,7 +1449,7 @@ dialog#editors{width:min(680px,94vw)}
     if (st.length || ser.length || wk.length) {
       d = { ...obj(st[0] && st[0].value),
         series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
-        works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: x.title, series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
+        works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
     }
     return { d, st, ser, wk };
   }
