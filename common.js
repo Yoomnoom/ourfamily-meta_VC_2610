@@ -44,7 +44,7 @@
     ai: 'AI가 한 것', human: '직접 한 것', sources: '출처 · 저작권', others: '다른 작품 보기',
     declaration: '책임 있는 AI 활용 선언문', producer: '제작자 소개', contest: '공모전 안내'
   };
-  const NAV = [['index.html', '홈'], ['works.html', '상영작'], ['making.html', '메이킹'], ['album.html', '가족 앨범'], ['about.html', '소개']];
+  const NAV = [['index.html', '홈'], ['works.html', '상영작'], ['making.html', '메이킹'], ['album.html', '비하인드 컷'], ['about.html', '소개']];
   const curPage = (location.pathname.split('/').pop() || 'index.html').replace(/^watch\.html$/, 'works.html');
 
   /** 데이터가 있는 페이지만 메뉴·링크에 노출한다 */
