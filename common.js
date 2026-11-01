@@ -149,11 +149,13 @@
           h('span', { class: 'tool-name', text: has(t.name) ? t.name : '(이름 없음)' }),
           has(t.purpose) && h('span', { class: 'tool-purpose', text: t.purpose }))),
         h('div', { class: 'tool-body' }, prompts.length ? prompts.map(p => {
+          const refs = arr(p.refs).filter(x => x && has(x.file));
           const btn = h('button', { type: 'button', class: 'btn ghost sm', 'aria-label': `${p.title || '프롬프트'} 복사` }, '복사');
           btn.addEventListener('click', () => copyText(p.text, btn));
           return h('div', { class: 'prompt' },
             h('div', { class: 'prompt-head' }, h('h4', { text: has(p.title) ? p.title : '프롬프트' }), btn),
-            h('pre', {}, h('code', { text: p.text, raw: true })));
+            h('pre', {}, h('code', { text: p.text, raw: true })),
+            refs.length && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
         }) : h('p', { text: '공개된 프롬프트가 없습니다.' })));
     }));
   }

@@ -257,7 +257,10 @@ dialog#editors{width:min(680px,94vw)}
       { type: 'list', key: 'prompts', itemLabel: i => `프롬프트 ${i + 1}`, addLabel: '프롬프트 추가', fields: [
         T('title', '프롬프트 이름', { ph: '예) 거실 장면' }),
         A('text', 'AI에 넣은 문장 (프롬프트)', { req: 1, big: 1, rows: 8, ph: '예) 따뜻한 오후 햇살이 드는 거실, 할머니와 손주가 함께 앨범을 넘기는 모습, 수채화 일러스트',
-          hint: '쓴 그대로 붙여 넣어요. 줄바꿈과 띄어쓰기가 그대로 남아요.\nCtrl+Enter를 누르면 다음 프롬프트가 생겨요.' })] }] });
+          hint: '쓴 그대로 붙여 넣어요. 줄바꿈과 띄어쓰기가 그대로 남아요.\nCtrl+Enter를 누르면 다음 프롬프트가 생겨요.' }),
+        { type: 'list', key: 'refs', itemLabel: i => `참고 이미지 ${i + 1}`, addLabel: '참고 이미지 추가', fields: [
+          F('file', '이미지', 'image', { hint: '이 프롬프트를 만들 때 AI에 같이 넣은 이미지예요. 여러 장 올릴 수 있어요.' }),
+          T('caption', '설명 (선택)', { ph: '예) 어릴 적 부엌 사진' })] }] }] });
   const ROLES_GROUP = () => ({ group: 'roles', cols: 2, fields: [
     { type: 'list', key: 'ai', str: true, itemLabel: i => `AI ${i + 1}`, addLabel: 'AI가 한 일 추가', title: 'AI가 한 일', ph: '예) 장면별 일러스트 12장 만들기' },
     { type: 'list', key: 'human', str: true, itemLabel: i => `내가 ${i + 1}`, addLabel: '내가 한 일 추가', title: '내가 한 일', ph: '예) 시나리오 쓰기, 영상 편집' }] });
@@ -414,7 +417,7 @@ dialog#editors{width:min(680px,94vw)}
   const SECTION_TITLES = { intent: '기획 의도', process: '창작 과정', tools: '사용한 AI 도구와 주요 프롬프트', roles: 'AI가 한 것 vs 직접 한 것', ai: 'AI가 한 것', human: '직접 한 것',
     sources: '출처 · 저작권', others: '다른 작품 보기', declaration: '책임 있는 AI 활용 선언문', producer: '제작자 소개', contest: '공모전 안내' };
   const kindOf = () => { const k = (data.works[ui.work] || {}).kind; return k === 'game' || k === 'storyboard' ? k : 'video'; };
-  const blankTool = () => ({ name: '', purpose: '', prompts: [{ title: '', text: '' }] });
+  const blankTool = () => ({ name: '', purpose: '', prompts: [{ title: '', text: '', refs: [] }] });
   const blankCommon = () => ({ process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, sources: [{ item: '', source: '', license: '' }] });
   function blankWork(id) {
     return { id, kind: 'video', title: '', creator: '', tagline: '', intent: '',
@@ -436,7 +439,7 @@ dialog#editors{width:min(680px,94vw)}
     series: [], solos: [],
     works: [blankWork('work-1')]
   });
-  const normTools = a => arr(a).map(t => ({ name: '', purpose: '', ...obj(t), prompts: arr(obj(t).prompts).map(p => ({ title: '', text: '', ...obj(p) })) }));
+  const normTools = a => arr(a).map(t => ({ name: '', purpose: '', ...obj(t), prompts: arr(obj(t).prompts).map(p => ({ title: '', text: '', ...obj(p), refs: arr(obj(p).refs).map(x => ({ file: '', caption: '', ...obj(x) })) })) }));
   const normSteps = a => arr(a).map(p => ({ title: '', desc: '', ...obj(p) }));
   const normRoles = r => ({ ...obj(r), ai: arr(obj(r).ai), human: arr(obj(r).human) });
   /** 제작 기록(과정·도구·역할·출처)에 실제로 적은 내용이 있는가 */
