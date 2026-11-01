@@ -93,6 +93,7 @@
       img.addEventListener('error', () => img.remove());
       box.append(img);
     }
+    if (has(work.tagline)) box.append(h('p', { class: 'poster-peek', 'aria-hidden': 'true', raw: true, text: work.tagline.trim() }));   // 마우스를 올리면 한 줄 소개가 나온다
     return box;
   }
 
