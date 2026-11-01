@@ -53,17 +53,13 @@
     }
     // 다음 화·이전 화 (연재물) / 다른 작품으로 이동
     const epList = ser ? works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)) : [];
-    const at = epList.indexOf(w), nextEp = at >= 0 ? epList[at + 1] : null, prevEp = at > 0 ? epList[at - 1] : null;
+    
     const epThumb = e => {   // 회차 썸네일: 가로 표지가 있으면 그것, 없으면 포스터
       const f = obj(e.video).cover || obj(e.video).poster, box = h('span', { class: 'ep-thumb', 'aria-hidden': 'true' });
       if (has(f)) { const img = h('img', { src: mediaPath(f), alt: '', loading: 'lazy', draggable: 'false' }); img.addEventListener('error', () => img.remove()); box.append(img); }
       return box;
     };
-    const epName = e => `${has(e.episode) ? e.episode + '화' : '다음 이야기'}${has(e.title) ? ' · ' + e.title : ''}`;
-    const nextbar = h('div', { class: 'nextbar' },
-      prevEp ? h('a', { class: 'btn ghost sm', href: watchHref(prevEp, works.indexOf(prevEp)) }, '← 이전 화') : h('span'),
-      nextEp ? h('a', { class: 'btn', href: watchHref(nextEp, works.indexOf(nextEp)) }, '다음 화 보기 → ' + epName(nextEp)) : h('a', { class: 'btn ghost', href: href('works.html') }, '다른 작품 보기'));
-    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl, nextbar)));
+    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl)));
 
     // 영화 정보
     const side = ser && h('aside', { class: 'ep-side', id: 'episodes', 'aria-label': ser.title + ' 회차' },
