@@ -303,6 +303,7 @@ dialog#editors{width:min(680px,94vw)}
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
+            T('coverAt', '표지로 쓸 장면의 시간 (초)', { ph: '예) 5', show: () => kindOf() === 'video' && !has((data.works[ui.work] || {}).video && data.works[ui.work].video.cover), hint: '가로 표지를 올리지 않았을 때, 영상의 이 시간 장면이 재생 전에 멈춰서 보여요.\n비워 두면 맨 앞 장면이 나와요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
@@ -431,7 +432,7 @@ dialog#editors{width:min(680px,94vw)}
   function blankWork(id) {
     return { id, kind: 'video', title: '', creator: '', tagline: '', intent: '',
       game: { url: '', embed: false, howto: '' }, storyboard: { pages: [{ file: '', caption: '', alt: '' }], pdf: '' },
-      video: { file: '', poster: '', cover: '', duration: '', captions: '', showDownload: true },
+      video: { file: '', poster: '', cover: '', coverAt: '', duration: '', captions: '', showDownload: true },
       process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
       sources: [{ item: '', source: '', license: '' }], series: '', episode: '', useCommon: true, owner: '' };
   }
