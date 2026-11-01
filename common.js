@@ -342,6 +342,7 @@
     document.querySelectorAll('.pv-hl').forEach(e => e.classList.remove('pv-hl'));
     if (!hlSection) return;
     const t = document.querySelector('[data-section="' + hlSection + '"]'); if (!t) return;
+    const hp = t.closest('[role="tabpanel"][hidden]'); if (hp) { const tb = document.getElementById(hp.getAttribute('aria-labelledby')); if (tb) tb.click(); }
     t.classList.add('pv-hl');
     if (scroll) { if (hlSection === 'header') window.scrollTo({ top: 0, behavior: 'smooth' }); else t.scrollIntoView({ block: hlSection === 'footer' ? 'end' : 'center', behavior: 'smooth' }); }
   }

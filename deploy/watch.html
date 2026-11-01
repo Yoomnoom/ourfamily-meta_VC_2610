@@ -61,7 +61,6 @@
     };
     main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl)));
 
-    // 영화 정보
     const side = ser && h('aside', { class: 'ep-side', id: 'episodes', 'aria-label': ser.title + ' 회차' },
       h('h2', { text: ser.title + ' 회차' }),
       h('ol', { class: 'eps' }, epList.map(e =>
@@ -74,29 +73,49 @@
         ser && h('p', { class: 'meta', text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),
         has(v.duration) && h('p', { class: 'meta', text: '러닝타임 ' + v.duration.trim() }),
         has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
-        has(credit(w)) && h('p', { class: 'meta', text: credit(w) }),
-        has(w.intent) && h('div', { id: 'intent' }, h('h2', { text: T.intent }), h('p', { class: 'prose', raw: true, text: w.intent.trim() })),
-        h('nav', { class: 'jump', 'aria-label': '이 작품의 섹션 이동', id: 'jump' })), side || null)));
-    if (has(w.intent)) jumps.push(['intent', T.intent]);
-    if (side) jumps.push(['episodes', '회차']);
+        has(credit(w)) && h('p', { class: 'meta', text: credit(w) })), side || null)));
 
-    const add = (id, label, body) => { main.append(section(id, label, '', body)); jumps.push([id, label]); };
-    const tl = timeline(pr.process); if (tl) add('process', T.process, tl);
-    if (toolList(pr.tools).length) add('tools', T.tools, tools(pr.tools));
-    const ro = roles(pr.roles, T); if (ro) add('roles', T.roles, ro);
-    const src = sourcesTable(pr.sources, T.sources); if (src) add('sources', T.sources, src);
-
-    if (av.making) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('making.html') }, '이 작품의 메이킹 더 보기')));
+    // 작품 설명: 탭 (기획 의도 / 창작 과정 / AI 도구·프롬프트 / 역할·출처)
+    const tabs = [];   // [id, 이름, 내용]
+    if (has(w.intent)) tabs.push(['intent', '기획 의도', h('p', { class: 'prose', raw: true, text: w.intent.trim() })]);
+    const tl = timeline(pr.process); if (tl) tabs.push(['process', '창작 과정', tl]);
+    if (toolList(pr.tools).length) tabs.push(['tools', 'AI 도구·프롬프트', tools(pr.tools)]);
+    const ro = roles(pr.roles, T), src = sourcesTable(pr.sources, T.sources);
+    if (ro || src) tabs.push(['credits', '역할·출처', [
+      ro && h('div', { class: 'tab-block', 'data-section': 'roles' }, h('h3', { text: T.roles }), ro),
+      src && h('div', { class: 'tab-block', 'data-section': 'sources' }, h('h3', { text: T.sources }), src)]]);
+    if (tabs.length) {
+      const ids = tabs.map(t => t[0]), alias = { roles: 'credits', sources: 'credits' };
+      const list = h('div', { class: 'tablist', role: 'tablist', 'aria-label': '작품 설명' }), panels = h('div', { class: 'tabpanels' }), btn = {}, pan = {};
+      const fromHash = () => { let k = ''; try { k = decodeURIComponent(location.hash.slice(1)); } catch (e) {} k = alias[k] || k; return ids.includes(k) ? k : null; };
+      const show = id => ids.forEach(k => { const on = k === id;
+        btn[k].setAttribute('aria-selected', on ? 'true' : 'false'); btn[k].tabIndex = on ? 0 : -1; btn[k].classList.toggle('on', on); pan[k].hidden = !on; });
+      tabs.forEach(([id, label, body]) => {
+        btn[id] = h('button', { type: 'button', class: 'tab', role: 'tab', id: 'tab-' + id, 'aria-controls': 'panel-' + id, text: label });
+        pan[id] = h('div', { class: 'tabpanel', role: 'tabpanel', id: 'panel-' + id, 'aria-labelledby': 'tab-' + id, 'data-section': id === 'credits' ? null : id }, body);
+        btn[id].addEventListener('click', () => {
+          show(id);
+          if (location.hash !== '#' + id) { try { history.pushState(null, '', '#' + id); } catch (e) {} }   // 주소만 바꾸고 스크롤은 하지 않는다
+        });
+        list.append(btn[id]); panels.append(pan[id]);
+      });
+      list.addEventListener('keydown', e => {
+        const at = ids.findIndex(k => btn[k] === document.activeElement); if (at < 0) return;
+        const to = { ArrowRight: (at + 1) % ids.length, ArrowLeft: (at + ids.length - 1) % ids.length, Home: 0, End: ids.length - 1 }[e.key];
+        if (to == null) return; e.preventDefault(); btn[ids[to]].focus(); btn[ids[to]].click();
+      });
+      if (av.making) { const more = h('div', { class: 'more' }, h('a', { class: 'btn ghost', href: href('making.html') }, '이 작품의 메이킹 더 보기'));
+        pan[ids.includes('process') ? 'process' : ids[0]].append(more); }
+      show(fromHash() || ids[0]);
+      window.onpopstate = window.onhashchange = () => show(fromHash() || ids[0]);   // 뒤로 가기·주소 직접 변경
+      main.append(h('section', { class: 'tabs-sec', 'data-section': 'tabs', 'aria-label': '작품 설명' }, h('div', { class: 'wrap' }, list, panels)));
+    }
 
     const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
-    if (others.length) { main.append(section('others', T.others, '', h('div', { class: 'mini' }, others.map(([o, i]) =>
+    if (others.length) main.append(section('others', T.others, '', h('div', { class: 'mini' }, others.map(([o, i]) =>
       h('a', { href: watchHref(o, i) }, poster(o),
         h('h3', { text: has(o.title) ? o.title : '제목 미정' }),
-        has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') })))))); jumps.push(['others', T.others]); }
-
-    const nav = main.querySelector('#jump');
-    if (jumps.length > 1) jumps.forEach(([id, label]) => nav.append(h('a', { href: '#' + id, text: label })));
-    else nav.remove();
+        has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') }))))));
 
     return { title: `${title} – ${name}`, main };
   });
