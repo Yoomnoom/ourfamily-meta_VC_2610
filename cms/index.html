@@ -1338,7 +1338,7 @@ fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
     const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok.access_token } });
     if (r.ok) setSession({ ...tok, user: await r.json() });
   }
-  const googleLogin = () => { location.href = SB_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
+  const googleLogin = () => { location.href = SB_URL + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
   async function ensureLogin() {
     try { await takeOAuthHash(); } catch {}
     try { session = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { session = null; }
