@@ -20,12 +20,12 @@
     if (!av.about) return { title, main: emptyPage('소개') };
     const main = h('main', { id: 'main', class: 'pad' }, pagehead('소개'));
     if (has(pr.name) || has(pr.text)) main.append(section('producer', T.producer, '', h('div', { class: 'who' },
-      has(pr.name) && h('h3', { text: pr.name }), has(pr.text) && h('p', { class: 'prose', text: pr.text.trim() }))));
-    if (has(ab.intent)) main.append(section('intent', T.intent, '', h('p', { class: 'prose', text: ab.intent.trim() })));
+      has(pr.name) && h('h3', { text: pr.name }), has(pr.text) && h('p', { class: 'prose', raw: true, text: pr.text.trim() }))));
+    if (has(ab.intent)) main.append(section('intent', T.intent, '', h('p', { class: 'prose', raw: true, text: ab.intent.trim() })));
     const src = sourcesTable(ab.sources, T.sources);
     if (src) main.append(section('sources', T.sources, '', src));
     if (has(site.contestName) || has(site.contestInfo)) main.append(section('contest', T.contest, '', h('div', { class: 'contest' },
-      has(site.contestName) && h('h3', { text: site.contestName }), has(site.contestInfo) && h('p', { class: 'prose', text: site.contestInfo.trim() }))));
+      has(site.contestName) && h('h3', { text: site.contestName }), has(site.contestInfo) && h('p', { class: 'prose', raw: true, text: site.contestInfo.trim() }))));
     return { title, main };
   });
 })();

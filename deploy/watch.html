@@ -62,7 +62,7 @@
         has(v.duration) && h('p', { class: 'meta', text: '러닝타임 ' + v.duration.trim() }),
         has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
         has(credit(w)) && h('p', { class: 'meta', text: credit(w) }),
-        has(w.intent) && h('div', { id: 'intent' }, h('h2', { text: T.intent }), h('p', { class: 'prose', text: w.intent.trim() })),
+        has(w.intent) && h('div', { id: 'intent' }, h('h2', { text: T.intent }), h('p', { class: 'prose', raw: true, text: w.intent.trim() })),
         h('nav', { class: 'jump', 'aria-label': '이 작품의 섹션 이동', id: 'jump' })))));
     if (has(w.intent)) jumps.push(['intent', T.intent]);
 

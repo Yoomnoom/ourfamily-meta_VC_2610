@@ -128,15 +128,15 @@
   const section = (id, title, sub, ...body) =>
     h('section', { class: 'page reveal', id, 'data-section': id, 'aria-labelledby': id + '-t' },
       h('div', { class: 'wrap' },
-        h('div', { class: 'sec-head' }, h('h2', { id: id + '-t', text: title }), has(sub) && h('p', { text: sub })), ...body));
+        h('div', { class: 'sec-head' }, h('h2', { id: id + '-t', text: title }), has(sub) && h('p', { raw: true, text: sub })), ...body));
   const pagehead = (title, sub) =>
-    h('section', { class: 'pagehead', 'data-section': 'head' }, h('div', { class: 'wrap' }, h('h1', { text: title }), has(sub) && h('p', { text: sub })));
+    h('section', { class: 'pagehead', 'data-section': 'head' }, h('div', { class: 'wrap' }, h('h1', { text: title }), has(sub) && h('p', { raw: true, text: sub })));
   const emptyPage = (title) => h('main', { id: 'main', class: 'pad' }, pagehead(title),
     h('div', { class: 'wrap' }, h('p', { class: 'empty', text: '아직 준비 중이에요. 곧 채워 둘게요.' })));
 
   const timeline = items => {
     items = arr(items).filter(p => has(p.title) || has(p.desc));
-    return items.length ? h('ol', { class: 'timeline' }, items.map(p => h('li', {}, has(p.title) && h('h3', { text: p.title }), has(p.desc) && h('p', { text: p.desc })))) : null;
+    return items.length ? h('ol', { class: 'timeline' }, items.map(p => h('li', {}, has(p.title) && h('h3', { text: p.title }), has(p.desc) && h('p', { raw: true, text: p.desc })))) : null;
   };
   const toolList = items => arr(items).filter(t => has(t.name) || arr(t.prompts).some(p => has(p.text)));
   /** 프롬프트 글 안의 마크다운 표(| 로 구분)는 표로, 나머지는 쓴 그대로 보여 준다. 복사하면 원문 그대로 복사된다 */
@@ -281,7 +281,7 @@
     return h('footer', { 'data-section': 'footer' }, h('div', { class: 'wrap foot' },
       h('div', { class: 'foot-brand' },
         h('a', { class: 'brand', href: href('index.html') }, logoSvg(markText(site)), h('span', { text: has(site.name) ? site.name : '가상의 가족 극장' })),
-        has(site.footer) && h('p', { text: site.footer })),
+        has(site.footer) && h('p', { raw: true, text: site.footer })),
       info.length > 0 && h('dl', { class: 'foot-info' }, info),
       sns.length > 0 && h('ul', { class: 'foot-sns', 'aria-label': 'SNS' }, sns.map(s =>
         h('li', {}, h('a', { href: s.url.trim(), target: '_blank', rel: 'noopener noreferrer', text: has(s.label) ? s.label : new URL(s.url.trim()).hostname }))))));

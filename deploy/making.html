@@ -29,7 +29,7 @@
     if (tl) parts.push(['process', T.process, `${tl_n}단계`, tl]);
     if (tl_tools.length) parts.push(['tools', T.tools, `AI 도구 ${tl_tools.length}종 · 프롬프트 ${tl_prompts}개`, tools(mk.tools)]);
     if (ro) parts.push(['roles', T.roles, `AI ${aiN}개 · 직접 ${huN}개`, ro]);
-    if (declText) parts.push(['declaration', has(decl.title) ? decl.title : T.declaration, '', h('div', { class: 'decl' }, h('p', { class: 'prose', text: declText }))]);
+    if (declText) parts.push(['declaration', has(decl.title) ? decl.title : T.declaration, '', h('div', { class: 'decl' }, h('p', { class: 'prose', raw: true, text: declText }))]);
 
     const main = h('main', { id: 'main', class: 'pad' }, pagehead('메이킹', mk.intro));
     if (parts.length > 1) main.append(h('div', { class: 'wrap' }, h('nav', { class: 'toc card', 'aria-label': '심사 필수 항목 요약' },
