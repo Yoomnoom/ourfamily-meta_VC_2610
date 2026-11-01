@@ -179,6 +179,9 @@ fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
 .login-msg{white-space:pre-line;min-height:1.4em;margin:10px 0 0;color:#a3341b;font-size:.95rem}
 .ed-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
 .ed-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;word-break:break-all}
+.ed-who{display:grid;gap:2px;justify-items:start}
+.ed-who strong{font-size:1.05em}
+.ed-who .btn.sm{margin-top:4px;padding:2px 8px;font-size:.8em}
 </style>
 </head>
 <body>
@@ -1444,10 +1447,19 @@ fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
   async function openEditors() {
     const dlg = el('dialog', { id: 'editors', 'aria-labelledby': 'edT' }), list = el('ul', { class: 'ed-list' });
     const email = el('input', { type: 'email', placeholder: '추가할 사람의 이메일', 'aria-label': '추가할 이메일' });
+    const memo = el('input', { type: 'text', placeholder: '이름·메모 (예: 이은지, 3화 담당)', 'aria-label': '이름 또는 메모', maxlength: 40 });
+    let hasMemo = true;
     const role = el('select', { class: 'fld', 'aria-label': '권한', style: 'width:auto' }, el('option', { value: 'editor', text: '편집자' }), el('option', { value: 'admin', text: '관리자' }));
     async function draw() {
-      const rows = await getJson('ourfamilymeta_editors?select=email,role&order=created_at'), admins = rows.filter(r => r.role === 'admin').length;
-      list.replaceChildren(...rows.map(r => el('li', {}, el('span', { text: r.email + (r.role === 'admin' ? ' (관리자)' : '') }),
+      let rows;
+      try { rows = await getJson('ourfamilymeta_editors?select=email,role,memo&order=created_at'); }
+      catch (e) { hasMemo = false; rows = await getJson('ourfamilymeta_editors?select=email,role&order=created_at'); }   // memo 칸이 아직 없으면 예전 방식
+      const admins = rows.filter(r => r.role === 'admin').length;
+      list.replaceChildren(...rows.map(r => el('li', {}, el('span', { class: 'ed-who' }, r.memo ? el('strong', { text: r.memo }) : null, el('span', { text: r.email + (r.role === 'admin' ? ' (관리자)' : '') }),
+          hasMemo ? el('button', { type: 'button', class: 'btn sm', text: r.memo ? '이름 수정' : '이름 적기', onclick: async () => {
+            const v = prompt('이름이나 메모를 적어 주세요.\n비우면 지워요.', r.memo || ''); if (v === null) return;
+            try { await sbFetch('/rest/v1/ourfamilymeta_editors?email=eq.' + encodeURIComponent(r.email), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ memo: v.trim() || null }) }); await draw(); } catch (e) { toast('저장 실패: ' + e.message); }
+          } }) : null),
         el('button', { type: 'button', class: 'btn sm', text: '제거', disabled: r.role === 'admin' && admins <= 1, title: r.role === 'admin' && admins <= 1 ? '마지막 관리자는 제거할 수 없어요.' : null,
           onclick: async () => {
             if (!await confirmDelete(`${r.email} 님의 편집 권한을 없애요.\n이 사람은 더 이상 CMS에서 작품을 올리거나 고칠 수 없어요.`)) return;
@@ -1457,12 +1469,12 @@ fieldset.ro{border:0;padding:0;margin:0;min-width:0;opacity:.78}
     const add = async () => {
       const v = email.value.trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { toast('이메일 형식이 맞지 않아요.'); return; }
-      try { await sbFetch('/rest/v1/ourfamilymeta_editors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v, role: role.value }) }); email.value = ''; await draw(); toast('등록했어요.\n그 사람이 이 주소에서 같은 이메일로 가입·로그인하면 바로 편집할 수 있어요.'); }
+      try { await sbFetch('/rest/v1/ourfamilymeta_editors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(hasMemo && memo.value.trim() ? { email: v, role: role.value, memo: memo.value.trim() } : { email: v, role: role.value }) }); email.value = ''; memo.value = ''; await draw(); toast('등록했어요.\n그 사람이 이 주소에서 같은 이메일로 가입·로그인하면 바로 편집할 수 있어요.'); }
       catch (e) { toast('등록 실패: ' + (/duplicate|unique|already/i.test(e.message) ? '이미 등록된 이메일이에요.' : e.message)); }
     };
     dlg.append(el('h2', { id: 'edT', text: '편집자 관리' }),
       el('p', { text: '여기에 등록한 이메일로 가입·로그인한 사람만 올리고 고칠 수 있어요.\n사람 수에는 제한이 없어요.', style: 'white-space:pre-line;margin:0' }),
-      list, email, el('div', { class: 'row' }, role, el('button', { type: 'button', class: 'btn primary', text: '추가', onclick: add }),
+      list, email, memo, el('div', { class: 'row' }, role, el('button', { type: 'button', class: 'btn primary', text: '추가', onclick: add }),
         el('button', { type: 'button', class: 'btn', text: '닫기', onclick: () => { dlg.close(); dlg.remove(); } })));
     document.body.append(dlg); dlg.showModal();
     try { await draw(); } catch (e) { toast('목록을 불러오지 못했어요: ' + e.message); }
