@@ -61,15 +61,15 @@
     };
     const epName = e => `${has(e.episode) ? e.episode + '화' : '다음 이야기'}${has(e.title) ? ' · ' + e.title : ''}`;
     const nextbar = h('div', { class: 'nextbar' },
-      prevEp ? h('a', { class: 'btn ghost sm', href: watchHref(prevEp, works.indexOf(prevEp)) }, '← 이전 화') : h('span'),
+      prevEp && h('a', { class: 'btn ghost sm', href: watchHref(prevEp, works.indexOf(prevEp)) }, '← 이전 화'),
       nextEp ? h('a', { class: 'btn', href: watchHref(nextEp, works.indexOf(nextEp)) }, '다음 화 보기 → ' + epName(nextEp)) : h('a', { class: 'btn ghost', href: href('works.html') }, '다른 작품 보기'));
-    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl, nextbar)));
+    main.append(h('section', { class: 'screen', 'data-section': 'player', 'aria-label': '상영관' }, h('div', { class: 'wrap' }, screen, dl)));
 
     // 영화 정보
     const jumps = [];
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' },
       h('div', {},
-        h('h1', { text: title }),
+        h('div', { class: 'titlerow' }, h('h1', { text: title }), nextbar),
         ser && h('p', { class: 'meta', text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),
         has(v.duration) && h('p', { class: 'meta', text: '러닝타임 ' + v.duration.trim() }),
         has(w.tagline) && h('p', { class: 'tagline', text: w.tagline }),
