@@ -35,13 +35,14 @@
 
     // 상영관 – 플레이어
     const kind = w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video';
-    let screen, dl = null, howto = null;
+    let screen, dl = null, howto = null, openLink = null;
     if (kind === 'game') {   // 게임: 주소로 연결 (원하면 화면 안에서 바로 실행)
       const g = obj(w.game), url = safeUrl(g.url);
       screen = h('div', { class: 'screen-frame' }, !url ? h('div', { class: 'video-fallback' }, h('strong', { text: '게임 주소가 아직 없어요' }))
         : [g.embed && h('iframe', { class: 'game-frame', src: url, title: title + ' 게임', allow: 'fullscreen; gamepad', allowfullscreen: true,
             sandbox: 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups', loading: 'lazy' }),
-          !g.embed && h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: url, target: '_blank', rel: 'noopener noreferrer' }, '게임 하러 가기'))]);   // 화면 안에 띄운 게임은 버튼을 두지 않는다
+          !g.embed && h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: url, target: '_blank', rel: 'noopener noreferrer' }, '게임 하러 가기'))]);
+      if (url && g.embed) openLink = h('a', { class: 'btn ghost sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, '새 창에서 열기');   // 화면 안이 아니라 제목 옆에 둔다
       if (has(g.howto)) howto = h('div', { class: 'game-how' }, h('h2', { text: '게임 방법' }), h('p', { class: 'prose', raw: true, text: g.howto.trim() }));
     } else if (kind === 'storyboard') {   // 스토리보드: 장면 이미지 + PDF
       const sb = obj(w.storyboard), pages = arr(sb.pages).filter(x => x && has(x.file));
@@ -77,7 +78,7 @@
           epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` }))))));
     const jumps = [];
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
-      h('h1', { text: title }),
+      openLink ? h('div', { class: 'title-row' }, h('h1', { text: title }), openLink) : h('h1', { text: title }),
       h('div', {},
         h('p', { class: 'meta meta-line' },
           ser && h('span', { text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),

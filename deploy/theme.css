@@ -222,6 +222,7 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .ep-side .eps a{flex-direction:column;align-items:stretch;gap:8px;padding:8px;height:100%}
 .ep-side .ep-thumb{width:100%}
 .movie h1{font-size:clamp(1.7rem,4.4vw,2.8rem);margin-bottom:10px}
+.title-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-bottom:10px}.title-row h1{margin:0}.title-row .btn{flex:none}
 .movie .meta{color:var(--muted);margin:0 0 14px}
 .meta-line{display:flex;flex-wrap:wrap;gap:4px 0}
 .meta-line span+span::before{content:"|";margin:0 12px;opacity:.5}
