@@ -439,7 +439,8 @@
       seen.add(x.id);
       const eps = ws.filter(e => e.series === x.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)), first = eps[0];
       out.push({ ...first, title: x.title, tagline: has(x.summary) ? x.summary : first.tagline,
-        video: { ...obj(first.video), poster: has(x.poster) ? x.poster : obj(first.video).poster, duration: '' },
+        video: { ...obj(first.video), poster: has(x.poster) ? x.poster : obj(first.video).poster, duration: '',
+          logo: (eps.find(e => has(obj(e.video).logo)) || first).video.logo },   // 로고는 올린 회차 중 가장 앞 회차 것을 쓴다
         seriesId: x.id, episodeCount: eps.length, seriesStatus: x.status });
     });
     return out;
