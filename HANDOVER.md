@@ -8,6 +8,7 @@
 
 - CMS "사이트 이름·슬로건·연락처" → "로고 이미지"(`site.logoImage`)를 올리면 모든 페이지 맨 위(헤더)·맨 아래(푸터)·브라우저 탭 아이콘·로딩 화면에 자동 적용. 없거나 불러오기 실패하면 기존 글자 로고(`logoText`)로 대체. `common.js`의 `logoMark()`, `setFavicon()`.
 - (수정) 연재물의 로고는 회차가 아니라 연재물에 하나: CMS "연재물 정보 고치기"의 "대표 로고"(DB `series.common.logo`, 마이그레이션 없음). 연재 회차의 1단계에는 로고 칸을 숨김, 단독 작품만 1단계에 보임. 이전에 3화에 올린 `video.logo` 값은 DB에 남아 있음(연재물에 다시 올릴 것).
+- 로고 위치·크기 선택: `logoPos`(''=아래/center/top)·`logoSize`(''=보통/s/l). 연재물은 `series.common`, 단독 작품은 `video`에 저장. `poster()`가 적용.
 - 작품별 로고: CMS 1단계 "작품 로고"(`video.logo`)를 올리면 포스터 아래쪽 가운데에 얹힘(`poster()`의 `.poster-logo`). 글자 제목은 그대로 유지. 연재물 카드는 첫 회의 로고를 씀. DB 변경 없음(content jsonb).
 - 확인: JS 문법 검사만. **못 한 것: 실제 업로드·화면 확인.** `deploy/common.js`·`deploy/theme.css`에는 복사함. 커밋·push는 하지 않음.
 

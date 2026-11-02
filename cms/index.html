@@ -316,6 +316,8 @@ dialog#editors{width:min(680px,94vw)}
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
+            S('logoPos', '로고 위치', [['', '아래 (기본)'], ['center', '가운데'], ['top', '위']], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; } }),
+            S('logoSize', '로고 크기', [['', '보통 (기본)'], ['s', '작게'], ['l', '크게']], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; } }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
@@ -428,7 +430,8 @@ dialog#editors{width:min(680px,94vw)}
         A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
         S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
         F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 잘려요.' }),
-        F('logo', '대표 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' })] }] }] }
+        F('logo', '대표 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
+        S('logoPos', '로고 위치', [['', '아래 (기본)'], ['center', '가운데'], ['top', '위']]), S('logoSize', '로고 크기', [['', '보통 (기본)'], ['s', '작게'], ['l', '크게']])] }] }] }
   ];
   const stepsFor = () => STEPS;
   // 제작 기록(3~6단계)은 단독 작품이면 연재물 공통 정보를, 연재 회차는 '이번 회차 추가분'(또는 공통 내용)을 고친다
@@ -1480,7 +1483,7 @@ dialog#editors{width:min(680px,94vw)}
       return { id: x.id, title: solo ? (w0 && has(w0.title) ? w0.title.trim() : '(제목 없음)') : has(x.title) ? x.title.trim() : '(제목 없음)',
         summary: has(x.summary) ? x.summary : null, status: x.status === 'completed' ? 'completed' : 'ongoing',
         poster_path: solo ? (w0 && has(obj(w0.video).poster) ? w0.video.poster.trim() : null) : has(x.poster) ? x.poster.trim() : null,
-        sort_order: i, is_published: true, solo, common: { ...clone(normCommon(x.common)), ...(has(x.logo) && !solo ? { logo: x.logo.trim() } : {}) } };   // 담당자(owner)는 보내지 않는다 – DB가 로그인한 사람으로 기록한다
+        sort_order: i, is_published: true, solo, common: { ...clone(normCommon(x.common)), ...(has(x.logo) && !solo ? { logo: x.logo.trim(), logoPos: x.logoPos || '', logoSize: x.logoSize || '' } : {}) } };   // 담당자(owner)는 보내지 않는다 – DB가 로그인한 사람으로 기록한다
     });
     const works = arr(d.works).map((w, i) => {
       const inSeries = has(w.series) && sids.has(w.series), solo = soloIds.has(w.series);
@@ -1500,7 +1503,7 @@ dialog#editors{width:min(680px,94vw)}
     let d = null;
     if (st.length || ser.length || wk.length) {
       d = { ...obj(st[0] && st[0].value),
-        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
+        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoPos: obj(x.common).logoPos || '', logoSize: obj(x.common).logoSize || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
         works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
     }
     return { d, st, ser, wk };

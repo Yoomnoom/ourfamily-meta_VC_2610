@@ -124,6 +124,8 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
   box-shadow:0 22px 40px -14px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07);transition:transform .3s,box-shadow .3s}
 .slide.active .poster{box-shadow:0 30px 60px -16px rgba(0,0,0,1),0 0 0 1px rgba(255,255,255,.18),0 0 90px -20px rgba(211,32,47,.55)}
 .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
+.poster img.poster-logo.pos-top{bottom:auto;top:6%}
+.poster img.poster-logo.pos-center{bottom:auto;top:50%;transform:translate(-50%,-50%)}
 .poster img.poster-logo{inset:auto;left:50%;bottom:6%;width:88%;height:auto;max-height:30%;object-fit:contain;transform:translateX(-50%);filter:drop-shadow(0 0 2px rgba(255,236,205,.95)) drop-shadow(0 0 9px rgba(255,236,205,.6));pointer-events:none}
 .poster-fallback{position:absolute;inset:0;display:flex;align-items:flex-end;padding:18px;
   background:linear-gradient(160deg,#4a1a26 0%,#2a1b3a 55%,#14111c 100%)}
