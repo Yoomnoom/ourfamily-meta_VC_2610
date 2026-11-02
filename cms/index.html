@@ -26,6 +26,9 @@ button,.btn{font:inherit;cursor:pointer}
 .btn{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:6px 18px;border-radius:12px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);font-weight:700;font-size:.95rem}
 .btn:hover{background:var(--yellow)}
 .btn.primary{background:var(--mint)} .btn.primary:hover{background:#a9e0c7}
+.rng-row{display:flex;align-items:center;gap:10px;max-width:420px}
+.rng-row input[type=range]{flex:1;min-width:0;padding:0;margin:0}
+.rng-row output{flex:none;width:3.4em;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .btn.sm{min-height:36px;padding:2px 12px;font-size:.88rem;border-width:1.5px}
 .btn.danger{color:var(--bad);border-color:var(--bad)} .btn.danger:hover{background:#fde8e6}
 .btn:disabled{opacity:.4;cursor:not-allowed}
@@ -772,10 +775,10 @@ dialog#editors{width:min(680px,94vw)}
         const rng = el('input', { id, type: 'range', min: f.min, max: f.max, step: 1, class: 'fld', 'data-k': f.key }), out = el('output', { for: id });
         const sync = () => { rng.value = cur(); out.textContent = cur() + (f.unit || ''); };
         rng.addEventListener('input', () => { o[f.key] = String(rng.value); sync(); changed(); });
-        const reset = el('button', { type: 'button', class: 'btn', text: '기본으로' });
+        const reset = el('button', { type: 'button', class: 'btn sm', text: '기본으로' });
         reset.addEventListener('click', () => { o[f.key] = ''; sync(); changed(); });
         sync();
-        return el('div', { class: 'field' }, lab(f.label, id), el('div', { style: 'display:flex;align-items:center;gap:12px' }, rng, out, reset), hintEl(f));
+        return el('div', { class: 'field' }, lab(f.label, id), el('div', { class: 'rng-row' }, rng, out, reset), hintEl(f));
       }
       if (f.type === 'file') return renderFile(f, o, id);
       const input = el(f.type === 'area' ? 'textarea' : 'input', { id, type: f.type === 'text' ? 'text' : null, rows: f.rows, placeholder: f.ph, list: f.list,
