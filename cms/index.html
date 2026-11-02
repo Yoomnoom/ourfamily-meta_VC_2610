@@ -27,6 +27,10 @@ button,.btn{font:inherit;cursor:pointer}
 .btn:hover{background:var(--yellow)}
 .btn.primary{background:var(--mint)} .btn.primary:hover{background:#a9e0c7}
 .rng-row{display:flex;align-items:center;gap:10px;max-width:420px}
+.rng-row.rr{max-width:none;flex-wrap:wrap;gap:8px 16px}
+.rr-item{display:flex;align-items:center;gap:8px;flex:1 1 150px;min-width:150px;font-weight:700;font-size:.9rem;margin:0}
+.rr-item span{flex:none}
+.rr-item output{width:3.2em}
 .rng-row input[type=range]{flex:1;min-width:0;padding:0;margin:0}
 .rng-row output{flex:none;width:3.4em;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .btn.sm{min-height:36px;padding:2px 12px;font-size:.88rem;border-width:1.5px}
@@ -268,6 +272,7 @@ dialog#editors{width:min(680px,94vw)}
   /* ---------- 폼 스키마 ---------- */
   const T = (key, label, o = {}) => ({ type: 'text', key, label, ...o });
   const A = (key, label, o = {}) => ({ type: 'area', key, label, ...o });
+  const RR = (label, items, o = {}) => ({ type: 'rangerow', label, items, ...o });   // 슬라이더 여러 개를 한 줄에
   const R = (key, label, o = {}) => ({ type: 'range', key, label, ...o });
   const S = (key, label, options, o = {}) => ({ type: 'select', key, label, options, ...o });
   const F = (key, label, kind, o = {}) => ({ type: 'file', key, label, kind, ...o });
@@ -319,14 +324,10 @@ dialog#editors{width:min(680px,94vw)}
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
             { type: 'check', key: 'coverLogo', label: '표지 위에 로고 얹기 (연재물 로고 사용)', rerender: true, show: () => kindOf() === 'video' },
-            R('coverLogoX', '표지 로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '왼쪽 0 ~ 오른쪽 100. 영상을 재생하면 로고는 사라져요.' }),
-            R('coverLogoY', '표지 로고 세로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '위쪽 0 ~ 아래쪽 100.' }),
-            R('coverLogoW', '표지 로고 크기', { min: 10, max: 100, def: 40, unit: '%', show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '영상 폭에 대한 비율이에요.' }),
+            RR('표지 로고 위치·크기', [{ key: 'coverLogoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'coverLogoY', label: '세로', min: 0, max: 100, def: 50 }, { key: 'coverLogoW', label: '크기', min: 10, max: 100, def: 40 }], { show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '영상을 재생하면 로고는 사라져요. 크기는 영상 폭 비율이에요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
-            R('logoX', '로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '왼쪽 0 ~ 오른쪽 100. 가운데는 50이에요.' }),
-            R('logoY', '로고 세로 위치', { min: 0, max: 100, def: 85, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '위쪽 0 ~ 아래쪽 100. 기본은 아래쪽(85)이에요.' }),
-            R('logoW', '로고 크기', { min: 20, max: 100, def: 80, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '포스터 폭에 대한 비율이에요.' }),
+            RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
@@ -440,9 +441,7 @@ dialog#editors{width:min(680px,94vw)}
         S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
         F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 잘려요.' }),
         F('logo', '대표 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
-        R('logoX', '로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', hint: '왼쪽 0 ~ 오른쪽 100. 가운데는 50이에요.' }),
-        R('logoY', '로고 세로 위치', { min: 0, max: 100, def: 85, unit: '%', hint: '위쪽 0 ~ 아래쪽 100. 기본은 아래쪽(85)이에요.' }),
-        R('logoW', '로고 크기', { min: 20, max: 100, def: 80, unit: '%', hint: '포스터 폭에 대한 비율이에요.' })] }] }] }
+        RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' })] }] }] }
   ];
   const stepsFor = () => STEPS;
   // 제작 기록(3~6단계)은 단독 작품이면 연재물 공통 정보를, 연재 회차는 '이번 회차 추가분'(또는 공통 내용)을 고친다
@@ -773,6 +772,19 @@ dialog#editors{width:min(680px,94vw)}
         if (sel.value !== (o[f.key] ?? opts[0][0])) sel.value = opts[0][0];
         sel.addEventListener('change', () => { o[f.key] = sel.value; if (f.onChange) f.onChange(sel.value, o); changed(); if (f.rerender) renderStep(); });
         return el('div', { class: 'field' }, lab(f.label, id), sel, hintEl(f));
+      }
+      if (f.type === 'rangerow') {   // 슬라이더 여러 개를 한 줄에 놓고 "기본으로" 하나로 모두 비움
+        const cur = (r) => has(String(o[r.key] ?? '')) ? +o[r.key] : r.def, syncs = [];
+        const row = el('div', { class: 'rng-row rr' }, f.items.map(r => {
+          const rid = id + r.key, rng = el('input', { id: rid, type: 'range', min: r.min, max: r.max, step: 1, 'data-k': r.key }), out = el('output', { for: rid });
+          const sync = () => { rng.value = cur(r); out.textContent = cur(r) + '%'; }; syncs.push(sync); sync();
+          rng.addEventListener('input', () => { o[r.key] = String(rng.value); sync(); changed(); });
+          return el('label', { class: 'rr-item', for: rid }, el('span', { text: r.label }), rng, out);
+        }));
+        const reset = el('button', { type: 'button', class: 'btn sm', text: '기본으로' });
+        reset.addEventListener('click', () => { f.items.forEach(r => { o[r.key] = ''; }); syncs.forEach(fn => fn()); changed(); });
+        row.append(reset);
+        return el('div', { class: 'field' }, el('label', { text: f.label }), row, hintEl(f));
       }
       if (f.type === 'range') {   // 슬라이더: 건드리지 않으면 빈 값(기본값 사용), "기본으로"를 누르면 다시 비움
         const cur = () => has(String(o[f.key] ?? '')) ? +o[f.key] : f.def;
