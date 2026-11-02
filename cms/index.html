@@ -318,6 +318,10 @@ dialog#editors{width:min(680px,94vw)}
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
+            { type: 'check', key: 'coverLogo', label: '표지 위에 로고 얹기 (연재물 로고 사용)', rerender: true, show: () => kindOf() === 'video' },
+            R('coverLogoX', '표지 로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '왼쪽 0 ~ 오른쪽 100. 영상을 재생하면 로고는 사라져요.' }),
+            R('coverLogoY', '표지 로고 세로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '위쪽 0 ~ 아래쪽 100.' }),
+            R('coverLogoW', '표지 로고 크기', { min: 10, max: 100, def: 40, unit: '%', show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '영상 폭에 대한 비율이에요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
             R('logoX', '로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '왼쪽 0 ~ 오른쪽 100. 가운데는 50이에요.' }),
@@ -759,7 +763,7 @@ dialog#editors{width:min(680px,94vw)}
       const lab = (kids, forId) => el('label', { for: forId }, kids, f.req && el('span', { class: 'req', text: '필수' }));
       if (f.type === 'check') {
         const cb = el('input', { type: 'checkbox', id, 'data-k': f.key }); cb.checked = !!o[f.key];
-        cb.addEventListener('change', () => { o[f.key] = cb.checked; changed(); });
+        cb.addEventListener('change', () => { o[f.key] = cb.checked; changed(); if (f.rerender) renderStep(); });
         return el('div', { class: 'field' }, el('label', { class: 'cb', for: id }, cb, f.label), hintEl(f));
       }
       if (f.type === 'select') {

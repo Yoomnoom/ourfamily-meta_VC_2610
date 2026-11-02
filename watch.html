@@ -50,6 +50,15 @@
     } else {
       dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, h('a', { class: 'btn ghost sm', href: mediaPath(v.file), download: '' }, '영상 다운로드'));
       screen = h('div', { class: 'screen-frame' }, buildVideo(v, title, () => dl && dl.remove()));
+      const cl = ser && !ser.solo ? ser.logo : v.logo, vid = screen.querySelector('video');   // 표지 위 로고: 연재물 로고(단독 작품은 작품 로고)를 불러와 쓴다
+      if (v.coverLogo && has(cl) && vid) {
+        const num = (k, d, lo, hi) => has(String(v[k] ?? '')) && isFinite(+v[k]) ? Math.min(hi, Math.max(lo, +v[k])) : d;
+        const li = h('img', { class: 'cover-logo', src: mediaPath(cl), alt: '', draggable: 'false',
+          style: `left:${num('coverLogoX', 50, 0, 100)}%;top:${num('coverLogoY', 50, 0, 100)}%;width:${num('coverLogoW', 40, 10, 100)}%` });
+        li.addEventListener('error', () => li.remove());
+        vid.addEventListener('play', () => li.classList.add('gone'), { once: true });
+        screen.append(li);
+      }
     }
     // 다음 화·이전 화 (연재물) / 다른 작품으로 이동
     const epList = ser ? works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)) : [];
