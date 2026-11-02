@@ -41,7 +41,7 @@
       screen = h('div', { class: 'screen-frame' }, !url ? h('div', { class: 'video-fallback' }, h('strong', { text: '게임 주소가 아직 없어요' }))
         : [g.embed && h('iframe', { class: 'game-frame', src: url, title: title + ' 게임', allow: 'fullscreen; gamepad', allowfullscreen: true,
             sandbox: 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups', loading: 'lazy' }),
-          h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: url, target: '_blank', rel: 'noopener noreferrer' }, g.embed ? '새 창에서 열기' : '게임 하러 가기'))]);
+          !g.embed && h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: url, target: '_blank', rel: 'noopener noreferrer' }, '게임 하러 가기'))]);   // 화면 안에 띄운 게임은 버튼을 두지 않는다
       if (has(g.howto)) howto = h('div', { class: 'game-how' }, h('h2', { text: '게임 방법' }), h('p', { class: 'prose', raw: true, text: g.howto.trim() }));
     } else if (kind === 'storyboard') {   // 스토리보드: 장면 이미지 + PDF
       const sb = obj(w.storyboard), pages = arr(sb.pages).filter(x => x && has(x.file));
