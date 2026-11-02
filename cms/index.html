@@ -265,6 +265,7 @@ dialog#editors{width:min(680px,94vw)}
   /* ---------- 폼 스키마 ---------- */
   const T = (key, label, o = {}) => ({ type: 'text', key, label, ...o });
   const A = (key, label, o = {}) => ({ type: 'area', key, label, ...o });
+  const R = (key, label, o = {}) => ({ type: 'range', key, label, ...o });
   const S = (key, label, options, o = {}) => ({ type: 'select', key, label, options, ...o });
   const F = (key, label, kind, o = {}) => ({ type: 'file', key, label, kind, ...o });
 
@@ -316,8 +317,9 @@ dialog#editors{width:min(680px,94vw)}
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
-            S('logoPos', '로고 위치', [['', '아래 (기본)'], ['center', '가운데'], ['top', '위']], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; } }),
-            S('logoSize', '로고 크기', [['', '보통 (기본)'], ['s', '작게'], ['l', '크게']], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; } }),
+            R('logoX', '로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '왼쪽 0 ~ 오른쪽 100. 가운데는 50이에요.' }),
+            R('logoY', '로고 세로 위치', { min: 0, max: 100, def: 85, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '위쪽 0 ~ 아래쪽 100. 기본은 아래쪽(85)이에요.' }),
+            R('logoW', '로고 크기', { min: 20, max: 100, def: 80, unit: '%', show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '포스터 폭에 대한 비율이에요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
@@ -431,7 +433,9 @@ dialog#editors{width:min(680px,94vw)}
         S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
         F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 잘려요.' }),
         F('logo', '대표 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
-        S('logoPos', '로고 위치', [['', '아래 (기본)'], ['center', '가운데'], ['top', '위']]), S('logoSize', '로고 크기', [['', '보통 (기본)'], ['s', '작게'], ['l', '크게']])] }] }] }
+        R('logoX', '로고 가로 위치', { min: 0, max: 100, def: 50, unit: '%', hint: '왼쪽 0 ~ 오른쪽 100. 가운데는 50이에요.' }),
+        R('logoY', '로고 세로 위치', { min: 0, max: 100, def: 85, unit: '%', hint: '위쪽 0 ~ 아래쪽 100. 기본은 아래쪽(85)이에요.' }),
+        R('logoW', '로고 크기', { min: 20, max: 100, def: 80, unit: '%', hint: '포스터 폭에 대한 비율이에요.' })] }] }] }
   ];
   const stepsFor = () => STEPS;
   // 제작 기록(3~6단계)은 단독 작품이면 연재물 공통 정보를, 연재 회차는 '이번 회차 추가분'(또는 공통 내용)을 고친다
@@ -762,6 +766,16 @@ dialog#editors{width:min(680px,94vw)}
         if (sel.value !== (o[f.key] ?? opts[0][0])) sel.value = opts[0][0];
         sel.addEventListener('change', () => { o[f.key] = sel.value; if (f.onChange) f.onChange(sel.value, o); changed(); if (f.rerender) renderStep(); });
         return el('div', { class: 'field' }, lab(f.label, id), sel, hintEl(f));
+      }
+      if (f.type === 'range') {   // 슬라이더: 건드리지 않으면 빈 값(기본값 사용), "기본으로"를 누르면 다시 비움
+        const cur = () => has(String(o[f.key] ?? '')) ? +o[f.key] : f.def;
+        const rng = el('input', { id, type: 'range', min: f.min, max: f.max, step: 1, class: 'fld', 'data-k': f.key }), out = el('output', { for: id });
+        const sync = () => { rng.value = cur(); out.textContent = cur() + (f.unit || ''); };
+        rng.addEventListener('input', () => { o[f.key] = String(rng.value); sync(); changed(); });
+        const reset = el('button', { type: 'button', class: 'btn', text: '기본으로' });
+        reset.addEventListener('click', () => { o[f.key] = ''; sync(); changed(); });
+        sync();
+        return el('div', { class: 'field' }, lab(f.label, id), el('div', { style: 'display:flex;align-items:center;gap:12px' }, rng, out, reset), hintEl(f));
       }
       if (f.type === 'file') return renderFile(f, o, id);
       const input = el(f.type === 'area' ? 'textarea' : 'input', { id, type: f.type === 'text' ? 'text' : null, rows: f.rows, placeholder: f.ph, list: f.list,
@@ -1483,7 +1497,7 @@ dialog#editors{width:min(680px,94vw)}
       return { id: x.id, title: solo ? (w0 && has(w0.title) ? w0.title.trim() : '(제목 없음)') : has(x.title) ? x.title.trim() : '(제목 없음)',
         summary: has(x.summary) ? x.summary : null, status: x.status === 'completed' ? 'completed' : 'ongoing',
         poster_path: solo ? (w0 && has(obj(w0.video).poster) ? w0.video.poster.trim() : null) : has(x.poster) ? x.poster.trim() : null,
-        sort_order: i, is_published: true, solo, common: { ...clone(normCommon(x.common)), ...(has(x.logo) && !solo ? { logo: x.logo.trim(), logoPos: x.logoPos || '', logoSize: x.logoSize || '' } : {}) } };   // 담당자(owner)는 보내지 않는다 – DB가 로그인한 사람으로 기록한다
+        sort_order: i, is_published: true, solo, common: { ...clone(normCommon(x.common)), ...(has(x.logo) && !solo ? { logo: x.logo.trim(), logoX: x.logoX || '', logoY: x.logoY || '', logoW: x.logoW || '' } : {}) } };   // 담당자(owner)는 보내지 않는다 – DB가 로그인한 사람으로 기록한다
     });
     const works = arr(d.works).map((w, i) => {
       const inSeries = has(w.series) && sids.has(w.series), solo = soloIds.has(w.series);
@@ -1503,7 +1517,7 @@ dialog#editors{width:min(680px,94vw)}
     let d = null;
     if (st.length || ser.length || wk.length) {
       d = { ...obj(st[0] && st[0].value),
-        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoPos: obj(x.common).logoPos || '', logoSize: obj(x.common).logoSize || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
+        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoX: obj(x.common).logoX || '', logoY: obj(x.common).logoY || '', logoW: obj(x.common).logoW || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
         works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
     }
     return { d, st, ser, wk };
