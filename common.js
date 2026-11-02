@@ -76,7 +76,20 @@
     t.textContent = txt; s.append(r, t);
     return s;
   }
+  /** 로고 이미지가 있으면 그림, 없으면 글자 로고. 이미지가 안 불러와지면 글자 로고로 되돌린다. */
+  function logoMark(site) {
+    if (!has(site.logoImage)) return logoSvg(markText(site));
+    const img = h('img', { class: 'logo logo-img', src: mediaPath(site.logoImage), alt: '', draggable: 'false' });
+    img.addEventListener('error', () => img.replaceWith(logoSvg(markText(site))));
+    return img;
+  }
   function setFavicon(site) {
+    if (has(site.logoImage)) {
+      let l = document.querySelector('link[rel~=icon]');
+      if (!l) { l = h('link', { rel: 'icon' }); document.head.append(l); }
+      l.removeAttribute('type'); l.setAttribute('href', mediaPath(site.logoImage));
+      return;
+    }
     const txt = markText(site).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])), [fs, y] = markSize(txt);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#d3202f"/><text x="16" y="${y}" font-size="${fs}" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">${txt}</text></svg>`;
     let l = document.querySelector('link[rel~=icon]');
@@ -92,6 +105,12 @@
       const img = h('img', { src: mediaPath(file), alt: `${has(work.title) ? work.title : '작품'} 포스터`, loading: 'lazy', draggable: 'false' });
       img.addEventListener('error', () => img.remove());
       box.append(img);
+    }
+    const logo = work.video && work.video.logo;   // 포스터 아래쪽에 얹는 작품 로고
+    if (has(logo)) {
+      const li = h('img', { class: 'poster-logo', src: mediaPath(logo), alt: '', loading: 'lazy', draggable: 'false' });
+      li.addEventListener('error', () => li.remove());
+      box.append(li);
     }
     const peek = has(work.intent) ? work.intent : work.tagline;   // 마우스를 올리면 기획 의도(없으면 한 줄 소개)가 나온다
     if (has(peek)) box.append(h('div', { class: 'poster-peek', 'aria-hidden': 'true' }, h('span', { class: 'peek-label', text: has(work.intent) ? '기획 의도' : '소개' }),
@@ -255,7 +274,7 @@
     const burger = h('button', { type: 'button', class: 'burger', 'aria-expanded': 'false', 'aria-controls': 'nav', 'aria-label': '메뉴 열기' },
       h('span', { 'aria-hidden': 'true' }), h('span', { 'aria-hidden': 'true' }), h('span', { 'aria-hidden': 'true' }));
     const hd = h('header', { class: 'site-header', 'data-section': 'header' }, h('div', { class: 'wrap bar' },
-      h('a', { class: 'brand', href: href('index.html') }, logoSvg(markText(site)), h('span', { text: name })),
+      h('a', { class: 'brand', href: href('index.html') }, logoMark(site), h('span', { text: name })),
       burger,
       h('nav', { id: 'nav', class: 'nav', 'aria-label': '주요 메뉴' }, h('ul', {}, shown.map(([p, label]) =>
         h('li', {}, h('a', { class: 'navlink', href: href(p), 'aria-current': p === curPage ? 'page' : null, text: label })))))));
@@ -283,7 +302,7 @@
     ].filter(Boolean);
     return h('footer', { 'data-section': 'footer' }, h('div', { class: 'wrap foot' },
       h('div', { class: 'foot-brand' },
-        h('a', { class: 'brand', href: href('index.html') }, logoSvg(markText(site)), h('span', { text: has(site.name) ? site.name : '가상의 가족 극장' })),
+        h('a', { class: 'brand', href: href('index.html') }, logoMark(site), h('span', { text: has(site.name) ? site.name : '가상의 가족 극장' })),
         has(site.footer) && h('p', { raw: true, text: site.footer })),
       info.length > 0 && h('dl', { class: 'foot-info' }, info),
       sns.length > 0 && h('ul', { class: 'foot-sns', 'aria-label': 'SNS' }, sns.map(s =>
@@ -304,7 +323,7 @@
   let loader = null;
   if (!reduced) {
     let c = '극'; try { c = sessionStorage.getItem('ft.logo') || c; } catch {}
-    loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, logoSvg(c));
+    loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, c.startsWith('img:') ? h('img', { class: 'logo logo-img', src: c.slice(4), alt: '' }) : logoSvg(c));
     document.body.append(loader);
   }
   function hideLoader() {
@@ -465,7 +484,7 @@
       const site = obj(d.site), av = avail(d), r = build(d, site, av);
       document.title = r.title;
       setFavicon(site);
-      try { sessionStorage.setItem('ft.logo', markText(site)); } catch {}
+      try { sessionStorage.setItem('ft.logo', has(site.logoImage) ? 'img:' + mediaPath(site.logoImage) : markText(site)); } catch {}
       const frag = document.createDocumentFragment();
       frag.append(header(site, av), r.main, footer(site));
       app.replaceChildren(frag);

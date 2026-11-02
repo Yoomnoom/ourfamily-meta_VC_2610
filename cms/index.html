@@ -315,6 +315,7 @@ dialog#editors{width:min(680px,94vw)}
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
+            F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물 카드에는 첫 회의 로고가 나와요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
@@ -362,7 +363,8 @@ dialog#editors{width:min(680px,94vw)}
       parts: [
         { title: '이름·슬로건·로고', pv: ['index.html', 'hero'], fields: [{ group: 'site', fields: [
           T('name', '사이트 이름', { req: 1, ph: '예) 우리 가족 극장' }), T('slogan', '슬로건', { req: 1, ph: '예) 우리의 이야기가 상영됩니다.', hint: '홈 첫 화면의 큰 제목이 돼요.' }),
-          T('logoText', '로고 글자 (1~2글자)', { ph: '극', hint: '비워 두면 사이트 이름의 첫 글자를 써요.' })] }] },
+          F('logoImage', '로고 이미지', 'image', { hint: '올리면 모든 페이지 맨 위·맨 아래와 브라우저 탭 아이콘에 자동으로 나와요. 정사각형 PNG(투명 배경)가 좋아요.' }),
+          T('logoText', '로고 글자 (1~2글자)', { ph: '극', hint: '로고 이미지가 없을 때만 써요. 비워 두면 사이트 이름의 첫 글자를 써요.' })] }] },
         { title: '연락처', pv: ['index.html', 'footer'], fields: [{ group: 'site', fields: [
           T('producer', '만든 사람', { ph: '예) 김○○ 가족' }), T('email', '문의 이메일', { ph: 'name@example.com' }),
           { type: 'list', key: 'sns', title: 'SNS 주소 (있으면)', itemLabel: i => `주소 ${i + 1}`, addLabel: 'SNS 주소 추가',

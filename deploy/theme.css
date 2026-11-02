@@ -55,6 +55,7 @@ section[id]{scroll-margin-top:calc(var(--hh) + 8px)}
 .brand span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .logo{width:34px;height:34px;flex:none;display:block;transition:transform .25s}
 .logo text{font-family:var(--hand);font-weight:700}
+.logo-img{object-fit:contain;border-radius:8px}
 .brand:hover .logo{transform:rotate(-6deg) scale(1.06)}
 .nav ul{list-style:none;margin:0;padding:0;display:flex;gap:4px}
 .navlink{display:block;padding:9px 16px;border-radius:999px;color:var(--text);text-decoration:none;font-weight:500;font-size:.97rem;transition:background .2s}
@@ -123,6 +124,7 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
   box-shadow:0 22px 40px -14px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07);transition:transform .3s,box-shadow .3s}
 .slide.active .poster{box-shadow:0 30px 60px -16px rgba(0,0,0,1),0 0 0 1px rgba(255,255,255,.18),0 0 90px -20px rgba(211,32,47,.55)}
 .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
+.poster img.poster-logo{inset:auto;left:50%;bottom:6%;width:72%;height:auto;max-height:28%;object-fit:contain;transform:translateX(-50%);filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));pointer-events:none}
 .poster-fallback{position:absolute;inset:0;display:flex;align-items:flex-end;padding:18px;
   background:linear-gradient(160deg,#4a1a26 0%,#2a1b3a 55%,#14111c 100%)}
 .poster-fallback::after{content:"";position:absolute;left:50%;top:50%;margin:-20px 0 0 -12px;border-left:34px solid rgba(255,255,255,.2);border-top:20px solid transparent;border-bottom:20px solid transparent}

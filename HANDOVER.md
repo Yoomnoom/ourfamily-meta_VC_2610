@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-11-02 (사이트 로고 이미지)
+
+- CMS "사이트 이름·슬로건·연락처" → "로고 이미지"(`site.logoImage`)를 올리면 모든 페이지 맨 위(헤더)·맨 아래(푸터)·브라우저 탭 아이콘·로딩 화면에 자동 적용. 없거나 불러오기 실패하면 기존 글자 로고(`logoText`)로 대체. `common.js`의 `logoMark()`, `setFavicon()`.
+- 작품별 로고: CMS 1단계 "작품 로고"(`video.logo`)를 올리면 포스터 아래쪽 가운데에 얹힘(`poster()`의 `.poster-logo`). 글자 제목은 그대로 유지. 연재물 카드는 첫 회의 로고를 씀. DB 변경 없음(content jsonb).
+- 확인: JS 문법 검사만. **못 한 것: 실제 업로드·화면 확인.** `deploy/common.js`·`deploy/theme.css`에는 복사함. 커밋·push는 하지 않음.
+
+---
+
 ## 2026-10-28 (제작 기록 공통화 + 권한 + 제작자 표시)
 
 - DB(`db/ourfamilymeta_owner_common.sql`, Supabase에 이미 적용): series에 `owner`·`solo`·`common`, works에 `owner`. 담당자는 트리거가 로그인 이메일로 기록, 변경은 관리자만. 작품·연재물은 담당자/관리자만 수정·삭제, settings와 Storage 덮어쓰기·삭제는 관리자만. 연재물 없던 작품은 solo 연재물로 연결(재실행 안전).
