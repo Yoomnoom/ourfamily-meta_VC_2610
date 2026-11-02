@@ -378,7 +378,7 @@
       get('ourfamilymeta_works?select=slug,kind,title,series_id,episode_no,content&order=sort_order,created_at')]);
     if (!st.length && !wk.length) return null;
     const d = { ...obj(st[0] && st[0].value) };
-    d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', solo: !!x.solo, common: obj(x.common) }));
+    d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', solo: !!x.solo, common: obj(x.common) }));
     d.works = wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug || obj(x.content).id, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''),
       series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' }));
     return d;
@@ -439,8 +439,7 @@
       seen.add(x.id);
       const eps = ws.filter(e => e.series === x.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)), first = eps[0];
       out.push({ ...first, title: x.title, tagline: has(x.summary) ? x.summary : first.tagline,
-        video: { ...obj(first.video), poster: has(x.poster) ? x.poster : obj(first.video).poster, duration: '',
-          logo: obj((eps.find(e => has(obj(e.video).logo)) || first).video).logo },   // 로고는 올린 회차 중 가장 앞 회차 것을 쓴다
+        video: { ...obj(first.video), poster: has(x.poster) ? x.poster : obj(first.video).poster, duration: '', logo: x.logo },   // 연재물 로고는 연재물 정보에서 올린 것
         seriesId: x.id, episodeCount: eps.length, seriesStatus: x.status });
     });
     return out;
