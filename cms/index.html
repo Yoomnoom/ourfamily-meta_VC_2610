@@ -330,7 +330,7 @@ dialog#editors{width:min(680px,94vw)}
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
             RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
-            F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 파일이에요.' }),
+            F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 또는 .srt 파일을 올리면 돼요. .srt 는 올릴 때 자동으로 .vtt 로 바뀌어요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
           { group: 'game', show: () => kindOf() === 'game', fields: [
             T('url', '게임 주소', { ph: 'https://...', hint: 'itch.io 등 게임이 올라간 주소(https://로 시작)를 붙여 넣어요.' }),
@@ -1048,8 +1048,16 @@ dialog#editors{width:min(680px,94vw)}
     else if (/[^\x00-\x7F]/.test(raw) && !/[A-Za-z]/.test(base)) base = 'file-' + base;   // 한글 이름이 숫자만 남지 않게
     return base + ext;
   };
+  /** 자막: .srt 는 브라우저가 읽지 못하므로 올릴 때 .vtt 로 바꾼다. (한국어 srt 는 EUC-KR 인 경우가 많아 인코딩을 판별한다) */
+  async function srtToVtt(file) {
+    const buf = await file.arrayBuffer();
+    let t; try { t = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch { t = new TextDecoder('euc-kr').decode(buf); }
+    t = t.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+    return new File(['WEBVTT\n\n' + t.trim() + '\n'], file.name.replace(/\.srt$/i, '.vtt'), { type: 'text/vtt' });
+  }
   /** 폴더가 연결되어 있으면 media/에 복사하고 저장된 파일명을 돌려준다. 아니면 원래 이름만 돌려준다. */
   async function placeFile(file) {
+    if (/\.srt$/i.test(file.name)) { try { file = await srtToVtt(file); toast('.srt 자막을 .vtt 로 바꿔서 올려요.', { ms: 2500 }); } catch (e) { toast('자막을 바꾸지 못했어요: ' + e.message); return ''; } }
     if (online) return uploadFile(file);
     if (!dir) return file.name;
     try {
@@ -1093,7 +1101,7 @@ dialog#editors{width:min(680px,94vw)}
   const origNames = (() => { try { return JSON.parse(localStorage.getItem(NAMES_KEY)) || {}; } catch { return {}; } })();
   const rememberName = (url, n) => { origNames[url] = n; try { localStorage.setItem(NAMES_KEY, JSON.stringify(origNames)); } catch {} };
   function renderFile(f, o, id) {
-    const kind = f.kind, accept = kind === 'media' ? 'image/*,video/*,.mp4' : kind === 'video' ? 'video/*,.mp4' : kind === 'vtt' ? '.vtt,text/vtt' : kind === 'pdf' ? '.pdf,application/pdf' : 'image/*';
+    const kind = f.kind, accept = kind === 'media' ? 'image/*,video/*,.mp4' : kind === 'video' ? 'video/*,.mp4' : kind === 'vtt' ? '.vtt,.srt,text/vtt' : kind === 'pdf' ? '.pdf,application/pdf' : 'image/*';
     const kindLabel = { video: '영상', image: '이미지', media: '사진·영상', vtt: '자막', pdf: 'PDF' }[kind];
     const box = el('div', { class: 'filebox empty' }), thumb = el('div', { class: 'f-thumb', 'aria-hidden': 'true' });
     const nameEl = el('div', { class: 'f-name' }), meta = el('div', { class: 'f-meta' });
