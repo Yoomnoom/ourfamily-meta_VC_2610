@@ -180,11 +180,11 @@
   const finePointer = () => matchMedia('(hover:hover) and (pointer:fine)').matches;
   /* 마우스 모양: 작품마다 CMS에서 이모지나 그림으로 고른다. 비워 두면 제목 속 낱말로 정하고, 그래도 없으면 홈 모양(팝콘)을 쓴다 */
   const CURSOR_HOME = '🍿';
-  const CURSOR_WORDS = [['지영', '🍠'], ['찰칵', '📷'], ['보은', '🐕'], ['풍산', '🐗'], ['잘먹', '🥄'], ['마음', '🏠'], ['식탁', '🥢']];
+  const CURSOR_WORDS = [['지영', '📖'], ['찰칵', '📷'], ['보은', '🐕'], ['풍산', '🐗'], ['잘먹', '🥄'], ['마음', '🏠'], ['식탁', '🥢'], ['식당', '🥢']];   // 제목의 공백은 무시하고 비교한다
   function cursorSpec(emoji, image, ...titles) {
     if (has(image)) return { img: mediaPath(image) };
     if (has(emoji)) return { text: emoji.trim() };
-    const k = CURSOR_WORDS.find(([w]) => titles.some(t => String(t || '').includes(w)));
+    const k = CURSOR_WORDS.find(([w]) => titles.some(t => String(t || '').replace(/\s/g, '').includes(w)));
     return k ? { text: k[1] } : null;
   }
   const siteCursor = site => cursorSpec(obj(site).cursor, obj(site).cursorImage) || { text: CURSOR_HOME };
