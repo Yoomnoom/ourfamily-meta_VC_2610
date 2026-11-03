@@ -29,7 +29,8 @@
     const w = works[idx], v = w.video || {};
     const ser0 = has(w.series) ? arr(d.series).find(x => x.id === w.series) : null;
     const ser = ser0 && !ser0.solo ? ser0 : null;   // 단독 작품의 숨은 연재물은 연재물처럼 보이지 않는다
-    App.setCursor(App.cursorSpec(w.cursor, w.cursorImage, w.title, ser && ser.title) || App.siteCursor(site));   // 작품 주제에 맞는 마우스 모양
+    const cur = App.cursorSpec(w.cursor, w.cursorImage, w.title, ser && ser.title) || App.siteCursor(site);
+    App.setCursor(cur);   // 작품 주제에 맞는 마우스 모양
     const pr = production(w, d);   // 연재물 공통 제작 정보 + 이 회차 추가분 (미리보기와 같은 함수)
     const title = has(w.title) ? w.title : '제목 미정';
     const main = h('main', { id: 'main', class: 'pad' });
@@ -43,7 +44,13 @@
         : [g.embed && h('iframe', { class: 'game-frame' + tall, src: url, title: title + ' ' + noun, allow: 'fullscreen; gamepad', allowfullscreen: true,
             sandbox: 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-modals allow-downloads', loading: 'lazy' }),
           !g.embed && h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: url, target: '_blank', rel: 'noopener noreferrer' }, kind === 'app' ? '앱 열기' : '게임 하러 가기'))]);
-      const fr = screen.querySelector('iframe'); if (fr) screen.append(frameStatus(fr, noun));   // 게임이 늦게 열리면 이유를 알려 준다
+      const fr = screen.querySelector('iframe');
+      if (fr) {
+        screen.append(frameStatus(fr, noun));
+        // 게임 화면 안에는 사이트의 마우스 모양이 못 들어가서, 게임이 원하면 직접 그리도록 모양을 알려 준다 (게임이 이 메시지를 받아야 쓰인다)
+        const msg = { type: 'ft-cursor', text: cur.text || '', img: cur.img ? new URL(cur.img, location.href).href : '' };
+        fr.addEventListener('load', () => { try { fr.contentWindow.postMessage(msg, new URL(url).origin); } catch (e) {} });
+      }   // 게임이 늦게 열리면 이유를 알려 준다
       if (url && g.embed) openLink = h('a', { class: 'btn ghost sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, '새 창에서 열기');   // 화면 안이 아니라 제목 옆에 둔다
       if (has(g.howto)) howto = h('div', { class: 'game-how' }, h('h2', { text: noun + ' 방법' }), h('p', { class: 'prose', raw: true, text: g.howto.trim() }));
     } else if (kind === 'storyboard') {   // 스토리보드: 장면 이미지 + PDF
