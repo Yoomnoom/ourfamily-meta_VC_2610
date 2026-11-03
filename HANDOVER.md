@@ -7,6 +7,7 @@
 ## 2026-11-03 (게임 iframe 권한)
 
 - **홈 대표 화면 세로 화면 처리**: 가로 영상·사진은 세로 화면(휴대폰)에서도 자르지 않고 통째로 보여 준다(`object-fit:contain`). 세로용 파일(`videoPortrait`/`imagePortrait`/목록의 `portrait`)은 **올렸을 때만** 세로 화면에서 대신 쓰고, 그때는 꽉 채운다(`.fill`, cover).
+- **커서 이모지 지연 제거**: `cursorFx` 가 마우스를 40%씩 따라가던(지연) 방식을 마우스 위치에 바로 붙이는 방식으로 바꾸고, 기울기만 부드럽게 둔다. `.fx-cursor`/`.fx-c-in` 에 `will-change:transform`.
 - **자막 .srt 자동 변환**: CMS 업로드(`placeFile` → `srtToVtt`)가 `.srt`를 받으면 UTF-8 아니면 EUC-KR 로 읽어 `.vtt`(WEBVTT 머리말, 시간 쉼표→점)로 바꿔 올린다. 브라우저 `<track>`은 .vtt 만 읽기 때문. .ass·.smi 등은 미지원.
 - **비율 기준 정리**: 포스터는 세로 2:3, 기본 규격 1500×2168(CMS 안내·media/README 수정). 가로 표지는 16:9 1920×1080. 회차 썸네일(16:9 칸)에 가로 표지가 없어 포스터를 쓰면 자르지 않고 통째로(`.ep-thumb.tall`, contain).
 - 홈 대표 화면에 **휴대폰용 세로 버전**: `hero.videoPortrait`/`hero.imagePortrait`, `hero.more[].portrait`. 세로 화면(`max-aspect-ratio:1/1`)에서 있으면 대신 쓴다. 없으면 가로 영상을 자르지 않고 통째로 보여줌(`contain`). 390×844 폰 점검: 가로 넘침 없음, 작은 터치 대상(캐러셀 점 28px, 관람하기 링크 31px 높이, 푸터 메일 20px) 남아 있음, 찰칵 게임은 CMS에서 "앱용(세로형)"을 켜지 않으면 16:9로 작게 보임.

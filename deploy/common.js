@@ -194,7 +194,7 @@
     const el = h('div', { class: 'fx-cursor', 'aria-hidden': 'true' }), inner = h('span', { class: 'fx-c-in' });
     el.append(inner); document.body.append(el);
     const root = document.documentElement, HOT = 'a[href],button,[role="button"],.tile,.arrow,summary,label';
-    let spec = null, mx = 0, my = 0, x = 0, y = 0, raf = 0, seen = false, near = false, live = 0;
+    let spec = null, mx = 0, my = 0, px = 0, tilt = 0, raf = 0, seen = false, near = false, live = 0;
     const content = () => spec.img ? h('img', { src: spec.img, alt: '', draggable: 'false' }) : document.createTextNode(spec.text);
     setCursor = sp => {
       spec = sp || null;
@@ -204,10 +204,10 @@
       if (seen && !near) root.classList.add('fx-on');
     };
     const loop = () => {
-      const dx = mx - x; x += dx * .4; y += (my - y) * .4;
-      el.style.transform = `translate(${x}px,${y}px)`;
-      inner.style.setProperty('--tilt', Math.max(-28, Math.min(28, dx * 1.4)) + 'deg');   // 움직이는 방향으로 흔들린다
-      raf = Math.abs(mx - x) + Math.abs(my - y) > .3 ? requestAnimationFrame(loop) : 0;
+      el.style.transform = `translate(${mx}px,${my}px)`;   // 마우스 위치에 바로 붙인다 (지연 없음)
+      tilt += (Math.max(-28, Math.min(28, (mx - px) * 1.4)) - tilt) * .3; px = mx;   // 기울기만 부드럽게: 움직이는 방향으로 흔들리고 멈추면 돌아온다
+      inner.style.setProperty('--tilt', tilt + 'deg');
+      raf = Math.abs(tilt) > .5 ? requestAnimationFrame(loop) : 0;
       if (!raf) inner.style.setProperty('--tilt', '0deg');
     };
     const bit = (cx, cy) => {   // 클릭하면 같은 모양의 작은 조각이 톡 튀어 오른다 (팝콘 튀기듯)
@@ -219,7 +219,7 @@
     document.addEventListener('pointermove', e => {
       if (e.pointerType === 'touch' || !spec) return;
       mx = e.clientX; my = e.clientY;
-      if (!seen) { seen = true; x = mx; y = my; el.classList.add('on'); }
+      if (!seen) { seen = true; px = mx; el.classList.add('on'); }
       // 게임·앱 화면과 그 둘레(80px)에서는 사이트 아이콘을 숨기고 원래 마우스 모양으로 돌려 놓는다 (게임 조작에 방해가 되지 않게)
       const fr = document.querySelector('.game-frame'), rc = fr && fr.getBoundingClientRect();
       near = !!rc && mx > rc.left - 80 && mx < rc.right + 80 && my > rc.top - 80 && my < rc.bottom + 80;
