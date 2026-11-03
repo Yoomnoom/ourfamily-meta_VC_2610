@@ -3,7 +3,8 @@
   const has = s => typeof s === 'string' && s.trim() !== '';
   const arr = a => Array.isArray(a) ? a : [];
   const obj = o => (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* 공모전 발표용: 심사위원 기기의 '움직임 줄이기' 설정과 상관없이 연출(등장·전환·로딩 화면)을 항상 보여 준다 */
+  const reduced = false;
   /** 내용이 하나라도 있는가 (auto 표시 행은 제외) */
   const filled = v => typeof v === 'string' ? has(v) : Array.isArray(v) ? v.some(filled)
     : v && typeof v === 'object' ? (v.auto ? false : Object.values(v).some(filled)) : false;
@@ -130,12 +131,112 @@
   function buildVideo(v, title, onFail) {
     const slot = h('div');
     if (!has(v.file)) { slot.append(videoFallback(v, title)); return slot; }
-    const video = h('video', { controls: true, playsinline: true, preload: 'metadata', src: mediaPath(v.file) + (has(v.cover) ? '' : '#t=' + (+v.coverAt > 0 ? +v.coverAt : 0.1)), title, 'aria-label': title + ' 영상' });
+    const video = h('video', { controls: true, playsinline: true, preload: 'metadata', src: mediaPath(v.file) + (has(v.cover) ? '' : '#t=' + (+v.coverAt > 0 ? +v.coverAt : 0.1)), 'aria-label': title + ' 영상' });
+    const st = mediaStatus(video, { above: true, errors: false, lazy: true }); slot.style.position = 'relative';
     if (has(v.cover)) video.setAttribute('poster', mediaPath(v.cover));   // 세로 포스터는 목록용이라 쓰지 않는다 (없으면 영상 첫 장면)
     if (has(v.captions)) video.append(h('track', { kind: 'captions', srclang: 'ko', label: '한국어', src: mediaPath(v.captions), default: true }));
-    video.addEventListener('error', () => { video.replaceWith(videoFallback(v, title)); if (onFail) onFail(); });
-    slot.append(video);
+    video.addEventListener('error', () => { st.el.remove(); video.replaceWith(videoFallback(v, title)); if (onFail) onFail(); });
+    slot.append(video, st.el);
     return slot;
+  }
+
+
+  /* ---------- 불러오는 상태 안내: 인터넷이 느릴 때 이유를 보여 준다 ---------- */
+  function mediaStatus(video, { noun = '영상', errors = true, above = false, lazy = false } = {}) {
+    const base = 'media-status' + (above ? ' above' : '');
+    const el = h('div', { class: base, role: 'status', 'aria-live': 'polite', hidden: true });
+    let t = 0, ok = false, bad = false;
+    const say = (msg, kind) => {   // kind: 'bad' 오류 · 'info' 안내 · 없으면 불러오는 중(빙글빙글)
+      bad = kind === 'bad'; el.className = base + (kind ? ' ' + kind : '');
+      el.replaceChildren(...[kind ? null : h('span', { class: 'spin', 'aria-hidden': 'true' }), h('span', { text: msg })].filter(Boolean)); el.hidden = false;
+    };
+    const hide = () => { clearTimeout(t); el.hidden = true; };
+    const pct = () => { try { const b = video.buffered; return video.duration > 0 && b.length ? Math.min(99, Math.round(b.end(b.length - 1) / video.duration * 100)) : 0; } catch { return 0; } };
+    const slow = () => { if (!ok && !bad) say(`${noun}을 불러오는 중이에요.\n인터넷이 느리면 조금 걸려요.` + (pct() ? `\n(${pct()}%)` : '')); };
+    const fail = code => say(code === 2 ? `인터넷이 끊겼거나 너무 느려서 ${noun}을 받지 못했어요.\n인터넷 연결을 확인해 주세요.`
+      : code === 3 ? `${noun} 파일이 손상되었거나 이 기기에서 재생할 수 없어요.`
+      : code === 4 ? `이 브라우저에서 재생할 수 없는 형식이거나 주소가 잘못되었어요.`
+      : `${noun}을 불러오지 못했어요.\n인터넷 연결을 확인해 주세요.`, 'bad');
+    if (!lazy) t = setTimeout(slow, 1200);
+    else video.addEventListener('play', () => { if (!ok) { clearTimeout(t); t = setTimeout(slow, 1200); } });
+    video.addEventListener('progress', () => { if (!el.hidden && !ok && !bad) slow(); });
+    video.addEventListener('playing', () => { ok = true; bad = false; hide(); });
+    video.addEventListener('pause', () => { if (!video.ended) hide(); });
+    video.addEventListener('waiting', () => { if (!ok) return; clearTimeout(t); t = setTimeout(() => say('다음 장면을 미리 받는 중이에요.\n인터넷이 느리면 잠시 멈출 수 있어요.'), 900); });
+    if (errors) video.addEventListener('error', () => fail(video.error && video.error.code));
+    window.addEventListener('offline', () => say('인터넷 연결이 끊겼어요.\n연결을 확인해 주세요.', 'bad'));
+    window.addEventListener('online', () => { if (bad && !video.error) hide(); });
+    return { el, say, fail, hide };
+  }
+  function frameStatus(frame, noun = '게임') {   // 게임·앱 화면(iframe)이 늦게 열릴 때
+    const el = h('div', { class: 'media-status', role: 'status', 'aria-live': 'polite', hidden: true });
+    let done = false;
+    const t1 = setTimeout(() => { if (done) return; el.replaceChildren(h('span', { class: 'spin', 'aria-hidden': 'true' }), h('span', { text: `${noun}을 불러오는 중이에요.\n인터넷이 느리면 조금 걸려요.` })); el.hidden = false; }, 1500);
+    const t2 = setTimeout(() => { if (done) return; el.className = 'media-status bad'; el.replaceChildren(h('span', { text: `아직 ${noun}을 불러오지 못했어요.\n인터넷을 확인하거나 "새 창에서 열기"를 눌러 보세요.` })); el.hidden = false; }, 15000);
+    frame.addEventListener('load', () => { done = true; clearTimeout(t1); clearTimeout(t2); el.hidden = true; });
+    return el;
+  }
+
+  /* ---------- 꾸밈 효과: 마우스(빛·고리·반짝임)와 말풍선 안내 (마우스를 쓰는 기기에서만) ---------- */
+  const finePointer = () => matchMedia('(hover:hover) and (pointer:fine)').matches;
+  function cursorFx() {
+    if (!finePointer() || window.parent !== window) return;   // 관리 페이지 미리보기 안에서는 쓰지 않는다
+    const glow = h('div', { class: 'fx-glow', 'aria-hidden': 'true' }), ring = h('div', { class: 'fx-ring', 'aria-hidden': 'true' });
+    document.body.append(glow, ring);
+    const HOT = 'a[href],button,[role="button"],.tile,.arrow,input,select,textarea,summary,label';
+    const COLORS = ['#e8c36a', '#ff7a82', '#fff6dc'];
+    let mx = 0, my = 0, gx = 0, gy = 0, rx = 0, ry = 0, raf = 0, last = 0, seen = false, live = 0;
+    const loop = () => {
+      gx += (mx - gx) * .12; gy += (my - gy) * .12; rx += (mx - rx) * .3; ry += (my - ry) * .3;
+      glow.style.transform = `translate(${gx}px,${gy}px)`; ring.style.transform = `translate(${rx}px,${ry}px)`;
+      raf = Math.abs(mx - rx) + Math.abs(my - ry) + Math.abs(mx - gx) + Math.abs(my - gy) > .5 ? requestAnimationFrame(loop) : 0;
+    };
+    const star = (x, y, far) => {
+      if (live > 28) return;
+      const s = h('span', { class: 'fx-star', 'aria-hidden': 'true' }), a = Math.random() * Math.PI * 2, d = far ? 30 + Math.random() * 46 : 8 + Math.random() * 22;
+      s.style.cssText = `left:${x}px;top:${y}px;--s:${far ? 8 + Math.random() * 8 : 5 + Math.random() * 6}px;--c:${COLORS[Math.floor(Math.random() * COLORS.length)]};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d + (far ? 0 : 14)}px`;
+      live++; s.addEventListener('animationend', () => { s.remove(); live--; }); document.body.append(s);
+    };
+    document.addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') return;
+      mx = e.clientX; my = e.clientY;
+      if (!seen) { seen = true; gx = rx = mx; gy = ry = my; glow.style.opacity = 1; ring.classList.add('on'); }
+      ring.classList.toggle('hot', !!(e.target.closest && e.target.closest(HOT)));
+      const t = performance.now(); if (t - last > 60) { last = t; star(mx, my); }
+      if (!raf) raf = requestAnimationFrame(loop);
+    }, { passive: true });
+    document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') return; for (let i = 0; i < 9; i++) star(e.clientX, e.clientY, true); ring.classList.add('press'); });
+    document.addEventListener('pointerup', () => ring.classList.remove('press'));
+    document.documentElement.addEventListener('mouseleave', () => { seen = false; glow.style.opacity = 0; ring.classList.remove('on'); });
+  }
+  function tooltips() {   // 브라우저 기본 말풍선(title) 대신 꾸민 말풍선을 보여 준다
+    if (!finePointer()) return;
+    const tip = h('div', { class: 'fx-tip', role: 'tooltip', 'aria-hidden': 'true' });
+    document.body.append(tip);
+    let cur = null, timer = 0;
+    const textOf = el => {
+      if (/^(VIDEO|IFRAME)$/.test(el.tagName)) return '';
+      let t = el.getAttribute('data-tip');
+      if (!t && el.hasAttribute('title')) { t = el.getAttribute('title'); el.setAttribute('data-tip', t); el.removeAttribute('title'); }
+      if (!t && el.matches('.arrow,.lb-btn,.tile')) t = el.getAttribute('aria-label');
+      return (t || '').trim();
+    };
+    const hide = () => { clearTimeout(timer); cur = null; tip.classList.remove('on'); };
+    const place = el => {
+      const r = el.getBoundingClientRect(); tip.classList.remove('below'); tip.style.left = '0px'; tip.style.top = '0px';
+      const w = tip.offsetWidth, hh = tip.offsetHeight, x = Math.min(innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
+      let y = r.top - hh - 12; if (y < 8) { y = r.bottom + 12; tip.classList.add('below'); }
+      tip.style.left = x + 'px'; tip.style.top = y + 'px'; tip.style.setProperty('--ax', (r.left + r.width / 2 - x) + 'px');
+    };
+    document.addEventListener('mouseover', e => {
+      const el = e.target.closest && e.target.closest('[title],[data-tip],.arrow,.lb-btn,.tile');
+      if (el === cur) return;
+      hide(); if (!el) return;
+      const t = textOf(el); if (!t) return;
+      cur = el; timer = setTimeout(() => { tip.textContent = t; place(el); tip.classList.add('on'); }, 350);
+    });
+    ['scroll', 'mousedown', 'keydown'].forEach(k => window.addEventListener(k, hide, { passive: true, capture: true }));
+    document.documentElement.addEventListener('mouseleave', hide);
   }
 
   async function copyText(text, btn) {
@@ -343,6 +444,7 @@
     setTimeout(() => { l.classList.add('done'); setTimeout(() => l.remove(), 600); }, Math.max(0, 450 - (performance.now() - t0)));
   }
 
+  cursorFx(); tooltips();
   window.addEventListener('scroll', syncHeader, { passive: true });
   window.addEventListener('pageshow', () => document.body.classList.remove('leaving'));
   document.addEventListener('click', e => {
@@ -502,6 +604,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, TITLES, avail,
+  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, reduced, params };
 })();

@@ -14,7 +14,7 @@
 <script src="common.js"></script>
 <script>
 (() => {
-  const { h, has, arr, obj, mediaPath, watchHref, href, poster, section, gallery, tools: _t, toolList, boot, reduced, production } = App;
+  const { h, has, arr, obj, mediaPath, watchHref, href, poster, section, gallery, tools: _t, toolList, boot, reduced, production, mediaStatus } = App;
   const T0 = { works: '지금 상영 중', topics: '이 영화들이 담은 것', album: '비하인드 컷', making: '메이킹' };
   let current = 0;           // 카로셀 위치는 다시 그려도 유지한다
 
@@ -31,15 +31,16 @@
       {
         const list = [hr.video, ...arr(hr.more).map(x => obj(x).file)].filter(has), many = list.length > 1;   // 영상이 여러 개면 차례로 이어서 보여 주고 마지막 다음에는 처음으로 돌아간다
         let at = 0, fails = 0;
-        const v = h('video', { class: 'hero-media', muted: true, autoplay: true, loop: !many, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', title: (site.name || '') + ' 대표 영상', src: mediaPath(list[0]) });
+        const v = h('video', { class: 'hero-media', muted: true, autoplay: true, loop: !many, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', src: mediaPath(list[0]) });
         if (has(hr.poster)) v.setAttribute('poster', mediaPath(hr.poster));
         v.muted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');   // 휴대폰(iOS)에서 자동 재생되려면 속성으로도 필요하다
         const go = () => { at = (at + 1) % list.length; v.src = mediaPath(list[at]); v.play && v.play().catch(() => {}); };
         if (many) v.addEventListener('ended', go);
-        v.addEventListener('error', () => { if (many && ++fails < list.length) go(); else v.replaceWith(...(still_ ? [still_] : [])); });
+        const st = mediaStatus(v, { errors: false });   // 인터넷이 느리거나 막힌 이유를 화면에 알려 준다
+        v.addEventListener('error', () => { if (many && ++fails < list.length) go(); else { st.fail(v.error && v.error.code); v.replaceWith(...(still_ ? [still_] : [])); } });
         v.addEventListener('playing', () => { fails = 0; });
-        v.play && v.play().catch(() => {});
-        media.push(v);
+        v.play && v.play().catch(e => { if (e && e.name === 'NotAllowedError') { st.say('자동 재생이 막혀 있어요.\n화면을 한 번 누르면 재생돼요.', 'info'); document.addEventListener('pointerdown', () => v.play().catch(() => {}), { once: true }); } });
+        media.push(v, st.el);
       }
     } else if (has(hr.poster)) media.push(img(hr.poster));
     return h('section', { class: 'hero', 'data-section': 'hero', 'aria-label': '대표 화면' }, media,
