@@ -130,7 +130,7 @@
   function buildVideo(v, title, onFail) {
     const slot = h('div');
     if (!has(v.file)) { slot.append(videoFallback(v, title)); return slot; }
-    const video = h('video', { controls: true, playsinline: true, preload: 'metadata', src: mediaPath(v.file) + (has(v.cover) ? '' : '#t=' + (+v.coverAt > 0 ? +v.coverAt : 0.1)), 'aria-label': title + ' 영상' });
+    const video = h('video', { controls: true, playsinline: true, preload: 'metadata', crossorigin: has(v.captions) ? 'anonymous' : null, src: mediaPath(v.file) + (has(v.cover) ? '' : '#t=' + (+v.coverAt > 0 ? +v.coverAt : 0.1)), 'aria-label': title + ' 영상' });
     const st = mediaStatus(video, { above: true, errors: false, lazy: true }); slot.style.position = 'relative';
     if (has(v.cover)) video.setAttribute('poster', mediaPath(v.cover));   // 세로 포스터는 목록용이라 쓰지 않는다 (없으면 영상 첫 장면)
     if (has(v.captions)) video.append(h('track', { kind: 'captions', srclang: 'ko', label: '한국어', src: mediaPath(v.captions), default: true }));
