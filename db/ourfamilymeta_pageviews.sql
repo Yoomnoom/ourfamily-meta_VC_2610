@@ -15,6 +15,7 @@ create index if not exists ourfamilymeta_pageviews_page_idx
 
 -- 2) 권한: 누구나 기록(insert)만 가능, 읽기·수정·삭제 정책은 만들지 않는다 (아래 함수로만 합계를 본다)
 alter table public.ourfamilymeta_pageviews enable row level security;
+grant insert on public.ourfamilymeta_pageviews to anon, authenticated;
 drop policy if exists ourfamilymeta_pageviews_insert on public.ourfamilymeta_pageviews;
 create policy ourfamilymeta_pageviews_insert on public.ourfamilymeta_pageviews
   for insert to anon, authenticated with check (true);
