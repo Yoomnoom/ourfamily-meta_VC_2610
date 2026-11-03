@@ -397,7 +397,8 @@ dialog#editors{width:min(680px,94vw)}
         { title: '첫 화면 배경', pv: ['index.html', 'hero'], fields: [{ group: 'hero', fields: [
           S('mode', '배경 종류', [['video', '영상 (반복 재생)'], ['image', '사진 한 장']]),
           F('video', '반복 재생할 영상', 'video', { hint: '10~20초, 5MB 이하가 좋아요. 소리는 나지 않아요.' }),
-          F('poster', '영상 대신 보여줄 사진', 'image', { hint: '휴대폰이나 영상이 안 나올 때 대신 나와요.' }),
+          { type: 'list', key: 'more', itemLabel: i => `이어서 보여줄 영상 ${i + 1}`, addLabel: '영상 추가 (이어서 재생)', fields: [F('file', '영상', 'video', { hint: '위 영상이 끝나면 이어서 나와요. 마지막 영상 다음에는 처음 영상으로 돌아가요.' })] },
+          F('poster', '영상 대신 보여줄 사진', 'image', { hint: '영상이 불러와지기 전과, 영상이 안 나올 때(움직임 줄이기·데이터 절약 설정 등) 대신 나와요.' }),
           F('image', '배경 사진', 'image', { hint: '"사진 한 장"을 골랐을 때 써요.' })] }] },
         { title: '첫 화면 글자와 버튼', pv: ['index.html', 'hero'], fields: [{ group: 'hero', fields: [
           T('title', '큰 제목', { hint: '비워 두면 슬로건을 써요.' }), A('text', '짧은 설명', { rows: 3, ph: '예) 우리 가족의 이야기를 생성형 AI와 함께 영상으로 그렸어요.' }),
@@ -473,7 +474,7 @@ dialog#editors{width:min(680px,94vw)}
     site: { name: '[사이트 이름]', slogan: '[슬로건]', logoText: '', producer: '[제작자 이름]', email: '[이메일 주소]', sns: [],
       contestName: '2026 생성형 AI 창작 공모전 · Meta와 함께하는 AI 페스티벌 – AI로 그려낸 가족 이야기', contestInfo: '', footer: '' },
     sectionTitles: { ...SECTION_TITLES },
-    hero: { mode: 'video', video: '', poster: '', image: '', title: '', text: '', ctaWatch: '지금 관람하기', ctaMaking: '메이킹 보기' },
+    hero: { mode: 'video', video: '', more: [], poster: '', image: '', title: '', text: '', ctaWatch: '지금 관람하기', ctaMaking: '메이킹 보기' },
     home: { titles: { works: '지금 상영 중', topics: '이 영화들이 담은 것', album: '비하인드 컷', making: '메이킹' },
       topics: TOPIC_LABELS.map(label => ({ label, title: '', text: '' })) },
     making: { intro: '', timeline: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, declaration: { title: '', text: '' } },

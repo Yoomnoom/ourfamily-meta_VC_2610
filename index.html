@@ -22,7 +22,7 @@
   function hero(d, site, av) {
     const hr = obj(d.hero);
     const title = has(hr.title) ? hr.title : (has(site.slogan) ? site.slogan : site.name);
-    const still = matchMedia('(max-width:719px)').matches || reduced || (navigator.connection && navigator.connection.saveData);
+    const still = reduced || (navigator.connection && navigator.connection.saveData);   // 움직임 줄이기·데이터 절약을 켠 경우만 사진으로 (휴대폰도 영상을 재생한다)
     const img = f => { const i = h('img', { class: 'hero-media', src: mediaPath(f), alt: '', 'aria-hidden': 'true' }); i.addEventListener('error', () => i.remove()); return i; };
     const media = [];
     if (hr.mode === 'image') { if (has(hr.image)) media.push(img(hr.image)); }
@@ -30,10 +30,15 @@
       const still_ = has(hr.poster) ? img(hr.poster) : null;
       if (still || !has(hr.video)) { if (still_) media.push(still_); }
       else {
-        const v = h('video', { class: 'hero-media', muted: true, autoplay: true, loop: true, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', title: (site.name || '') + ' 대표 영상', src: mediaPath(hr.video) });
+        const list = [hr.video, ...arr(hr.more).map(x => obj(x).file)].filter(has), many = list.length > 1;   // 영상이 여러 개면 차례로 이어서 보여 주고 마지막 다음에는 처음으로 돌아간다
+        let at = 0, fails = 0;
+        const v = h('video', { class: 'hero-media', muted: true, autoplay: true, loop: !many, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', title: (site.name || '') + ' 대표 영상', src: mediaPath(list[0]) });
         if (has(hr.poster)) v.setAttribute('poster', mediaPath(hr.poster));
-        v.muted = true;
-        v.addEventListener('error', () => v.replaceWith(...(still_ ? [still_] : [])));
+        v.muted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');   // 휴대폰(iOS)에서 자동 재생되려면 속성으로도 필요하다
+        const go = () => { at = (at + 1) % list.length; v.src = mediaPath(list[at]); v.play && v.play().catch(() => {}); };
+        if (many) v.addEventListener('ended', go);
+        v.addEventListener('error', () => { if (many && ++fails < list.length) go(); else v.replaceWith(...(still_ ? [still_] : [])); });
+        v.addEventListener('playing', () => { fails = 0; });
         v.play && v.play().catch(() => {});
         media.push(v);
       }
