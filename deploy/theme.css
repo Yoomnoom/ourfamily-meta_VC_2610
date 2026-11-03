@@ -105,7 +105,10 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 /* ===== 홈: 히어로 ===== */
 .hero{position:relative;min-height:clamp(520px,92svh,900px);display:flex;align-items:flex-end;overflow:hidden;
   background:linear-gradient(160deg,#4a1a26 0%,#2a1b3a 55%,#14111c 100%)}
+.hero-stage{position:absolute;inset:0}
 .hero-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.hero-stage .hero-media{animation:hero-in .7s ease both}
+@keyframes hero-in{from{opacity:0}}
 .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(13,11,16,.6) 0%,rgba(13,11,16,.4) 45%,rgba(13,11,16,.92) 88%,var(--bg) 100%)}
 .hero-in{position:relative;z-index:2;padding:calc(var(--hh) + 40px) 0 clamp(48px,9vw,96px)}
