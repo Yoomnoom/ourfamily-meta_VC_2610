@@ -7,7 +7,7 @@ media/ 폴더 안내
 [넣을 파일]
 - 영상:   mp4 (5분 이내)                 예) work-1.mp4
 - 히어로: 루프 mp4 (소리 없음) + 대체 이미지   예) hero-loop.mp4, hero-poster.jpg
-- 포스터: jpg 또는 png, 세로 2:3 권장    예) work-1-poster.jpg  (예: 800x1200)
+- 포스터: jpg 또는 png, 세로 2:3 권장    예) work-1-poster.jpg  (기본 규격: 1500x2168)
           홈 카로셀 카드와 상영관 영상 썸네일로 함께 쓰입니다.
 - 자막:   WebVTT (.vtt, 선택)            예) work-1.vtt
 - 사진:   가족 사진·제작 과정 갤러리용    예) gallery-1.jpg  (가로 1600px 이하 권장, 용량은 500KB~1MB 정도로)

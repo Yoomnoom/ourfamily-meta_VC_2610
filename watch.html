@@ -74,7 +74,7 @@
     const epList = ser ? works.filter(e => e.series === ser.id).sort((a, b) => (+a.episode || 0) - (+b.episode || 0)) : [];
     
     const epThumb = e => {   // 회차 썸네일: 가로 표지가 있으면 그것, 없으면 포스터
-      const f = obj(e.video).cover || obj(e.video).poster, box = h('span', { class: 'ep-thumb', 'aria-hidden': 'true' });
+      const f = obj(e.video).cover || obj(e.video).poster, box = h('span', { class: 'ep-thumb' + (has(obj(e.video).cover) ? '' : ' tall'), 'aria-hidden': 'true' });   // 세로 포스터는 자르지 않고 통째로(contain)
       if (has(f)) { const img = h('img', { src: mediaPath(f), alt: '', loading: 'lazy', draggable: 'false' }); img.addEventListener('error', () => img.remove()); box.append(img); }
       return box;
     };

@@ -326,7 +326,7 @@ dialog#editors{width:min(680px,94vw)}
             F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
             { type: 'check', key: 'coverLogo', label: '표지 위에 로고 얹기 (연재물 로고 사용)', rerender: true, show: () => kindOf() === 'video' },
             RR('표지 로고 위치·크기', [{ key: 'coverLogoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'coverLogoY', label: '세로', min: 0, max: 100, def: 50 }, { key: 'coverLogoW', label: '크기', min: 10, max: 100, def: 40 }], { show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '영상을 재생하면 로고는 사라져요. 크기는 영상 폭 비율이에요.' }),
-            F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
+            F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
             RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
@@ -402,10 +402,10 @@ dialog#editors{width:min(680px,94vw)}
         { title: '첫 화면 배경', pv: ['index.html', 'hero'], fields: [{ group: 'hero', fields: [
           S('mode', '첫 화면 처음에 보여줄 것', [['video', '영상'], ['image', '사진']], { hint: '아래에서 사진·영상을 더 추가하면 차례로 이어서 나와요.' }),
           F('video', '영상', 'video', { hint: '"영상"을 골랐을 때 처음에 나와요.\n10~20초, 5MB 이하가 좋아요. 소리는 나지 않아요.' }),
-          F('videoPortrait', '휴대폰용 세로 영상 (선택)', 'video', { hint: '세로 화면(휴대폰)에서는 위 영상 대신 이 영상이 나와요.\n세로 9:16(예 1080×1920px)을 권장해요. 비우면 가로 영상을 잘라서 보여줘요.' }),
+          F('videoPortrait', '휴대폰용 세로 영상 (선택)', 'video', { hint: '세로 화면(휴대폰)에서는 위 영상 대신 이 영상이 나와요.\n세로 9:16(예 1080×1920px)을 권장해요. 비우면 가로 영상을 자르지 않고 통째로 보여줘요.' }),
           { type: 'list', key: 'more', itemLabel: i => `이어서 보여줄 사진·영상 ${i + 1}`, addLabel: '사진·영상 추가 (이어서 보여주기)', fields: [F('file', '사진 또는 영상', 'media', { hint: '앞의 것이 끝나면 이어서 나와요. 마지막 다음에는 처음으로 돌아가요.\n영상은 끝까지 재생하고, 사진은 아래 시간만큼 보여줘요.' }), F('portrait', '휴대폰용 세로 사진·영상 (선택)', 'media', { hint: '세로 화면(휴대폰)에서는 위 파일 대신 나와요. 세로 9:16 권장.' })] },
           T('photoSeconds', '사진 한 장 보여주는 시간 (초)', { ph: '5', hint: '사진이 둘 이상 이어질 때 적용돼요. 비우면 5초예요. (2~60초)' }),
-          F('poster', '영상 대신 보여줄 사진', 'image', { hint: '영상이 불러와지기 전과, 영상이 안 나올 때(움직임 줄이기·데이터 절약 설정 등) 대신 나와요.' }),
+          F('poster', '영상 대신 보여줄 사진', 'image', { hint: '영상이 불러와지기 전과, 영상이 안 나올 때 대신 나와요.' }),
           F('image', '사진', 'image', { hint: '"사진"을 골랐을 때 처음에 나와요.' }),
           F('imagePortrait', '휴대폰용 세로 사진 (선택)', 'image', { hint: '세로 화면(휴대폰)에서는 위 사진 대신 이 사진이 나와요. 세로 9:16 권장.' })] }] },
         { title: '첫 화면 글자와 버튼', pv: ['index.html', 'hero'], fields: [{ group: 'hero', fields: [
@@ -455,7 +455,7 @@ dialog#editors{width:min(680px,94vw)}
         T('title', '연재물 제목', { req: 1, uuid: 1, ph: '예) 우리 가족 이야기' }),
         A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
         S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
-        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1000×1500px 권장(최소 600×900px)이에요. 다른 비율은 가운데만 남기고 잘려요.' }),
+        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 잘려요.' }),
         F('logo', '대표 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
         RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' })] }] }] }
   ];
