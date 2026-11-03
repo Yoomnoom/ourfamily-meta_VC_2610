@@ -410,11 +410,11 @@ dialog#editors{width:min(680px,94vw)}
       checks: d => [ck('첫 화면 배경 파일', st(obj(d.hero).mode === 'image' ? obj(d.hero).image : obj(d.hero).video), false, 'hero/video', 'hero/image'),
         ck('주제 설명 카드 3개', arr(obj(d.home).topics).length ? worst(arr(obj(d.home).topics).map(t => Math.min(st(t.title), st(t.text)))) : 0, false, 'topics/title', 'topics/text')] },
     { id: 'album', scope: 'site', title: '비하인드 컷', pv: ['album.html', 'gallery'],
-      why: '사진을 여러 장 한꺼번에 끌어다 놓을 수 있어요. 홈에는 앞의 6장이 나와요.',
+      why: '사진과 영상을 여러 개 한꺼번에 끌어다 놓을 수 있어요. 홈에는 앞의 6개가 나와요.',
       parts: [{ fields: [{ group: 'album', fields: [
         A('intro', '앨범 소개 문구 (없어도 돼요)', { rows: 2 }),
-        { type: 'list', key: 'photos', multiDrop: true, itemLabel: i => `사진 ${i + 1}`, addLabel: '사진 1장 추가', fields: [
-          F('file', '사진 파일', 'image'), T('caption', '사진 위에 보일 글', { ph: '예) 시나리오 회의' }),
+        { type: 'list', key: 'photos', multiDrop: true, itemLabel: i => `사진 ${i + 1}`, addLabel: '사진·영상 1개 추가', fields: [
+          F('file', '사진·영상 파일', 'media', { hint: '사진(jpg·png·webp) 또는 영상(mp4, 50MB 이하)을 올려요.' }), T('caption', '사진 위에 보일 글', { ph: '예) 시나리오 회의' }),
           T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진이 안 보이는 분께 읽어 드리는 글이에요.\n사진 속 모습을 한 문장으로 적어요.' })] }] }] }],
       checks: d => [ck('비하인드 컷 사진 (파일 + 설명)', best(arr(obj(d.album).photos).map(x => Math.min(st(x.file), st(x.alt)))), false, 'file', 'alt')] },
     { id: 'making', scope: 'site', title: '메이킹 페이지 공통', pv: ['making.html', 'process'],
@@ -921,17 +921,17 @@ dialog#editors{width:min(680px,94vw)}
 
     // 앨범: 여러 장 한 번에 끌어다 놓기
     function multiDrop() {
-      const pick = el('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true });
-      const zone = el('div', { class: 'dropmulti' }, el('div', { text: '사진을 여러 장 끌어다 놓으면 한 번에 추가돼요.' }),
-        el('button', { type: 'button', class: 'btn sm', text: '사진 여러 장 선택', onclick: () => pick.click() }), pick);
+      const pick = el('input', { type: 'file', accept: 'image/*,video/*,.mp4', multiple: true, hidden: true });
+      const zone = el('div', { class: 'dropmulti' }, el('div', { text: '사진·영상을 여러 개 끌어다 놓으면 한 번에 추가돼요.' }),
+        el('button', { type: 'button', class: 'btn sm', text: '사진·영상 여러 개 선택', onclick: () => pick.click() }), pick);
       const addFiles = async files => {
-        files = [...files].filter(x => /^image\//.test(x.type) || /\.(jpe?g|png|webp|gif|avif)$/i.test(x.name));
-        if (!files.length) return toast('이미지 파일만 추가할 수 있어요.');
+        files = [...files].filter(x => /^(image|video)\//.test(x.type) || /\.(jpe?g|png|webp|gif|avif|mp4)$/i.test(x.name));
+        if (!files.length) return toast('사진 또는 mp4 영상만 추가할 수 있어요.');
         const a = items(); while (a.length && !filled(a[a.length - 1])) a.pop();
         let copied = 0;
         for (const file of files) { const name = await placeFile(file); if (dir) copied++; a.push({ file: name, caption: '', alt: '' }); }
         changed(); draw(a.length - files.length, 'alt');
-        toast(`사진 ${files.length}장을 추가했어요.${dir ? '' : '\nmedia/ 폴더에 같은 이름으로 직접 넣어 주세요.'}`);
+        toast(`${files.length}개를 추가했어요.${dir ? '' : '\nmedia/ 폴더에 같은 이름으로 직접 넣어 주세요.'}`);
       };
       pick.addEventListener('change', () => { addFiles(pick.files); pick.value = ''; });
       zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
@@ -1084,8 +1084,8 @@ dialog#editors{width:min(680px,94vw)}
   const origNames = (() => { try { return JSON.parse(localStorage.getItem(NAMES_KEY)) || {}; } catch { return {}; } })();
   const rememberName = (url, n) => { origNames[url] = n; try { localStorage.setItem(NAMES_KEY, JSON.stringify(origNames)); } catch {} };
   function renderFile(f, o, id) {
-    const kind = f.kind, accept = kind === 'video' ? 'video/*,.mp4' : kind === 'vtt' ? '.vtt,text/vtt' : kind === 'pdf' ? '.pdf,application/pdf' : 'image/*';
-    const kindLabel = { video: '영상', image: '이미지', vtt: '자막', pdf: 'PDF' }[kind];
+    const kind = f.kind, accept = kind === 'media' ? 'image/*,video/*,.mp4' : kind === 'video' ? 'video/*,.mp4' : kind === 'vtt' ? '.vtt,text/vtt' : kind === 'pdf' ? '.pdf,application/pdf' : 'image/*';
+    const kindLabel = { video: '영상', image: '이미지', media: '사진·영상', vtt: '자막', pdf: 'PDF' }[kind];
     const box = el('div', { class: 'filebox empty' }), thumb = el('div', { class: 'f-thumb', 'aria-hidden': 'true' });
     const nameEl = el('div', { class: 'f-name' }), meta = el('div', { class: 'f-meta' });
     const input = el('input', { type: 'file', accept, hidden: true, tabindex: '-1' });
@@ -1101,8 +1101,9 @@ dialog#editors{width:min(680px,94vw)}
       const odd = !isUrl(v) && /[^\x00-\x7F]|\s/.test(v) ? ' · 공백·한글 이름은 피하는 게 좋아요.' : '';
       if (mi.state === 'ok') {
         meta.className = 'f-meta ok'; meta.textContent = (isUrl(v) ? '✓ 올렸어요' : '✓ media/에 있음') + (mi.size ? ' · ' + fmtSize(mi.size) : '') + odd;
-        if (kind === 'image') thumb.replaceChildren(el('img', { src: mi.url, alt: '' }));
-        else if (kind === 'video') { const vd = el('video', { src: mi.url, muted: true, preload: 'metadata', playsinline: true }); vd.muted = true; vd.addEventListener('loadedmetadata', () => { vd.currentTime = Math.min(0.1, vd.duration || 0.1); }); thumb.replaceChildren(vd); }
+        const asVideo = kind === 'video' || (kind === 'media' && /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(v));
+        if (kind === 'image' || (kind === 'media' && !asVideo)) thumb.replaceChildren(el('img', { src: mi.url, alt: '' }));
+        else if (asVideo) { const vd = el('video', { src: mi.url, muted: true, preload: 'metadata', playsinline: true }); vd.muted = true; vd.addEventListener('loadedmetadata', () => { vd.currentTime = Math.min(0.1, vd.duration || 0.1); }); thumb.replaceChildren(vd); }
         else thumb.textContent = kind === 'pdf' ? 'PDF' : 'VTT';
       } else if (mi.state === 'missing') {
         meta.className = 'f-meta bad'; meta.textContent = '⚠ media/ 폴더에 이 파일이 없어요.' + (dir ? '' : ' 같은 이름으로 직접 넣어 주세요.') + odd; thumb.textContent = '없음';
@@ -1110,7 +1111,7 @@ dialog#editors{width:min(680px,94vw)}
     }
     async function setFile(file) {
       if (!file) return;
-      if (kind === 'video' && !/\.mp4$/i.test(file.name)) toast('mp4 파일을 권장해요. 다른 형식은 일부 브라우저에서 재생되지 않을 수 있어요.');
+      if ((kind === 'video' || (kind === 'media' && /^video\//.test(file.type))) && !/\.mp4$/i.test(file.name)) toast('mp4 파일을 권장해요. 다른 형식은 일부 브라우저에서 재생되지 않을 수 있어요.');
       const name = await placeFile(file);
       if (!name) return;
       if (isUrl(name)) rememberName(name, file.name);

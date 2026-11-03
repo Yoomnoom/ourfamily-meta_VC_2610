@@ -170,9 +170,10 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .tile{position:relative;display:block;width:100%;height:100%;padding:0;border:0;border-radius:14px;overflow:hidden;cursor:zoom-in;background:var(--surface2);
   box-shadow:0 12px 26px -14px rgba(0,0,0,.95);transition:transform .25s,box-shadow .25s}
 .tile:hover{transform:translateY(-3px);box-shadow:0 18px 34px -14px rgba(0,0,0,1),0 0 0 2px var(--accent)}
-.tile img{width:100%;height:100%;object-fit:cover;display:block;position:relative}
+.tile img,.tile video{width:100%;height:100%;object-fit:cover;display:block;position:relative;pointer-events:none}
+.tile .vbadge{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:1.1rem;display:grid;place-items:center;padding-left:3px}
 .masonry .tile{height:auto}
-.masonry .tile img{height:auto}
+.masonry .tile img,.masonry .tile video{height:auto}
 .tile .cap{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;font-size:.88rem;text-align:left;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.85))}
 dialog.lightbox{border:0;padding:0;background:transparent;color:var(--text);width:min(96vw,1100px);max-width:none;max-height:96vh;overflow:visible}
 dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}

@@ -222,6 +222,7 @@
 
   /* ---------- 사진 갤러리 + 확대 ---------- */
   const RATIOS = [1.25, .8, 1, 1.4, .9, 1.1];   // masonry에서 사진이 없을 때의 대체 카드 비율
+  const isVideo = f => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(String(f || ''));   // 비하인드 컷은 사진과 영상을 함께 담는다
   function gallery(items, { masonry = false } = {}) {
     const dlg = h('dialog', { class: 'lightbox', 'aria-label': '사진 확대 보기' });
     let cur = 0;
@@ -235,7 +236,10 @@
       const it = items[cur];
       const cap = has(it.caption) ? it.caption : (it.alt || '');
       let media;
-      if (has(it.file)) {
+      if (has(it.file) && isVideo(it.file)) {
+        media = h('video', { class: 'lb-img', src: mediaPath(it.file), controls: true, playsinline: true, autoplay: true, 'aria-label': it.alt || cap });
+        media.addEventListener('error', () => media.replaceWith(h('div', { class: 'lb-miss', role: 'img', 'aria-label': it.alt || cap })));
+      } else if (has(it.file)) {
         media = h('img', { class: 'lb-img', src: mediaPath(it.file), alt: it.alt || cap });
         media.addEventListener('error', () => media.replaceWith(h('div', { class: 'lb-miss', role: 'img', 'aria-label': it.alt || cap })));
       } else media = h('div', { class: 'lb-miss', role: 'img', 'aria-label': it.alt || cap });
@@ -243,6 +247,7 @@
       prev.hidden = next.hidden = items.length < 2;
     }
     close.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('close', () => fig.replaceChildren());   // 닫으면 영상 소리도 함께 멈춘다
     prev.addEventListener('click', () => show(cur - 1));
     next.addEventListener('click', () => show(cur + 1));
     dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
@@ -256,7 +261,11 @@
       const btn = h('button', { type: 'button', class: 'tile', 'aria-label': `${it.alt || cap || '사진'} 확대 보기` });
       if (masonry) btn.style.aspectRatio = RATIOS[i % RATIOS.length];
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
-      if (has(it.file)) {
+      if (has(it.file) && isVideo(it.file)) {
+        const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
+        vd.muted = true; vd.addEventListener('error', () => vd.remove());
+        btn.append(vd, h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
+      } else if (has(it.file)) {
         const img = h('img', { src: mediaPath(it.file), alt: '', loading: 'lazy' });
         img.addEventListener('load', () => { if (masonry) btn.style.aspectRatio = ''; });
         img.addEventListener('error', () => img.remove());
