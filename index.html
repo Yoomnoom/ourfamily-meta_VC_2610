@@ -129,8 +129,8 @@
     paint(false);
     const box = h('div', { class: 'carousel' }, stage, n > 1 && prev, n > 1 && next, dots, live);
 
-    // 자동 넘김: 3초마다 다음 작품(마지막 다음엔 처음으로). 마우스를 올리거나 포커스·터치 중, 탭이 숨겨진 동안, '동작 줄이기' 설정에서는 멈춘다.
-    if (n > 1 && !reduced) {
+    // 자동 넘김: 3초마다 다음 작품(마지막 다음엔 처음으로). 마우스를 올리거나 포커스·터치 중, 탭이 숨겨진 동안 멈춘다. '동작 줄이기' 설정에서도 돌지만, 그때는 CSS 가 전환 애니메이션을 없애 카드가 바로 바뀐다.
+    if (n > 1) {
       let hold = false, tick = null;
       const stop = () => { clearInterval(tick); tick = null; };
       const start = () => { if (tick || hold || document.hidden) return; tick = setInterval(() => {
