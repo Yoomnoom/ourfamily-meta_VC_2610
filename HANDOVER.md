@@ -5,6 +5,8 @@
 ---
 
 ## 2026-11-03 (게임 iframe 권한)
+
+- **홈 대표 화면 세로 화면 처리**: 가로 영상·사진은 세로 화면(휴대폰)에서도 자르지 않고 통째로 보여 준다(`object-fit:contain`). 세로용 파일(`videoPortrait`/`imagePortrait`/목록의 `portrait`)은 **올렸을 때만** 세로 화면에서 대신 쓰고, 그때는 꽉 채운다(`.fill`, cover).
 - 홈 대표 화면에 **휴대폰용 세로 버전**: `hero.videoPortrait`/`hero.imagePortrait`, `hero.more[].portrait`. 세로 화면(`max-aspect-ratio:1/1`)에서 있으면 대신 쓴다. 없으면 가로 영상을 잘라 보여줌(1280×720 영상은 폰에서 폭의 27%만 보임). 390×844 폰 점검: 가로 넘침 없음, 작은 터치 대상(캐러셀 점 28px, 관람하기 링크 31px 높이, 푸터 메일 20px) 남아 있음, 찰칵 게임은 CMS에서 "앱용(세로형)"을 켜지 않으면 16:9로 작게 보임.
 - **방문 집계 2차**(`db/ourfamilymeta_pageviews_v2.sql`, 2026-11-03 Supabase에 실행 완료): 기록에 체류 시간·재방문(방문자 번호)·세션·기기·브라우저·OS·언어·시간대·유입 경로·국가·도시 추가. `common.js track()`이 열 때 `view`, 떠날 때 `leave`(화면에 보인 초)를 `/api/track`으로 보내고, **`api/track.js`(Vercel Function, 배포 시 `deploy/api/`로 복사)** 가 Vercel 의 `x-vercel-ip-country/city` 헤더를 붙여 Supabase에 넣는다(IP 저장 안 함, 비밀 키 없음). 함수가 없으면 Supabase에 직접(최소 칸만). CMS "방문 집계"는 `ourfamilymeta_pageview_report()`(jsonb)로 요약 카드·14일 추이·페이지별·시간대·기기·브라우저·OS·국가·도시·유입·언어를 보여 준다. 이전 `ourfamilymeta_pageview_stats()`는 삭제됨.
 - 마우스 모양은 게임·앱 화면(`.game-frame`)과 그 둘레 80px 안에서는 숨기고 원래 포인터로 돌려 놓는다(게임 조작 방해 방지, `cursorFx`의 `near`).

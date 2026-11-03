@@ -32,16 +32,16 @@
     const next = () => { at = (at + 1) % list.length; show(); };
     function show() {
       clearTimeout(timer);
-      const tall = matchMedia('(max-aspect-ratio: 1/1)').matches, it = list[at], f = tall && has(it.portrait) ? it.portrait : it.file;   // 세로 화면(휴대폰)에서는 세로용 사진·영상이 있으면 그것을 쓴다
+      const tall = matchMedia('(max-aspect-ratio: 1/1)').matches, it = list[at], own = tall && has(it.portrait), f = own ? it.portrait : it.file;   // 세로 화면(휴대폰)에서는 세로용 사진·영상이 있으면 그것을 쓴다
       if (!isVideo(f)) {
-        const i = img(f);
+        const i = img(f); if (own) i.classList.add('fill');
         i.addEventListener('load', () => { fails = 0; });
         i.addEventListener('error', () => { if (many && ++fails < list.length) next(); });
         stage.replaceChildren(i);
         if (many) timer = setTimeout(next, secs * 1000);
         return;
       }
-      const v = h('video', { class: 'hero-media', muted: true, autoplay: true, loop: !many, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', src: mediaPath(f) });
+      const v = h('video', { class: 'hero-media' + (own ? ' fill' : ''), muted: true, autoplay: true, loop: !many, playsinline: true, preload: 'auto', 'aria-hidden': 'true', tabindex: '-1', src: mediaPath(f) });
       if (has(hr.poster)) v.setAttribute('poster', mediaPath(hr.poster));
       v.muted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');   // 휴대폰(iOS)에서 자동 재생되려면 속성으로도 필요하다
       const st = mediaStatus(v, { errors: false });   // 인터넷이 느리거나 막힌 이유를 화면에 알려 준다

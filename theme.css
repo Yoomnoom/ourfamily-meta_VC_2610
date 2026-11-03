@@ -108,6 +108,8 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .hero-stage{position:absolute;inset:0}
 .hero-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .hero-stage .hero-media{animation:hero-in .7s ease both}
+/* 세로 화면(휴대폰): 가로 영상·사진을 잘라 내지 않고 통째로 보여 준다. 휴대폰용 세로 파일(.fill)을 올렸을 때만 화면을 가득 채운다 */
+@media (max-aspect-ratio:1/1){.hero{min-height:clamp(460px,72svh,680px)}.hero-stage .hero-media{object-fit:contain;object-position:center 20%}.hero-stage .hero-media.fill{object-fit:cover;object-position:center}}
 @keyframes hero-in{from{opacity:0}}
 .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(13,11,16,.6) 0%,rgba(13,11,16,.4) 45%,rgba(13,11,16,.92) 88%,var(--bg) 100%)}
