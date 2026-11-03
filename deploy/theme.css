@@ -117,7 +117,7 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .stage{position:relative;height:calc(var(--cw)*1.5 + 168px);touch-action:pan-y;user-select:none;-webkit-user-select:none;outline-offset:-4px}
 .slide{position:absolute;left:50%;top:0;width:var(--cw);transform-origin:50% 0;
   transform:translateX(-50%) translateX(calc(var(--o)*var(--cw)*.86)) scale(var(--s));
-  opacity:var(--op);transition:transform .45s cubic-bezier(.3,.7,.2,1),opacity .35s;cursor:pointer}
+  opacity:var(--op);transition:transform .8s cubic-bezier(.22,.8,.2,1),opacity .6s ease;cursor:pointer}
 .slide.active{cursor:default}
 .slide.far{pointer-events:none}
 .poster{position:relative;display:block;aspect-ratio:2/3;border-radius:14px;overflow:hidden;background:var(--surface2);
@@ -129,7 +129,7 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .poster-fallback{position:absolute;inset:0;display:flex;align-items:flex-end;padding:18px;
   background:linear-gradient(160deg,#4a1a26 0%,#2a1b3a 55%,#14111c 100%)}
 .poster-fallback::after{content:"";position:absolute;left:50%;top:50%;margin:-20px 0 0 -12px;border-left:34px solid rgba(255,255,255,.2);border-top:20px solid transparent;border-bottom:20px solid transparent}
-.slide-info{text-align:center;padding-top:16px;transition:opacity .3s}
+.slide-info{text-align:center;padding-top:16px;transition:opacity .5s}
 .slide:not(.active) .slide-info{opacity:0}
 .slide-info h3{font-size:1.55rem;margin-bottom:2px}
 .slide-info .meta{color:var(--muted);font-size:.95rem;margin:0 0 12px}
@@ -342,6 +342,9 @@ footer{margin-top:48px;border-top:1px solid var(--line);padding:38px 0 46px;back
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   .reveal{opacity:1;transform:none}
   .btn:hover,.topic:hover,.tile:hover,.arrow:hover:not(:disabled),.toc a:hover,.wcard:hover .poster{transform:none}
+  /* 상영작 캐러셀은 자동으로 도는 요소라, 카드가 부드럽게 미끄러지는 전환은 유지한다 */
+  .carousel .slide{transition-duration:.8s,.6s!important}
+  .carousel .slide-info{transition-duration:.5s!important}
 }
 
 /* 관리 페이지 미리보기에서만: 지금 입력 중인 구역 강조 */

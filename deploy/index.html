@@ -89,7 +89,7 @@
         const abs = Math.abs(off);
         // 한쪽 끝에서 반대쪽 끝으로 넘어가는 카드는 화면을 가로질러 날아가지 않게 애니메이션 없이 옮긴다
         const jump = loop && slide._off != null && Math.abs(off - slide._off) > 1;
-        if (jump) slide.style.transition = 'none';
+        if (jump) slide.style.setProperty('transition', 'none', 'important');
         slide._off = off;
         slide.style.setProperty('--o', Math.max(-2, Math.min(2, off)));
         slide.style.setProperty('--s', abs === 0 ? 1 : abs === 1 ? .8 : .66);
@@ -99,7 +99,7 @@
         slide.classList.toggle('far', abs > 1);
         slide.setAttribute('aria-hidden', abs === 0 ? 'false' : 'true');
         link.tabIndex = abs === 0 ? 0 : -1;
-        if (jump) { void slide.offsetWidth; slide.style.transition = ''; }
+        if (jump) { void slide.offsetWidth; slide.style.removeProperty('transition'); }
       });
       prev.disabled = !loop && current === 0; next.disabled = !loop && current === n - 1;
       if (dots) [...dots.children].forEach((d, i) => d.setAttribute('aria-current', i === current ? 'true' : 'false'));
