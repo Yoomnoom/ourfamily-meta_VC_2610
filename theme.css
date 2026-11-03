@@ -211,6 +211,8 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .cover-logo{position:absolute;height:auto;max-height:90%;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none;transition:opacity .25s}
 .cover-logo.gone{opacity:0}
 .screen-frame video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.end-cover{position:absolute;inset:0 0 48px;background:#000;pointer-events:none}.end-cover[hidden]{display:none}
+.end-cover img{width:100%;height:100%;object-fit:contain;display:block}
 .video-fallback{aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;text-align:center;
   background:repeating-linear-gradient(45deg,#16121d,#16121d 16px,#1c1726 16px,#1c1726 32px)}
 .video-fallback strong{font-family:var(--hand);font-size:clamp(1.5rem,4.5vw,2.2rem)}

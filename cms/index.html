@@ -330,6 +330,7 @@ dialog#editors{width:min(680px,94vw)}
             F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
             RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
+            F('endCover', '끝 화면 이미지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '영상이 끝나면 영상 화면에 보이는 가로 이미지예요. 다시 재생하면 사라져요.\n예) "다음 화에서 계속됩니다." 이미지. 가로 16:9, 1920×1080px 권장이에요.\n비워 두면 아무것도 보이지 않아요.' }),
             F('captions', '자막 파일 (있으면)', 'vtt', { show: () => kindOf() === 'video', hint: '.vtt 또는 .srt 파일을 올리면 돼요. .srt 는 올릴 때 자동으로 .vtt 로 바뀌어요.' }),
             { type: 'check', key: 'showDownload', label: '영상 아래에 다운로드 버튼 보이기', show: () => kindOf() === 'video' }] },
           { group: 'game', show: () => kindOf() === 'game', fields: [
@@ -474,7 +475,7 @@ dialog#editors{width:min(680px,94vw)}
   function blankWork(id) {
     return { id, kind: 'video', title: '', creator: '', tagline: '', intent: '',
       game: { url: '', embed: false, portrait: false, howto: '' }, app: { url: '', embed: false, portrait: true, howto: '' }, storyboard: { pages: [{ file: '', caption: '', alt: '' }], pdf: '' },
-      video: { file: '', poster: '', cover: '', duration: '', captions: '', showDownload: true },
+      video: { file: '', poster: '', cover: '', endCover: '', duration: '', captions: '', showDownload: true },
       process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
       sources: [{ item: '', source: '', license: '' }], series: '', episode: '', useCommon: true, owner: '' };
   }

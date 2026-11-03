@@ -136,6 +136,13 @@
     if (has(v.captions)) video.append(h('track', { kind: 'captions', srclang: 'ko', label: '한국어', src: mediaPath(v.captions), default: true }));
     video.addEventListener('error', () => { st.el.remove(); video.replaceWith(videoFallback(v, title)); if (onFail) onFail(); });
     slot.append(video, st.el);
+    if (has(v.endCover)) {   // 영상이 끝나면 끝 화면 이미지를 보여 준다 (다시 재생하면 사라진다). 아래쪽은 재생 막대를 위해 비워 둔다
+      const end = h('div', { class: 'end-cover', hidden: true }, h('img', { src: mediaPath(v.endCover), alt: '', draggable: 'false' }));
+      end.firstChild.addEventListener('error', () => end.remove());
+      slot.append(end);
+      video.addEventListener('ended', () => { end.hidden = false; });
+      ['play', 'seeking'].forEach(k => video.addEventListener(k, () => { end.hidden = true; }));
+    }
     return slot;
   }
 
