@@ -81,7 +81,10 @@ section[id]{scroll-margin-top:calc(var(--hh) + 8px)}
 /* 로딩 화면 */
 #loader{position:fixed;inset:0;z-index:250;display:grid;place-items:center;background:var(--bg);transition:opacity .5s ease}
 #loader.done{opacity:0;pointer-events:none}
+#loader{align-content:center;justify-items:center;gap:22px}
 #loader .logo{width:72px;height:72px;animation:pulse .9s ease-in-out infinite alternate}
+#loader .ld-bar{width:min(220px,56vw);height:6px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+#loader .ld-bar i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--accent),#e8c36a);transition:width .25s ease-out}
 @keyframes pulse{from{transform:scale(.92);opacity:.7}to{transform:scale(1.06);opacity:1}}
 
 /* 공통 섹션 */

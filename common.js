@@ -3,8 +3,7 @@
   const has = s => typeof s === 'string' && s.trim() !== '';
   const arr = a => Array.isArray(a) ? a : [];
   const obj = o => (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
-  /* 공모전 발표용: 심사위원 기기의 '움직임 줄이기' 설정과 상관없이 연출(등장·전환·로딩 화면)을 항상 보여 준다 */
-  const reduced = false;
+  // 공모전 발표용: 심사위원 기기의 '움직임 줄이기' 설정을 따르지 않는다 (연출·로딩 화면이 항상 나온다)
   /** 내용이 하나라도 있는가 (auto 표시 행은 제외) */
   const filled = v => typeof v === 'string' ? has(v) : Array.isArray(v) ? v.some(filled)
     : v && typeof v === 'object' ? (v.auto ? false : Object.values(v).some(filled)) : false;
@@ -445,7 +444,7 @@
   /* ---------- 스크롤 등장 / 로딩 화면 / 페이지 전환 ---------- */
   function reveal() {
     const els = [...document.querySelectorAll('.reveal:not(.in)')];
-    if (reduced || !('IntersectionObserver' in window)) return els.forEach(e => e.classList.add('in'));
+    if (!('IntersectionObserver' in window)) return els.forEach(e => e.classList.add('in'));
     const io = new IntersectionObserver(es => es.forEach(e => {
       if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
     }), { threshold: .06 });
@@ -454,15 +453,16 @@
 
   const t0 = performance.now();
   let loader = null;
-  if (!reduced) {
-    let c = '극'; try { c = sessionStorage.getItem('ft.logo') || c; } catch {}
-    loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, c.startsWith('img:') ? h('img', { class: 'logo logo-img', src: c.slice(4), alt: '' }) : logoSvg(c));
-    document.body.append(loader);
-  }
+  let c = '극'; try { c = sessionStorage.getItem('ft.logo') || c; } catch {}
+  const bar = h('i');
+  loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, c.startsWith('img:') ? h('img', { class: 'logo logo-img', src: c.slice(4), alt: '' }) : logoSvg(c), h('div', { class: 'ld-bar' }, bar));
+  document.body.append(loader);
+  let pct = 6; const tick = setInterval(() => { pct += (92 - pct) * .09; bar.style.width = pct + '%'; }, 90);   // 실제 진행률은 알 수 없어서 90%쪽으로 천천히 차오르다가, 다 불러오면 100%로 채운다
+  bar.style.width = pct + '%';
   function hideLoader() {
     if (!loader) return;
     const l = loader; loader = null;
-    setTimeout(() => { l.classList.add('done'); setTimeout(() => l.remove(), 600); }, Math.max(0, 450 - (performance.now() - t0)));
+    setTimeout(() => { clearInterval(tick); bar.style.width = '100%'; setTimeout(() => { l.classList.add('done'); setTimeout(() => l.remove(), 600); }, 260); }, Math.max(0, 700 - (performance.now() - t0)));
   }
 
   cursorFx(); tooltips();
@@ -470,7 +470,7 @@
   window.addEventListener('pageshow', () => document.body.classList.remove('leaving'));
   document.addEventListener('click', e => {
     const a = e.target.closest && e.target.closest('a[href]');
-    if (reduced || !a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if ((a.target && a.target !== '_self') || a.hasAttribute('download')) return;
     const u = new URL(a.href, location.href);
     if (u.origin !== location.origin || !/^https?:$/.test(u.protocol)) return;
@@ -628,5 +628,5 @@
   }
 
   window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
-    section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, reduced, params };
+    section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, params };
 })();
