@@ -25,6 +25,9 @@ foreach ($f in $publicFiles) {
   if (Test-Path -LiteralPath $src) { Copy-Item -LiteralPath $src -Destination $deploy }
   else { $warn.Add("필수 파일이 없어요: $f") }
 }
+# 방문 기록 중계 함수(Vercel Functions): deploy/api/ 로 복사
+$apiSrc = Join-Path $root 'api'
+if (Test-Path -LiteralPath $apiSrc) { Copy-Item -LiteralPath $apiSrc -Destination $deploy -Recurse }
 $mediaSrc = Join-Path $root 'media'
 if (Test-Path -LiteralPath $mediaSrc) {
   Get-ChildItem -LiteralPath $mediaSrc -Recurse -File | ForEach-Object {

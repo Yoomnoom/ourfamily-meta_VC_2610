@@ -189,7 +189,7 @@ dialog#intro ol{margin:0 0 16px;padding-left:22px}
 dialog#intro li{margin-bottom:6px}
 input[type=email],input[type=password]{width:100%;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:11px 14px}
 dialog#login,dialog#editors,dialog#stats,dialog#confirmDel{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;width:min(440px,92vw)}
-dialog#stats{width:min(620px,94vw)}
+dialog#stats{width:min(800px,96vw);max-height:92vh;overflow:auto}
 dialog#login::backdrop,dialog#editors::backdrop,dialog#stats::backdrop,dialog#confirmDel::backdrop{background:rgba(58,47,38,.55)}
 dialog#login h2,dialog#editors h2,dialog#stats h2,dialog#confirmDel h2{font-family:var(--hand);margin:0 0 10px}
 dialog#confirmDel input{width:100%;box-sizing:border-box}
@@ -1616,22 +1616,53 @@ dialog#editors{width:min(680px,94vw)}
   async function openStats() {
     const dlg = el('dialog', { id: 'stats', 'aria-labelledby': 'stT' }), body = el('div', { text: '불러오는 중…' });
     const NAMES = { index: '홈', works: '상영작', watch: '상영관', making: '메이킹', album: '비하인드 컷', about: '소개' };
+    const close = () => { dlg.close(); dlg.remove(); };
     dlg.append(el('h2', { id: 'stT', text: '방문 집계' }), body,
-      el('p', { class: 'hint', text: '페이지를 연 횟수예요. 같은 탭에서 새로고침한 것은 한 번만 세요.\n방문자는 브라우저마다 만든 임의 번호로 세고, 이름·주소 같은 개인정보는 저장하지 않아요.\n내 컴퓨터(localhost)와 관리 페이지 미리보기는 세지 않아요.', style: 'white-space:pre-line;margin:12px 0 0' }),
-      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: '닫기', onclick: () => { dlg.close(); dlg.remove(); } })));
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: '닫기', onclick: close })));
     dlg.addEventListener('cancel', () => dlg.remove());
     document.body.append(dlg); dlg.showModal();
+    const n = v => Number(v || 0).toLocaleString('ko-KR');
+    const secs = v => v == null ? '—' : v >= 60 ? `${Math.floor(v / 60)}분 ${v % 60}초` : `${v}초`;
+    const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
+    const sec = (title, ...kids) => el('section', { style: 'margin:18px 0 0' }, el('h3', { text: title, style: 'font-size:1.05rem;margin:0 0 8px' }), ...kids);
+    const card = (k, v, sub) => el('div', { style: 'border:1.5px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fffdf7' },
+      el('div', { text: k, style: 'font-size:.82rem;opacity:.75' }), el('div', { text: v, style: 'font-size:1.5rem;font-weight:700;line-height:1.3' }), sub ? el('div', { text: sub, style: 'font-size:.8rem;opacity:.75' }) : null);
+    const bars = (list, lab) => { const rows = list.filter(x => x.n > 0), max = Math.max(1, ...rows.map(x => x.n)), tot = rows.reduce((a, x) => a + x.n, 0);
+      return rows.length ? el('div', {}, ...rows.map(x => el('div', { style: 'display:grid;grid-template-columns:130px 1fr 78px;gap:8px;align-items:center;margin:3px 0;font-size:.9rem' },
+        el('span', { text: lab(x), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }),
+        el('span', { style: 'background:#eadfcb;border-radius:6px;height:12px;overflow:hidden' }, el('span', { style: `display:block;height:100%;width:${Math.round(x.n / max * 100)}%;background:var(--accent,#d84d44)` })),
+        el('span', { text: `${n(x.n)} · ${pct(x.n, tot)}`, style: 'text-align:right' })))) : el('p', { text: '아직 자료가 없어요.', style: 'margin:0;opacity:.7' }); };
     try {
-      const rows = await (await sbFetch('/rest/v1/rpc/ourfamilymeta_pageview_stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
-      const total = rows.find(r => r.page == null), list = rows.filter(r => r.page != null);
-      const label = r => r.page === 'watch' && r.work ? '상영관 · ' + ((data.works.find(w => w.id === r.work) || {}).title || r.work) : (NAMES[r.page] || r.page);
-      const tr = (cells, tag = 'td') => el('tr', {}, ...cells.map((c, i) => el(tag, { text: String(c), style: i ? 'text-align:right;padding:6px 10px' : 'padding:6px 10px' })));
-      body.replaceChildren(el('table', { style: 'width:100%;border-collapse:collapse;font-size:.95rem' },
-        el('thead', {}, tr(['페이지', '전체 방문', '방문자', '오늘', '최근 7일'], 'th')),
-        el('tbody', {}, ...(total ? [tr(['전체', total.views, total.visitors, total.today, total.week])] : []), ...list.map(r => tr([label(r), r.views, r.visitors, r.today, r.week])))));
-      if (!rows.length) body.replaceChildren(el('p', { text: '아직 기록된 방문이 없어요.\n공개 사이트를 열면 여기에 쌓여요.', style: 'white-space:pre-line' }));
+      const r = await (await sbFetch('/rest/v1/rpc/ourfamilymeta_pageview_report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
+      const t = r.total || {};
+      if (!t.views) { body.replaceChildren(el('p', { text: '아직 기록된 방문이 없어요.\n공개 사이트를 실제 주소로 열면 여기에 쌓여요.\n(내 컴퓨터 localhost 와 관리 페이지 미리보기는 세지 않아요)', style: 'white-space:pre-line' })); return; }
+      const cn = (() => { try { return new Intl.DisplayNames(['ko'], { type: 'region' }); } catch { return null; } })();
+      const country = k => !k ? '알 수 없음' : (cn && cn.of(k)) || k;
+      const day = r.by_day || [], dmax = Math.max(1, ...day.map(x => x.views));
+      const hours = Array.from({ length: 24 }, (_, h) => ({ k: h, n: ((r.by_hour || []).find(x => x.k === h) || {}).n || 0 }));
+      body.replaceChildren(
+        el('div', { style: 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px' },
+          card('전체 방문', n(t.views), '페이지를 연 횟수'), card('방문자', n(t.visitors), '브라우저 기준(중복 제외)'),
+          card('재방문자', n(t.returning), `방문자의 ${pct(t.returning, t.visitors)} · 2일 이상 방문`), card('평균 머문 시간', secs(t.avg_page_secs), '한 페이지당'),
+          card('한 번 방문당', secs(t.avg_session_secs), `평균 ${t.avg_pages || '—'}페이지`), card('한 페이지만 보고 나감', pct(t.bounce, t.sessions), `${n(t.bounce)} / ${n(t.sessions)}번 방문`),
+          card('오늘', n(t.today), `방문자 ${n(t.today_visitors)}`), card('최근 7일 / 30일', `${n(t.week)} / ${n(t.month)}`, '방문 횟수')),
+        sec('최근 14일', el('div', { style: 'display:flex;align-items:flex-end;gap:4px;height:90px;border-bottom:1.5px solid var(--ink)' }, ...day.map(x =>
+          el('div', { title: `${x.d} · 방문 ${x.views} · 방문자 ${x.visitors}`, style: 'flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.7rem' },
+            el('span', { text: x.views || '' }), el('span', { style: `display:block;width:100%;min-height:2px;height:${Math.round(x.views / dmax * 70)}px;background:var(--accent,#d84d44);border-radius:4px 4px 0 0` })))),
+          el('div', { style: 'display:flex;gap:4px;font-size:.68rem;opacity:.75' }, ...day.map(x => el('span', { text: x.d.slice(8), style: 'flex:1;text-align:center' })))),
+        sec('페이지별', el('table', { style: 'width:100%;border-collapse:collapse;font-size:.92rem' },
+          el('thead', {}, el('tr', {}, ...['페이지', '방문', '방문자', '평균 머문 시간'].map((h, i) => el('th', { text: h, style: `padding:5px 8px;text-align:${i ? 'right' : 'left'};white-space:nowrap` })))),
+          el('tbody', {}, ...(r.by_page || []).map(x => el('tr', {}, el('td', { text: x.page === 'watch' && x.work ? '상영관 · ' + ((data.works.find(w => w.id === x.work) || {}).title || x.work) : (NAMES[x.page] || x.page), style: 'padding:5px 8px' }),
+            ...[n(x.views), n(x.visitors), secs(x.avg_secs)].map(v => el('td', { text: v, style: 'padding:5px 8px;text-align:right;white-space:nowrap' }))))))),
+        sec('시간대 (한국 시간)', el('div', { style: 'display:flex;align-items:flex-end;gap:2px;height:70px;border-bottom:1.5px solid var(--ink)' }, ...hours.map(x =>
+          el('span', { title: `${x.k}시 · ${x.n}`, style: `flex:1;min-height:2px;height:${Math.round(x.n / Math.max(1, ...hours.map(y => y.n)) * 64)}px;background:var(--accent,#d84d44);border-radius:3px 3px 0 0` }))),
+          el('div', { style: 'display:flex;gap:2px;font-size:.62rem;opacity:.75' }, ...hours.map(x => el('span', { text: x.k % 3 ? '' : x.k, style: 'flex:1;text-align:center' })))),
+        sec('기기', bars(r.by_device || [], x => x.k)), sec('브라우저', bars(r.by_browser || [], x => x.k)), sec('운영체제', bars(r.by_os || [], x => x.k)),
+        sec('국가', bars(r.by_country || [], x => country(x.k))), sec('도시 (상위 15)', bars(r.by_city || [], x => x.k + (x.c ? ` (${country(x.c)})` : ''))),
+        sec('어디서 들어왔나 (첫 페이지 기준)', bars(r.by_referrer || [], x => x.k || '직접 입력·북마크·앱')), sec('언어', bars(r.by_lang || [], x => x.k)),
+        el('p', { class: 'hint', text: '방문 = 페이지를 연 횟수(같은 탭에서 새로고침은 한 번). 방문자 = 브라우저마다 만든 임의 번호(같은 사람이 다른 브라우저로 오면 다른 방문자).\n재방문자 = 2일 이상 찾아온 방문자. 머문 시간 = 화면에 실제로 보인 시간(1초~1시간만 계산).\n나라·도시는 접속 지역을 대략 알려 주는 값이고, IP 주소와 이름은 저장하지 않아요. 내 컴퓨터(localhost)와 미리보기는 세지 않아요.', style: 'white-space:pre-line;margin:16px 0 0' }));
     } catch (e) {
-      body.replaceChildren(el('p', { text: /42883|function|does not exist|schema cache|404/i.test(e.message) ? '집계 기능이 아직 준비되지 않았어요.\ndb/ourfamilymeta_pageviews.sql 을 Supabase 의 SQL Editor 에서 한 번 실행해 주세요.' : '불러오지 못했어요: ' + e.message, style: 'white-space:pre-line' }));
+      body.replaceChildren(el('p', { text: /42883|function|does not exist|schema cache|404/i.test(e.message) ? '집계 기능이 아직 준비되지 않았어요.\ndb/ourfamilymeta_pageviews_v2.sql 을 Supabase SQL Editor 에서 한 번 실행해 주세요.' : '불러오지 못했어요: ' + e.message, style: 'white-space:pre-line' }));
     }
   }
 

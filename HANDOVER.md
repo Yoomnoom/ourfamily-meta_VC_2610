@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-03 (게임 iframe 권한)
+- **방문 집계 2차**(`db/ourfamilymeta_pageviews_v2.sql`, 2026-11-03 Supabase에 실행 완료): 기록에 체류 시간·재방문(방문자 번호)·세션·기기·브라우저·OS·언어·시간대·유입 경로·국가·도시 추가. `common.js track()`이 열 때 `view`, 떠날 때 `leave`(화면에 보인 초)를 `/api/track`으로 보내고, **`api/track.js`(Vercel Function, 배포 시 `deploy/api/`로 복사)** 가 Vercel 의 `x-vercel-ip-country/city` 헤더를 붙여 Supabase에 넣는다(IP 저장 안 함, 비밀 키 없음). 함수가 없으면 Supabase에 직접(최소 칸만). CMS "방문 집계"는 `ourfamilymeta_pageview_report()`(jsonb)로 요약 카드·14일 추이·페이지별·시간대·기기·브라우저·OS·국가·도시·유입·언어를 보여 준다. 이전 `ourfamilymeta_pageview_stats()`는 삭제됨.
 - 마우스 모양은 게임·앱 화면(`.game-frame`)과 그 둘레 80px 안에서는 숨기고 원래 포인터로 돌려 놓는다(게임 조작 방해 방지, `cursorFx`의 `near`).
 - **방문 집계**: 공개 페이지가 열릴 때 `ourfamilymeta_pageviews`에 1건 기록(`common.js track()`: 페이지명·작품ID·임의 방문자번호, 같은 탭 새로고침은 1회, localhost·CMS 미리보기 제외). CMS 메뉴 "방문 집계"가 `ourfamilymeta_pageview_stats()`(편집자만)로 페이지별 전체·방문자·오늘·7일을 보여 준다. `db/ourfamilymeta_pageviews.sql`은 **2026-11-03 Supabase에 실행 완료**(처음엔 insert 권한(grant)이 빠져 있어 추가함)(그 전에는 기록이 조용히 실패하고 CMS에 안내 문구가 나온다).
 - 마우스 모양 자동 낱말을 실제 제목에 맞게 고침: 제목의 공백은 무시하고 비교(`잘 먹었습니다!`), `식당`(우리집식당) 추가, 지영의 일생은 📖. 작품 제목이 바뀌면 `CURSOR_WORDS`(common.js)나 CMS의 마우스 모양 칸을 같이 확인.

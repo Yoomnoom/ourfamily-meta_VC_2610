@@ -403,17 +403,36 @@
   }
 
 
-  /* ---------- 방문 집계: 페이지를 열 때 1건 기록 (개인정보 없음, CMS "방문 집계"에서 합계를 본다) ---------- */
+  /* ---------- 방문 집계: 페이지를 열 때 1건, 떠날 때 머문 시간을 기록 (개인정보 없음, CMS "방문 집계"에서 본다) ---------- */
   function track() {
-    if (window.parent !== window || !SB.url || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;   // 미리보기·내 컴퓨터 시험은 세지 않는다
+    if (window.parent !== window || !SB.url || navigator.webdriver || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;   // 미리보기·내 컴퓨터 시험은 세지 않는다
     const page = (location.pathname.split('/').pop() || 'index').replace(/\.html$/, '') || 'index', work = page === 'watch' ? (params.get('id') || '').slice(0, 80) : '';
     const key = 'ft.pv.' + page + ':' + work;
     try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch {}   // 같은 탭에서 새로고침해도 한 번만
-    let vid = ''; try { vid = localStorage.getItem('ft.vid') || ''; if (vid.length < 8) { vid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/-/g, '').slice(0, 24); localStorage.setItem('ft.vid', vid); } } catch {}
+    const rnd = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/-/g, '').slice(0, 24);
+    let vid = ''; try { vid = localStorage.getItem('ft.vid') || ''; if (vid.length < 8) { vid = rnd(); localStorage.setItem('ft.vid', vid); } } catch {}   // 브라우저마다 다른 임의 번호(재방문 계산용)
     if (vid.length < 8) vid = 'anon' + String(Math.random()).slice(2, 12);
-    fetch(SB.url + '/rest/v1/ourfamilymeta_pageviews', { method: 'POST', keepalive: true,
-      headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ page, work: work || null, visitor: vid }) }).catch(() => {});
+    let sid = ''; try { sid = sessionStorage.getItem('ft.sid') || ''; } catch {}
+    const entry = !sid; if (!sid) { sid = rnd(); try { sessionStorage.setItem('ft.sid', sid); } catch {} }   // 탭을 연 뒤 첫 페이지인가(유입 경로 계산용)
+    const pv = rnd(), ua = navigator.userAgent;
+    const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : '기타';
+    const device = /iPad|Tablet/.test(ua) || (/Android/.test(ua) && !/Mobile/.test(ua)) ? '태블릿' : /Mobi|iPhone|Android/.test(ua) ? '휴대폰' : '컴퓨터';
+    const browser = /KAKAOTALK/i.test(ua) ? '카카오톡 앱' : /NAVER\(inapp/i.test(ua) ? '네이버 앱' : /Instagram|FBAN|FBAV/i.test(ua) ? '인스타·페이스북 앱' : /Whale/.test(ua) ? '웨일' : /SamsungBrowser/.test(ua) ? '삼성 인터넷' : /Edg\//.test(ua) ? 'Edge' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /OPR\/|Opera/.test(ua) ? 'Opera' : /Chrome|CriOS/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : '기타';
+    let referrer = ''; try { const u = new URL(document.referrer); if (u.hostname !== location.hostname) referrer = u.hostname.replace(/^www\./, ''); } catch {}   // 사이트 밖에서 온 경우만(도메인만 저장)
+    let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch {}
+    const send = (o, fallback) => {   // 같은 사이트의 /api/track 이 나라·도시를 붙여 저장한다. 안 되면 Supabase 에 직접
+      fetch('/api/track', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o) })
+        .then(r => { if (!r.ok && fallback) throw 0; })
+        .catch(() => { if (fallback) fetch(SB.url + '/rest/v1/ourfamilymeta_pageviews', { method: 'POST', keepalive: true,
+          headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ page: o.page, work: o.work || null, visitor: o.visitor }) }).catch(() => {}); });
+    };
+    const id = { page, work: work || null, visitor: vid, pv, session: sid };
+    send({ ...id, event: 'view', entry, referrer, device, browser, os, lang: (navigator.language || '').slice(0, 20), tz, screen: innerWidth + 'x' + innerHeight }, true);
+    let shown = 0, since = document.visibilityState === 'visible' ? performance.now() : 0;   // 화면에 실제로 보인 시간만 센다
+    const flush = () => { if (since) { shown += performance.now() - since; since = 0; } const sec = Math.round(shown / 1000); if (sec >= 1) send({ ...id, event: 'leave', seconds: sec }, false); };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); else since = performance.now(); });
+    addEventListener('pagehide', flush);
   }
 
   /* ---------- 헤더 / 푸터 ---------- */
