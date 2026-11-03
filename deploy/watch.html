@@ -29,6 +29,7 @@
     const w = works[idx], v = w.video || {};
     const ser0 = has(w.series) ? arr(d.series).find(x => x.id === w.series) : null;
     const ser = ser0 && !ser0.solo ? ser0 : null;   // 단독 작품의 숨은 연재물은 연재물처럼 보이지 않는다
+    App.setCursor(App.cursorSpec(w.cursor, w.cursorImage, w.title, ser && ser.title) || App.siteCursor(site));   // 작품 주제에 맞는 마우스 모양
     const pr = production(w, d);   // 연재물 공통 제작 정보 + 이 회차 추가분 (미리보기와 같은 함수)
     const title = has(w.title) ? w.title : '제목 미정';
     const main = h('main', { id: 'main', class: 'pad' });

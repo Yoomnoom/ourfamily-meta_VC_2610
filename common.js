@@ -177,37 +177,58 @@
     return el;
   }
 
-  /* ---------- 꾸밈 효과: 마우스(빛·고리·반짝임)와 말풍선 안내 (마우스를 쓰는 기기에서만) ---------- */
+  /* ---------- 꾸밈 효과: 주제에 맞는 마우스 모양과 말풍선 안내 (마우스를 쓰는 기기에서만) ---------- */
   const finePointer = () => matchMedia('(hover:hover) and (pointer:fine)').matches;
+  /* 마우스 모양: 작품마다 CMS에서 이모지나 그림으로 고른다. 비워 두면 제목 속 낱말로 정하고, 그래도 없으면 홈 모양(팝콘)을 쓴다 */
+  const CURSOR_HOME = '🍿';
+  const CURSOR_WORDS = [['지영', '🍠'], ['찰칵', '📷'], ['보은', '🐕'], ['풍산', '🐗'], ['잘먹', '🥄'], ['마음', '🏠'], ['식탁', '🥢']];
+  function cursorSpec(emoji, image, ...titles) {
+    if (has(image)) return { img: mediaPath(image) };
+    if (has(emoji)) return { text: emoji.trim() };
+    const k = CURSOR_WORDS.find(([w]) => titles.some(t => String(t || '').includes(w)));
+    return k ? { text: k[1] } : null;
+  }
+  const siteCursor = site => cursorSpec(obj(site).cursor, obj(site).cursorImage) || { text: CURSOR_HOME };
+  let setCursor = () => {};
   function cursorFx() {
     if (!finePointer() || window.parent !== window) return;   // 관리 페이지 미리보기 안에서는 쓰지 않는다
-    const glow = h('div', { class: 'fx-glow', 'aria-hidden': 'true' }), ring = h('div', { class: 'fx-ring', 'aria-hidden': 'true' });
-    document.body.append(glow, ring);
-    const HOT = 'a[href],button,[role="button"],.tile,.arrow,input,select,textarea,summary,label';
-    const COLORS = ['#e8c36a', '#ff7a82', '#fff6dc'];
-    let mx = 0, my = 0, gx = 0, gy = 0, rx = 0, ry = 0, raf = 0, last = 0, seen = false, live = 0;
-    const loop = () => {
-      gx += (mx - gx) * .12; gy += (my - gy) * .12; rx += (mx - rx) * .3; ry += (my - ry) * .3;
-      glow.style.transform = `translate(${gx}px,${gy}px)`; ring.style.transform = `translate(${rx}px,${ry}px)`;
-      raf = Math.abs(mx - rx) + Math.abs(my - ry) + Math.abs(mx - gx) + Math.abs(my - gy) > .5 ? requestAnimationFrame(loop) : 0;
+    const el = h('div', { class: 'fx-cursor', 'aria-hidden': 'true' }), inner = h('span', { class: 'fx-c-in' });
+    el.append(inner); document.body.append(el);
+    const root = document.documentElement, HOT = 'a[href],button,[role="button"],.tile,.arrow,summary,label';
+    let spec = null, mx = 0, my = 0, x = 0, y = 0, raf = 0, seen = false, live = 0;
+    const content = () => spec.img ? h('img', { src: spec.img, alt: '', draggable: 'false' }) : document.createTextNode(spec.text);
+    setCursor = sp => {
+      spec = sp || null;
+      if (!spec) { root.classList.remove('fx-on'); el.hidden = true; return; }
+      el.hidden = false; inner.replaceChildren(content());
+      const im = inner.querySelector('img'); if (im) im.addEventListener('error', () => { spec = { text: CURSOR_HOME }; inner.replaceChildren(content()); });
+      if (seen) root.classList.add('fx-on');
     };
-    const star = (x, y, far) => {
-      if (live > 28) return;
-      const s = h('span', { class: 'fx-star', 'aria-hidden': 'true' }), a = Math.random() * Math.PI * 2, d = far ? 30 + Math.random() * 46 : 8 + Math.random() * 22;
-      s.style.cssText = `left:${x}px;top:${y}px;--s:${far ? 8 + Math.random() * 8 : 5 + Math.random() * 6}px;--c:${COLORS[Math.floor(Math.random() * COLORS.length)]};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d + (far ? 0 : 14)}px`;
-      live++; s.addEventListener('animationend', () => { s.remove(); live--; }); document.body.append(s);
+    const loop = () => {
+      const dx = mx - x; x += dx * .4; y += (my - y) * .4;
+      el.style.transform = `translate(${x}px,${y}px)`;
+      inner.style.setProperty('--tilt', Math.max(-28, Math.min(28, dx * 1.4)) + 'deg');   // 움직이는 방향으로 흔들린다
+      raf = Math.abs(mx - x) + Math.abs(my - y) > .3 ? requestAnimationFrame(loop) : 0;
+      if (!raf) inner.style.setProperty('--tilt', '0deg');
+    };
+    const bit = (cx, cy) => {   // 클릭하면 같은 모양의 작은 조각이 톡 튀어 오른다 (팝콘 튀기듯)
+      if (live > 24 || !spec) return;
+      const b = h('span', { class: 'fx-bit', 'aria-hidden': 'true' }, content()), a = (-90 + (Math.random() - .5) * 150) * Math.PI / 180, d = 26 + Math.random() * 40;
+      b.style.cssText = `left:${cx}px;top:${cy}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;--r:${(Math.random() - .5) * 240}deg`;
+      live++; b.addEventListener('animationend', () => { b.remove(); live--; }); document.body.append(b);
     };
     document.addEventListener('pointermove', e => {
-      if (e.pointerType === 'touch') return;
+      if (e.pointerType === 'touch' || !spec) return;
       mx = e.clientX; my = e.clientY;
-      if (!seen) { seen = true; gx = rx = mx; gy = ry = my; glow.style.opacity = 1; ring.classList.add('on'); }
-      ring.classList.toggle('hot', !!(e.target.closest && e.target.closest(HOT)));
-      const t = performance.now(); if (t - last > 60) { last = t; star(mx, my); }
+      if (!seen) { seen = true; x = mx; y = my; root.classList.add('fx-on'); el.classList.add('on'); }
+      el.classList.remove('gone'); el.classList.toggle('hot', !!(e.target.closest && e.target.closest(HOT)));
       if (!raf) raf = requestAnimationFrame(loop);
     }, { passive: true });
-    document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') return; for (let i = 0; i < 9; i++) star(e.clientX, e.clientY, true); ring.classList.add('press'); });
-    document.addEventListener('pointerup', () => ring.classList.remove('press'));
-    document.documentElement.addEventListener('mouseleave', () => { seen = false; glow.style.opacity = 0; ring.classList.remove('on'); });
+    document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' || !spec) return; el.classList.add('press'); for (let i = 0; i < 6; i++) bit(e.clientX, e.clientY); });
+    document.addEventListener('pointerup', () => el.classList.remove('press'));
+    document.addEventListener('mouseout', e => { if (e.relatedTarget && e.relatedTarget.tagName === 'IFRAME') el.classList.add('gone'); });   // 게임·앱 화면 안에서는 그쪽 마우스 모양을 쓴다
+    root.addEventListener('mouseleave', () => el.classList.remove('on'));
+    root.addEventListener('mouseenter', () => { if (seen) el.classList.add('on'); });
   }
   function tooltips() {   // 브라우저 기본 말풍선(title) 대신 꾸민 말풍선을 보여 준다
     if (!finePointer()) return;
@@ -594,7 +615,9 @@
     const app = document.getElementById('app');
     load(app, d => {
       d = obj(d);
-      const site = obj(d.site), av = avail(d), r = build(d, site, av);
+      const site = obj(d.site), av = avail(d);
+      setCursor(siteCursor(site));   // 기본은 홈 모양. 상영관은 작품 모양으로 다시 정한다
+      const r = build(d, site, av);
       document.title = r.title;
       setFavicon(site);
       try { sessionStorage.setItem('ft.logo', has(site.logoImage) ? 'img:' + mediaPath(site.logoImage) : markText(site)); } catch {}
@@ -604,6 +627,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, TITLES, avail,
+  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, boot, reduced, params };
 })();

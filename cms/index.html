@@ -354,6 +354,8 @@ dialog#editors{width:min(680px,94vw)}
       parts: [{ pv: [WATCH, 'info'], fields: [
         T('title', '제목', { req: 1, autoId: 1, ph: '예) 할머니의 부엌' }),
         T('creator', '제작자 이름 (© 표시)', { ph: '예) 김○○ 가족', hint: '상영관과 목록에 "© 이름"으로 나와요. 로그인 이메일은 공개되지 않아요.' }),
+        T('cursor', '마우스 모양 (이모지)', { ph: '예) 📷', hint: '이 작품 상영관에서 마우스 포인터 대신 따라다니는 모양이에요.\n이모지 1개를 붙여 넣어요. 비우면 제목에 맞춰 정해지고, 해당이 없으면 홈 모양을 써요.' }),
+        F('cursorImage', '마우스 그림 (선택)', 'image', { hint: '이모지 대신 쓸 그림이에요. 정사각형 투명 PNG, 64×64px 이상이에요.' }),
         T('tagline', '한 줄 소개', { ph: '예) 냄새와 소리로 기억하는 할머니의 부엌을 그림으로 되살렸어요.' }),
         A('intent', '기획 의도', { rows: 7, ph: '왜 이 주제를 골랐는지, 영상으로 무엇을 전하고 싶은지, AI를 어떻게 썼는지를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] },
         { title: '고급: 작품 주소(ID)', adv: true, fields: [T('id', '작품 주소(ID)', { sanitize: true, ph: 'work-1',
@@ -382,6 +384,8 @@ dialog#editors{width:min(680px,94vw)}
       parts: [
         { title: '이름·슬로건·로고', pv: ['index.html', 'hero'], fields: [{ group: 'site', fields: [
           T('name', '사이트 이름', { req: 1, ph: '예) 우리 가족 극장' }), T('slogan', '슬로건', { req: 1, ph: '예) 우리의 이야기가 상영됩니다.', hint: '홈 첫 화면의 큰 제목이 돼요.' }),
+          T('cursor', '마우스 모양 (이모지)', { ph: '🍿', hint: '홈과 일반 페이지에서 마우스 포인터 대신 따라다니는 모양이에요.\n비우면 팝콘(🍿)이에요. 작품 상영관은 작품마다 따로 정해요.' }),
+          F('cursorImage', '마우스 그림 (선택)', 'image', { hint: '이모지 대신 쓸 그림이에요. 정사각형 투명 PNG, 64×64px 이상이에요.' }),
           F('logoImage', '로고 이미지', 'image', { hint: '올리면 모든 페이지 맨 위·맨 아래와 브라우저 탭 아이콘에 자동으로 나와요. 정사각형 PNG(투명 배경)가 좋아요.' }),
           T('logoText', '로고 글자 (1~2글자)', { ph: '극', hint: '로고 이미지가 없을 때만 써요. 비워 두면 사이트 이름의 첫 글자를 써요.' })] }] },
         { title: '연락처', pv: ['index.html', 'footer'], fields: [{ group: 'site', fields: [
