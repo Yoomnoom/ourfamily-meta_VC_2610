@@ -188,9 +188,10 @@ dialog#intro h2{font-family:var(--hand);margin:0 0 10px}
 dialog#intro ol{margin:0 0 16px;padding-left:22px}
 dialog#intro li{margin-bottom:6px}
 input[type=email],input[type=password]{width:100%;font:inherit;font-size:1.05rem;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:11px 14px}
-dialog#login,dialog#editors,dialog#confirmDel{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;width:min(440px,92vw)}
-dialog#login::backdrop,dialog#editors::backdrop,dialog#confirmDel::backdrop{background:rgba(58,47,38,.55)}
-dialog#login h2,dialog#editors h2,dialog#confirmDel h2{font-family:var(--hand);margin:0 0 10px}
+dialog#login,dialog#editors,dialog#stats,dialog#confirmDel{border:2px solid var(--ink);border-radius:20px;background:var(--paper);color:var(--ink);padding:24px 28px;width:min(440px,92vw)}
+dialog#stats{width:min(620px,94vw)}
+dialog#login::backdrop,dialog#editors::backdrop,dialog#stats::backdrop,dialog#confirmDel::backdrop{background:rgba(58,47,38,.55)}
+dialog#login h2,dialog#editors h2,dialog#stats h2,dialog#confirmDel h2{font-family:var(--hand);margin:0 0 10px}
 dialog#confirmDel input{width:100%;box-sizing:border-box}
 dialog#login .row,dialog#editors .row,dialog#confirmDel .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 .prodbar{margin:0 0 16px;padding:12px 16px;border:2px solid var(--line);border-radius:16px;background:var(--paper);display:grid;gap:8px}
@@ -1334,7 +1335,7 @@ dialog#editors{width:min(680px,94vw)}
       mi('이 작품을 앞으로', () => swapWork(-1), { disabled: !has1 || ui.work === 0 }), mi('이 작품을 뒤로', () => swapWork(1), { disabled: !has1 || ui.work >= n - 1 }),
       mi('이 작품 삭제', delWork, { danger: true, disabled: !has1 || !mine(data.works[ui.work] || {}) }),
       el('hr'), mi('사용 방법', () => $('intro').showModal()), mi(online ? '저장 안 한 내용 버리고 다시 불러오기' : '처음부터 다시', resetAll, { danger: true }),
-      ...(online ? [el('hr'), ...(me.role === 'admin' ? [mi('편집자 관리', openEditors)] : []), mi(`로그아웃 (${me.email})`, signOut)] : []));
+      ...(online ? [el('hr'), mi('방문 집계', openStats), ...(me.role === 'admin' ? [mi('편집자 관리', openEditors)] : []), mi(`로그아웃 (${me.email})`, signOut)] : []));
     $('menu').hidden = false; $('btnMore').setAttribute('aria-expanded', 'true');
     $('menu').querySelector('.mi:not(:disabled)').focus();
   }
@@ -1610,6 +1611,30 @@ dialog#editors{width:min(680px,94vw)}
     } catch (e) { toast('저장 실패: ' + e.message, { ms: 8000 }); }
     finally { btn.disabled = false; }
   }
+
+  /* ---------- 방문 집계 보기 (편집자) ---------- */
+  async function openStats() {
+    const dlg = el('dialog', { id: 'stats', 'aria-labelledby': 'stT' }), body = el('div', { text: '불러오는 중…' });
+    const NAMES = { index: '홈', works: '상영작', watch: '상영관', making: '메이킹', album: '비하인드 컷', about: '소개' };
+    dlg.append(el('h2', { id: 'stT', text: '방문 집계' }), body,
+      el('p', { class: 'hint', text: '페이지를 연 횟수예요. 같은 탭에서 새로고침한 것은 한 번만 세요.\n방문자는 브라우저마다 만든 임의 번호로 세고, 이름·주소 같은 개인정보는 저장하지 않아요.\n내 컴퓨터(localhost)와 관리 페이지 미리보기는 세지 않아요.', style: 'white-space:pre-line;margin:12px 0 0' }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: '닫기', onclick: () => { dlg.close(); dlg.remove(); } })));
+    dlg.addEventListener('cancel', () => dlg.remove());
+    document.body.append(dlg); dlg.showModal();
+    try {
+      const rows = await (await sbFetch('/rest/v1/rpc/ourfamilymeta_pageview_stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
+      const total = rows.find(r => r.page == null), list = rows.filter(r => r.page != null);
+      const label = r => r.page === 'watch' && r.work ? '상영관 · ' + ((data.works.find(w => w.id === r.work) || {}).title || r.work) : (NAMES[r.page] || r.page);
+      const tr = (cells, tag = 'td') => el('tr', {}, ...cells.map((c, i) => el(tag, { text: String(c), style: i ? 'text-align:right;padding:6px 10px' : 'padding:6px 10px' })));
+      body.replaceChildren(el('table', { style: 'width:100%;border-collapse:collapse;font-size:.95rem' },
+        el('thead', {}, tr(['페이지', '전체 방문', '방문자', '오늘', '최근 7일'], 'th')),
+        el('tbody', {}, ...(total ? [tr(['전체', total.views, total.visitors, total.today, total.week])] : []), ...list.map(r => tr([label(r), r.views, r.visitors, r.today, r.week])))));
+      if (!rows.length) body.replaceChildren(el('p', { text: '아직 기록된 방문이 없어요.\n공개 사이트를 열면 여기에 쌓여요.', style: 'white-space:pre-line' }));
+    } catch (e) {
+      body.replaceChildren(el('p', { text: /42883|function|does not exist|schema cache|404/i.test(e.message) ? '집계 기능이 아직 준비되지 않았어요.\ndb/ourfamilymeta_pageviews.sql 을 Supabase 의 SQL Editor 에서 한 번 실행해 주세요.' : '불러오지 못했어요: ' + e.message, style: 'white-space:pre-line' }));
+    }
+  }
+
   async function openEditors() {
     const dlg = el('dialog', { id: 'editors', 'aria-labelledby': 'edT' }), list = el('ul', { class: 'ed-list' });
     const email = el('input', { type: 'email', placeholder: '추가할 사람의 이메일', 'aria-label': '추가할 이메일' });

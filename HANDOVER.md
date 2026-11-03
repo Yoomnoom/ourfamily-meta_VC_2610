@@ -5,6 +5,7 @@
 ---
 
 ## 2026-11-03 (게임 iframe 권한)
+- **방문 집계**: 공개 페이지가 열릴 때 `ourfamilymeta_pageviews`에 1건 기록(`common.js track()`: 페이지명·작품ID·임의 방문자번호, 같은 탭 새로고침은 1회, localhost·CMS 미리보기 제외). CMS 메뉴 "방문 집계"가 `ourfamilymeta_pageview_stats()`(편집자만)로 페이지별 전체·방문자·오늘·7일을 보여 준다. **`db/ourfamilymeta_pageviews.sql`을 Supabase SQL Editor에서 한 번 실행해야 동작**(그 전에는 기록이 조용히 실패하고 CMS에 안내 문구가 나온다).
 - 마우스 모양 자동 낱말을 실제 제목에 맞게 고침: 제목의 공백은 무시하고 비교(`잘 먹었습니다!`), `식당`(우리집식당) 추가, 지영의 일생은 📖. 작품 제목이 바뀌면 `CURSOR_WORDS`(common.js)나 CMS의 마우스 모양 칸을 같이 확인.
 - 게임 iframe 안에는 사이트 마우스 모양이 못 들어간다(별도 문서라 마우스 이벤트가 안 옴). 상영관이 게임 로드 후 `postMessage({type:"ft-cursor", text, img})`를 보내므로, 게임이 받아서 직접 그리면 같은 모양이 된다. 받지 않는 게임(남의 게임)은 자기 마우스 모양을 쓴다.
 - 홈 대표 화면 = **사진·영상 재생 목록**: 처음 것(`hero.mode`가 image면 `hero.image`, 아니면 `hero.video`) + `hero.more`(사진/영상 섞어서). 영상은 끝까지, 사진은 `hero.photoSeconds`초(기본 5, 2~60) 보여 준 뒤 다음으로, 마지막 다음엔 처음으로. 하나뿐이면 사진은 계속, 영상은 반복.

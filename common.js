@@ -399,6 +399,20 @@
     return [list, dlg];
   }
 
+
+  /* ---------- 방문 집계: 페이지를 열 때 1건 기록 (개인정보 없음, CMS "방문 집계"에서 합계를 본다) ---------- */
+  function track() {
+    if (window.parent !== window || !SB.url || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;   // 미리보기·내 컴퓨터 시험은 세지 않는다
+    const page = (location.pathname.split('/').pop() || 'index').replace(/\.html$/, '') || 'index', work = page === 'watch' ? (params.get('id') || '').slice(0, 80) : '';
+    const key = 'ft.pv.' + page + ':' + work;
+    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch {}   // 같은 탭에서 새로고침해도 한 번만
+    let vid = ''; try { vid = localStorage.getItem('ft.vid') || ''; if (vid.length < 8) { vid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/-/g, '').slice(0, 24); localStorage.setItem('ft.vid', vid); } } catch {}
+    if (vid.length < 8) vid = 'anon' + String(Math.random()).slice(2, 12);
+    fetch(SB.url + '/rest/v1/ourfamilymeta_pageviews', { method: 'POST', keepalive: true,
+      headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ page, work: work || null, visitor: vid }) }).catch(() => {});
+  }
+
   /* ---------- 헤더 / 푸터 ---------- */
   function header(site, av) {
     const shown = NAV.filter(([p]) => p === 'index.html' || av[{ 'works.html': 'works', 'making.html': 'making', 'album.html': 'album', 'about.html': 'about' }[p]]);
@@ -624,6 +638,7 @@
       const frag = document.createDocumentFragment();
       frag.append(header(site, av), r.main, footer(site));
       app.replaceChildren(frag);
+      track();
     });
   }
 
