@@ -130,7 +130,12 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
   background:linear-gradient(160deg,#4a1a26 0%,#2a1b3a 55%,#14111c 100%)}
 .poster-fallback::after{content:"";position:absolute;left:50%;top:50%;margin:-20px 0 0 -12px;border-left:34px solid rgba(255,255,255,.2);border-top:20px solid transparent;border-bottom:20px solid transparent}
 .slide-info{text-align:center;padding-top:16px;transition:opacity .5s}
-.slide:not(.active) .slide-info{opacity:0}
+/* 옆 카드: 제목·소개 줄(저작권 포함)을 흐리게 보여 '뒤에 다른 작품이 더 있다'는 걸 알린다. 관람 버튼은 가운데 카드에서만 */
+.slide:not(.active) .slide-info .btn{opacity:0;visibility:hidden}
+.slide-info .btn{transition:opacity .5s,visibility .5s}
+.slide:not(.active) .slide-info .meta{font-size:.8rem;margin-bottom:0}
+.slide:not(.active) .slide-info h3{font-size:1.2rem}
+.slide-info h3{transition:font-size .5s}
 .slide-info h3{font-size:1.55rem;margin-bottom:2px}
 .slide-info .meta{color:var(--muted);font-size:.95rem;margin:0 0 12px}
 .arrow{position:absolute;top:calc(var(--cw)*.75 - 26px);z-index:20;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
@@ -344,7 +349,7 @@ footer{margin-top:48px;border-top:1px solid var(--line);padding:38px 0 46px;back
   .btn:hover,.topic:hover,.tile:hover,.arrow:hover:not(:disabled),.toc a:hover,.wcard:hover .poster{transform:none}
   /* 상영작 캐러셀은 자동으로 도는 요소라, 카드가 부드럽게 미끄러지는 전환은 유지한다 */
   .carousel .slide{transition-duration:.8s,.6s!important}
-  .carousel .slide-info{transition-duration:.5s!important}
+  .carousel .slide-info .btn,.carousel .slide-info h3{transition-duration:.5s!important}
 }
 
 /* 관리 페이지 미리보기에서만: 지금 입력 중인 구역 강조 */
