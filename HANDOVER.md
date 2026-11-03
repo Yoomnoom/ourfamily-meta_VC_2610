@@ -5,6 +5,8 @@
 ---
 
 ## 2026-11-03 (게임 iframe 권한)
+- 작품 종류에 **앱** 추가(영상·게임·앱·스토리보드). 앱 필드는 `w.app`(url·embed·portrait·howto). **DB `works.kind` 칸에는 앱도 `game`으로 저장**하고 `content.kind`가 `app`이면 읽을 때 앱으로 되살린다(칸에 제약이 있을 수 있어 마이그레이션을 피함).
+- 게임·앱에 **앱용(세로형)** 체크(`portrait`): 상영관 화면을 9:16 비율, 화면 높이 82% 안으로 보여준다(`.screen-frame.portrait`, `.game-frame.portrait`). 앱은 기본 켬, 게임은 기본 끔.
 - 상영관에 넣은 게임 iframe의 `sandbox`에 `allow-modals`, `allow-downloads` 추가. 없으면 앨범의 선택 삭제(확인창)와 선택 다운로드가 막힌다. 게임 단독 주소에서는 원래 되고 사이트 안에서만 안 됐다.
 
 ## 2026-11-02 (사이트 로고 이미지)

@@ -307,9 +307,9 @@ dialog#editors{width:min(680px,94vw)}
   /* 단계: scope(work=선택한 작품, site=사이트 공통), pv=[페이지, 섹션], parts=[{ title, desc, pv, adv, fields }] */
   const STEPS = [
     { id: 'video', scope: 'work', title: '작품 올리기', pv: [WATCH, 'player'],
-      why: '작품 종류를 고르고, 연재물이면 시리즈를 정해요. 그다음 영상(또는 게임·스토리보드)과 포스터를 올리면 오른쪽에서 상영관 모습을 바로 볼 수 있어요.',
+      why: '작품 종류를 고르고, 연재물이면 시리즈를 정해요. 그다음 영상(또는 게임·앱·스토리보드)과 포스터를 올리면 오른쪽에서 상영관 모습을 바로 볼 수 있어요.',
       parts: [{ fields: [
-        S('kind', '작품 종류', [['video', '영상'], ['game', '게임'], ['storyboard', '스토리보드']], { rerender: true, hint: '영상은 mp4 파일, 게임은 게임 주소, 스토리보드는 이미지 여러 장(또는 PDF)을 올려요.' }),
+        S('kind', '작품 종류', [['video', '영상'], ['game', '게임'], ['app', '앱'], ['storyboard', '스토리보드']], { rerender: true, hint: '영상은 mp4 파일, 게임·앱은 배포한 주소, 스토리보드는 이미지 여러 장(또는 PDF)을 올려요.' }),
         S('series', '연재물인가요?', () => {
           const w = data.works[ui.work] || {};
           return [['', '단독 작품 (연재물 아님)'], ...data.series.filter(x => mine(x) || x.id === w.series).map(x => { const c = (data.works.find(y => y.series === x.id && has(y.creator)) || {}).creator; return [x.id, (has(x.title) ? x.title : '(제목 없음)') + (has(c) ? ` (© ${c})` : '')]; }), ['__new', '＋ 새 연재물 만들기…']];
@@ -334,12 +334,19 @@ dialog#editors{width:min(680px,94vw)}
           { group: 'game', show: () => kindOf() === 'game', fields: [
             T('url', '게임 주소', { ph: 'https://...', hint: 'itch.io 등 게임이 올라간 주소(https://로 시작)를 붙여 넣어요.' }),
             { type: 'check', key: 'embed', label: '상영관 안에서 바로 실행하기 (안 되는 게임이면 끄세요)' },
+            { type: 'check', key: 'portrait', label: '앱용 (세로형 화면으로 보여주기)' },
             A('howto', '게임 하는 방법', { rows: 4, ph: '예) 방향키로 움직이고 스페이스바로 점프해요.' })] },
+          { group: 'app', show: () => kindOf() === 'app', fields: [
+            T('url', '앱 주소', { ph: 'https://...', hint: '배포한 앱 주소(https://로 시작)를 붙여 넣어요.' }),
+            { type: 'check', key: 'embed', label: '상영관 안에서 바로 실행하기 (안 되는 앱이면 끄세요)' },
+            { type: 'check', key: 'portrait', label: '앱용 (세로형 화면으로 보여주기)' },
+            A('howto', '앱 사용 방법', { rows: 4, ph: '예) 사진을 올리면 가족 카드가 만들어져요.' })] },
           { group: 'storyboard', show: () => kindOf() === 'storyboard', fields: [
             { type: 'list', key: 'pages', itemLabel: i => `장면 ${i + 1}`, addLabel: '장면 추가', fields: [
               F('file', '장면 이미지', 'image'), T('caption', '설명 (선택)', { ph: '예) 1컷: 할머니 부엌' })] },
             F('pdf', 'PDF 파일 (있으면)', 'pdf', { hint: '이미지 대신 또는 이미지와 함께 PDF를 올릴 수 있어요.' })] }] }],
       checks: w => w.kind === 'game' ? [ck('게임 주소', st(obj(w.game).url), false, 'url'), ck('포스터 사진', st(obj(w.video).poster), false, 'poster')]
+        : w.kind === 'app' ? [ck('앱 주소', st(obj(w.app).url), false, 'url'), ck('포스터 사진', st(obj(w.video).poster), false, 'poster')]
         : w.kind === 'storyboard' ? [ck('스토리보드 장면 1장 이상', best(arr(obj(w.storyboard).pages).map(x => st(x.file))), false, 'file'), ck('포스터 사진', st(obj(w.video).poster), false, 'poster')]
         : [ck('영상 파일', st(obj(w.video).file), false, 'file'), ck('포스터 사진', st(obj(w.video).poster), false, 'poster'), ck('영상 길이', st(obj(w.video).duration), false, 'duration')] },
     { id: 'intro', scope: 'work', title: '작품 소개 쓰기', pv: [WATCH, 'info'],
@@ -452,12 +459,12 @@ dialog#editors{width:min(680px,94vw)}
   const FONT_ROW = {"item": "글꼴 – Pretendard (본문·제목 전체)", "source": "Pretendard (Kil Hyung-jin) · github.com/orioncactus/pretendard · 파일을 media/fonts/에 포함해 직접 제공", "license": "SIL Open Font License 1.1 – 상업적 이용·재배포 가능, 저작권·라이선스 고지 유지 (media/fonts/Pretendard-LICENSE.txt)", "auto": true};
   const SECTION_TITLES = { intent: '기획 의도', process: '창작 과정', tools: '사용한 AI 도구와 주요 프롬프트', roles: 'AI가 한 것 vs 직접 한 것', ai: 'AI가 한 것', human: '직접 한 것',
     sources: '출처 · 저작권', others: '다른 작품 보기', declaration: '책임 있는 AI 활용 선언문', producer: '제작자 소개', contest: '공모전 안내' };
-  const kindOf = () => { const k = (data.works[ui.work] || {}).kind; return k === 'game' || k === 'storyboard' ? k : 'video'; };
+  const kindOf = () => { const k = (data.works[ui.work] || {}).kind; return k === 'game' || k === 'app' || k === 'storyboard' ? k : 'video'; };
   const blankTool = () => ({ name: '', purpose: '', prompts: [{ title: '', text: '', refs: [] }] });
   const blankCommon = () => ({ process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, sources: [{ item: '', source: '', license: '' }] });
   function blankWork(id) {
     return { id, kind: 'video', title: '', creator: '', tagline: '', intent: '',
-      game: { url: '', embed: false, howto: '' }, storyboard: { pages: [{ file: '', caption: '', alt: '' }], pdf: '' },
+      game: { url: '', embed: false, portrait: false, howto: '' }, app: { url: '', embed: false, portrait: true, howto: '' }, storyboard: { pages: [{ file: '', caption: '', alt: '' }], pdf: '' },
       video: { file: '', poster: '', cover: '', duration: '', captions: '', showDownload: true },
       process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
       sources: [{ item: '', source: '', license: '' }], series: '', episode: '', useCommon: true, owner: '' };
@@ -507,8 +514,8 @@ dialog#editors{width:min(680px,94vw)}
   function normWork(w) {
     const b = blankWork(''); w = obj(w);
     const sb = obj(w.storyboard);
-    return { ...b, ...w, kind: w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', video: { ...b.video, ...obj(w.video) },
-      game: { ...b.game, ...obj(w.game) },
+    return { ...b, ...w, kind: w.kind === 'game' || w.kind === 'app' || w.kind === 'storyboard' ? w.kind : 'video', video: { ...b.video, ...obj(w.video) },
+      game: { ...b.game, ...obj(w.game) }, app: { ...b.app, ...obj(w.app) },
       storyboard: { pdf: '', ...sb, pages: (arr(sb.pages).length ? arr(sb.pages) : b.storyboard.pages).map(x => ({ file: '', caption: '', alt: '', ...obj(x) })) },
       process: normSteps(w.process), tools: normTools(w.tools), roles: normRoles(w.roles),
       useCommon: typeof w.useCommon === 'boolean' ? w.useCommon : !ownProd(w), owner: has(w.owner) ? w.owner : '',
@@ -1523,7 +1530,7 @@ dialog#editors{width:min(680px,94vw)}
       if (inSeries && !solo && !(+w.episode >= 1)) throw new Error(`"${has(w.title) ? w.title : w.id}"의 회차 번호를 1 이상의 숫자로 적어 주세요.`);
       const c = clone(w); delete c.series; delete c.episode; delete c.owner;
       const slug = String(w.id || '').trim();
-      return { slug, kind: w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
+      return { slug, kind: w.kind === 'app' ? 'game' : w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
         episode_no: inSeries ? (solo ? 1 : Math.floor(+w.episode)) : null, poster_path: has(obj(w.video).poster) ? w.video.poster.trim() : null,
         sort_order: i, is_published: has(w.title), content: c };
     });
@@ -1537,7 +1544,7 @@ dialog#editors{width:min(680px,94vw)}
     if (st.length || ser.length || wk.length) {
       d = { ...obj(st[0] && st[0].value),
         series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoX: obj(x.common).logoX || '', logoY: obj(x.common).logoY || '', logoW: obj(x.common).logoW || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
-        works: wk.map(x => ({ ...obj(x.content), kind: x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
+        works: wk.map(x => ({ ...obj(x.content), kind: obj(x.content).kind === 'app' ? 'app' : x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
     }
     return { d, st, ser, wk };
   }
