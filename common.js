@@ -418,7 +418,7 @@
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
       if (has(it.file) && isVideo(it.file)) {
         const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
-        vd.muted = true; vd.addEventListener('error', () => vd.remove());
+        vd.muted = true; vd.addEventListener('error', () => vd.remove()); vd.addEventListener('loadedmetadata', () => { if (masonry) btn.style.aspectRatio = ''; });   // 영상 크기를 알면 그 비율대로 (위아래 빈 띠 없이)
         btn.append(vd, h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
       } else if (has(it.file)) {
         const img = h('img', { src: mediaPath(it.file), alt: '', loading: 'lazy' });

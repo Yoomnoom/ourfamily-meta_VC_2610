@@ -19,7 +19,7 @@
     const photos = arr(obj(d.album).photos).filter(g => g && (has(g.file) || has(g.caption)));
     if (!photos.length) return { title, main: emptyPage('비하인드 컷') };
     return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('비하인드 컷', obj(d.album).intro),
-      h('section', { class: 'page', 'data-section': 'gallery', 'aria-label': '사진 목록' }, h('div', { class: 'wrap' }, ...gallery(photos, { masonry: true })))) };
+      h('section', { class: 'page tight', 'data-section': 'gallery', 'aria-label': '사진 목록' }, h('div', { class: 'wrap' }, ...gallery(photos, { masonry: true })))) };
   });
 })();
 </script>
