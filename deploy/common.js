@@ -524,11 +524,15 @@
   const t0 = performance.now();
   let loader = null;
   let c = '극'; try { c = sessionStorage.getItem('ft.logo') || c; } catch {}
+  let firstPage = true; try { firstPage = !sessionStorage.getItem('ft.seen'); sessionStorage.setItem('ft.seen', '1'); } catch {}   // 로딩 화면은 탭을 연 뒤 첫 페이지에서만 (메뉴를 옮길 때마다 뜨지 않게)
   const bar = h('i');
-  loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, c.startsWith('img:') ? h('img', { class: 'logo logo-img', src: c.slice(4), alt: '' }) : logoSvg(c), h('div', { class: 'ld-bar' }, bar));
-  document.body.append(loader);
-  let pct = 6; const tick = setInterval(() => { pct += (92 - pct) * .09; bar.style.width = pct + '%'; }, 90);   // 실제 진행률은 알 수 없어서 90%쪽으로 천천히 차오르다가, 다 불러오면 100%로 채운다
-  bar.style.width = pct + '%';
+  let tick = 0;
+  if (firstPage && !previewMode) {
+    loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, c.startsWith('img:') ? h('img', { class: 'logo logo-img', src: c.slice(4), alt: '' }) : logoSvg(c), h('div', { class: 'ld-bar' }, bar));
+    document.body.append(loader);
+    let pct = 6; tick = setInterval(() => { pct += (92 - pct) * .09; bar.style.width = pct + '%'; }, 90);   // 실제 진행률은 알 수 없어서 90%쪽으로 천천히 차오르다가, 다 불러오면 100%로 채운다
+    bar.style.width = pct + '%';
+  }
   function hideLoader() {
     if (!loader) return;
     const l = loader; loader = null;
@@ -538,17 +542,6 @@
   cursorFx(); tooltips();
   window.addEventListener('scroll', syncHeader, { passive: true });
   window.addEventListener('pageshow', () => document.body.classList.remove('leaving'));
-  document.addEventListener('click', e => {
-    const a = e.target.closest && e.target.closest('a[href]');
-    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if ((a.target && a.target !== '_self') || a.hasAttribute('download')) return;
-    const u = new URL(a.href, location.href);
-    if (u.origin !== location.origin || !/^https?:$/.test(u.protocol)) return;
-    if (u.pathname === location.pathname && u.search === location.search) return;   // 같은 페이지 안 이동
-    e.preventDefault();
-    document.body.classList.add('leaving');
-    setTimeout(() => { location.href = a.href; }, 220);
-  });
 
   /* ---------- 데이터 로딩 / 미리보기 ---------- */
   function showError(app, msg) {
@@ -668,6 +661,8 @@
       host.postMessage({ type: 'preview-ready' }, '*');
       return;
     }
+    let shown = '';   // 직전 방문 때 읽어 둔 내용이 있으면 바로 그리고, 뒤에서 최신 내용을 확인해 달라졌을 때만 다시 그린다 (메뉴 이동이 즉시 보이게)
+    try { shown = sessionStorage.getItem('ft.data') || ''; if (shown) run(JSON.parse(shown)); } catch { shown = ''; }
     try {
       let d = null;
       try { d = await fromDb(); } catch (e) { console.warn('DB를 읽지 못해 content.json을 씁니다:', e.message); }
@@ -676,8 +671,10 @@
         if (!r.ok) throw new Error('HTTP ' + r.status);
         d = await r.json();
       }
-      run(d);
-    } catch (e) { showError(app, 'content.json을 읽는 중 문제가 생겼어요. (' + e.message + ')'); }
+      const now = JSON.stringify(d);
+      try { sessionStorage.setItem('ft.data', now); } catch {}
+      if (now !== shown) run(d);
+    } catch (e) { if (!shown) showError(app, 'content.json을 읽는 중 문제가 생겼어요. (' + e.message + ')'); }
   }
 
   /** 모든 페이지 공통 골격: build(data, site, av)가 { title, main }을 돌려주면 헤더·푸터를 붙여 그린다. */
@@ -689,6 +686,7 @@
     probe.src = src;
   }
 
+  let tracked = false;
   function boot(build) {
     const app = document.getElementById('app');
     load(app, d => {
@@ -703,7 +701,7 @@
       const frag = document.createDocumentFragment();
       frag.append(header(site, av), r.main, footer(site));
       app.replaceChildren(frag);
-      track();
+      if (!tracked) { tracked = true; track(); }
     });
   }
 
