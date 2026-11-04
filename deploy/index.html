@@ -175,12 +175,14 @@
 
     if (works.length) main.append(section('now', T.works, '', carousel(works)));
 
+    const TOPIC_GO = ['works.html', '', 'making.html'];   // 카드 순서대로 이동할 페이지 (게임 전용 페이지는 아직 없어서 비워 둔다)
     const topics = arr(home.topics).filter(t => has(t.title) || has(t.text));
-    if (topics.length) main.append(section('topics', T.topics, '', h('div', { class: 'topics' }, topics.map(t =>
-      h('article', { class: 'topic' },
+    if (topics.length) main.append(section('topics', T.topics, '', h('div', { class: 'topics' }, topics.map((t, i) =>
+      h(TOPIC_GO[i] ? 'a' : 'article', TOPIC_GO[i] ? { class: 'topic go', href: href(TOPIC_GO[i]) } : { class: 'topic' },
         has(t.label) && h('span', { class: 'tag', text: t.label }),
         has(t.title) && h('h3', { text: t.title }),
-        has(t.text) && h('p', { text: t.text }))))));
+        has(t.text) && h('p', { text: t.text }),
+        TOPIC_GO[i] && h('span', { class: 'go-arrow', 'aria-hidden': 'true', text: '→' }))))));
 
     const photos = arr(obj(d.album).photos).filter(g => has(g.file) || has(g.caption)).slice(0, 6);
     if (photos.length) main.append(section('album', T.album, '', ...gallery(photos),

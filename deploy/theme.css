@@ -166,6 +166,11 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .topic .tag{display:inline-block;font-weight:700;font-size:.85rem;letter-spacing:.1em;color:var(--accent-hi);margin-bottom:8px}
 .topic h3{font-size:1.55rem;margin-bottom:8px}
 .topic p{margin:0;color:var(--muted)}
+a.topic{display:block;color:inherit;text-decoration:none;padding-bottom:72px}
+.topic .go-arrow{position:absolute;right:20px;bottom:18px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--accent);color:#fff;font-weight:700;font-size:1.25rem;transition:transform .3s}
+a.topic:hover .go-arrow{transform:translateX(4px)}
+a.topic:focus-visible{outline:3px solid var(--accent-hi);outline-offset:3px}
 
 /* ===== 홈: 메이킹 하이라이트 ===== */
 .toolnames{list-style:none;margin:0 0 22px;padding:0;display:flex;flex-wrap:wrap;gap:10px}
