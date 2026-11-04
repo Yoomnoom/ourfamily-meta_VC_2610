@@ -67,6 +67,7 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(255,248,236,.98);bor
 .stp{display:flex;width:100%;gap:10px;align-items:center;text-align:left;background:none;border:0;border-radius:10px;padding:8px 8px;min-height:44px;font-weight:500;color:var(--ink)}
 .stp:hover{background:var(--yellow)}
 .stp[aria-current=step]{background:var(--mint);font-weight:700}
+.stp .req{margin-left:auto;flex:none}
 .stp .no{font-weight:700;color:var(--muted);min-width:1.1em}
 .ic{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--field);display:grid;place-items:center;font-size:.75rem;font-weight:700;background:#fff;color:#fff}
 .ic.done{background:var(--ok);border-color:var(--ok)}
@@ -1159,6 +1160,8 @@ dialog#editors{width:min(680px,94vw)}
   }
   // 제작 기록 단계는 '지금 고치는 대상'이 아니라 공통 + 추가분을 합친 결과로 완성도를 본다
   const scopeForStatus = (s, w) => s.scope !== 'work' ? data : s.prod ? (w && effProd(w)) : w;
+  const stepReqLeft = (st0, sc) => itemsOf(st0, sc).filter(x => x.req && x.s < 2).length;   // 필수인데 비었거나 예시 문구인 칸 수
+  const reqLeft = w => STEPS.filter(x => x.scope === 'work').reduce((a, x) => a + stepReqLeft(x, scopeForStatus(x, w)), 0);
   const workStepsLeft = w => STEPS.filter(s => s.scope === 'work' && statusOf(s, scopeForStatus(s, w)) !== 'done').length;
   const allStatus = () => STEPS.map(s => statusOf(s, scopeForStatus(s, data.works[ui.work])));
   const firstLeft = () => allStatus().findIndex(s => s !== 'done');
@@ -1172,8 +1175,8 @@ dialog#editors{width:min(680px,94vw)}
     STEPS.forEach((s, i) => {
       if (s.scope !== group) { group = s.scope; nodes.push(el('h2', { text: group === 'work' ? '이 작품' : '사이트 공통' })); }
       const stt = sts[i];
-      nodes.push(el('button', { type: 'button', class: 'stp', 'aria-current': i === ui.step ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.title} (${STATUS_TXT[stt]})`, onclick: () => goStep(i) },
-        el('span', { class: 'ic ' + stt, 'aria-hidden': 'true', text: stt === 'done' ? '✓' : '' }), el('span', { class: 'no', 'aria-hidden': 'true', text: i + 1 }), el('span', { text: s.title })));
+      nodes.push(el('button', { type: 'button', class: 'stp', 'aria-current': i === ui.step ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.title} (${STATUS_TXT[stt]}${stepReqLeft(s, curScopeOf(s)) ? ', 필수 항목 남음' : ''})`, onclick: () => goStep(i) },
+        el('span', { class: 'ic ' + stt, 'aria-hidden': 'true', text: stt === 'done' ? '✓' : '' }), el('span', { class: 'no', 'aria-hidden': 'true', text: i + 1 }), el('span', { text: s.title }), stepReqLeft(s, curScopeOf(s)) ? el('span', { class: 'req', text: '필수' }) : null));
     });
     $('steps').replaceChildren(...nodes);
   }
@@ -1190,13 +1193,13 @@ dialog#editors{width:min(680px,94vw)}
     gs.forEach(g => g.idx.sort((a, b) => (+data.works[a].episode || 0) - (+data.works[b].episode || 0)));
     return gs;
   }
-  const epLabel = (w, i) => { const n = workStepsLeft(w); return `${has(w.episode) ? w.episode + '화' : '회차 미정'}${has(w.title) ? ' · ' + w.title : ''} — ${n ? `${n}개 남음` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`; };
+  const epLabel = (w, i) => { const n = workStepsLeft(w); return `${has(w.episode) ? w.episode + '화' : '회차 미정'}${has(w.title) ? ' · ' + w.title : ''} — ${n ? `${n}개 남음${reqLeft(w) ? ` · 필수 ${reqLeft(w)}` : ''}` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`; };
   function updateHeader() {
     const sel = $('workSel'), ep = $('epSel'), gs = groupsOf(), cur = gs.find(g => g.idx.includes(ui.work));
     const labels = gs.map(g => {
       if (g.series) { const left = g.idx.reduce((a, i) => a + (workStepsLeft(data.works[i]) ? 1 : 0), 0); return `${g.title} — 연재 ${g.idx.length}편${left ? ` · ${left}편 작성 중` : ''}`; }
       const w = data.works[g.idx[0]], n = workStepsLeft(w);
-      return `${g.title} — ${n ? `${n}개 남음` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`;
+      return `${g.title} — ${n ? `${n}개 남음${reqLeft(w) ? ` · 필수 ${reqLeft(w)}` : ''}` : '끝'}${mine(w) ? '' : ' · 읽기 전용'}`;
     });
     if (!labels.length) labels.push('(작품 없음)');
     if (sel.options.length !== labels.length) sel.replaceChildren(...labels.map((l, i) => el('option', { value: gs[i] ? gs[i].key : '', text: l })));
