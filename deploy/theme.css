@@ -22,6 +22,8 @@ body{
   animation:pagein .45s ease both;
 }
 body.leaving{opacity:0;transition:opacity .2s ease}
+.site-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background-size:cover;background-position:center;background-repeat:no-repeat}
+.site-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(13,11,16,.72),rgba(13,11,16,.9))}
 @keyframes pagein{from{opacity:0}}
 :focus-visible{outline:3px solid #fff;outline-offset:3px;border-radius:6px}
 img{max-width:100%}

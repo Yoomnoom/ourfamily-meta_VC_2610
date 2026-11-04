@@ -681,6 +681,14 @@
   }
 
   /** 모든 페이지 공통 골격: build(data, site, av)가 { title, main }을 돌려주면 헤더·푸터를 붙여 그린다. */
+  /** 홈 첫 화면 "사진"(hero.image)을 모든 페이지의 뒷배경으로 깐다. 사진이 없거나 못 불러오면 기본 배경 그대로 */
+  function siteBg(hr) {
+    if (!has(hr.image) || document.querySelector('.site-bg')) return;
+    const src = mediaPath(hr.image), probe = new Image();
+    probe.onload = () => { const e = h('div', { class: 'site-bg', 'aria-hidden': 'true' }); e.style.backgroundImage = `url("${src}")`; document.body.prepend(e); };
+    probe.src = src;
+  }
+
   function boot(build) {
     const app = document.getElementById('app');
     load(app, d => {
@@ -690,6 +698,7 @@
       const r = build(d, site, av);
       document.title = r.title;
       setFavicon(site);
+      siteBg(obj(d.hero));
       try { sessionStorage.setItem('ft.logo', has(site.logoImage) ? 'img:' + mediaPath(site.logoImage) : markText(site)); } catch {}
       const frag = document.createDocumentFragment();
       frag.append(header(site, av), r.main, footer(site));
