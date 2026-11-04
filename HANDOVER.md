@@ -8,6 +8,7 @@
 
 - **홈 대표 화면 세로 화면 처리**: 가로 영상·사진은 세로 화면(휴대폰)에서도 자르지 않고 통째로 보여 준다(`object-fit:contain`). 세로용 파일(`videoPortrait`/`imagePortrait`/목록의 `portrait`)은 **올렸을 때만** 세로 화면에서 대신 쓰고, 그때는 꽉 채운다(`.fill`, cover).
 - **커서 이모지 지연 제거**: `cursorFx` 가 마우스를 40%씩 따라가던(지연) 방식을 마우스 위치에 바로 붙이는 방식으로 바꾸고, 기울기만 부드럽게 둔다. `.fx-cursor`/`.fx-c-in` 에 `will-change:transform`.
+- **영상 둘레 일반 마우스**: 커서 이모지는 게임뿐 아니라 `.screen-frame`(상영관의 영상·스토리보드·게임·앱)과 사진 확대 창의 영상(`video.lb-img`) 둘레 80px 안에서도 숨기고 일반 마우스로 돌린다. 홈 대표 화면(배경 영상)은 제외.
 - **영상 끝 화면 이미지**: CMS 영상 작품의 "끝 화면 이미지(선택)"(`video.endCover`). `common.js buildVideo`가 영상 `ended` 때 영상 위에 이미지를 보여 주고 `play`·`seeking` 때 숨긴다(`.end-cover`, 아래 48px 은 재생 막대용으로 비움, contain). 예: "다음 화에서 계속됩니다." 이미지. 전체화면에서는 영상 요소만 확대되어 보이지 않는다.
 - **자막이 안 나오던 원인**: 영상·자막이 다른 도메인(Supabase)이라 `<video>`에 `crossorigin` 이 없으면 브라우저가 자막(.vtt)을 막는다(track readyState 3=error, cue 0). `buildVideo`가 자막이 있을 때 `crossorigin="anonymous"` 를 붙인다(Supabase 가 영상·자막 모두 ACAO:* 응답, 라이브에서 확인).
 - **자막 .srt 자동 변환**: CMS 업로드(`placeFile` → `srtToVtt`)가 `.srt`를 받으면 UTF-8 아니면 EUC-KR 로 읽어 `.vtt`(WEBVTT 머리말, 시간 쉼표→점)로 바꿔 올린다. 브라우저 `<track>`은 .vtt 만 읽기 때문. .ass·.smi 등은 미지원.

@@ -227,9 +227,8 @@
       if (e.pointerType === 'touch' || !spec) return;
       mx = e.clientX; my = e.clientY;
       if (!seen) { seen = true; px = mx; el.classList.add('on'); }
-      // 게임·앱 화면과 그 둘레(80px)에서는 사이트 아이콘을 숨기고 원래 마우스 모양으로 돌려 놓는다 (게임 조작에 방해가 되지 않게)
-      const fr = document.querySelector('.game-frame'), rc = fr && fr.getBoundingClientRect();
-      near = !!rc && mx > rc.left - 80 && mx < rc.right + 80 && my > rc.top - 80 && my < rc.bottom + 80;
+      // 영상·스토리보드·게임·앱 화면(사진 확대 창의 영상 포함)과 그 둘레(80px)에서는 사이트 아이콘을 숨기고 원래 마우스 모양으로 돌려 놓는다 (조작에 방해가 되지 않게)
+      near = [...document.querySelectorAll('.screen-frame,video.lb-img')].some(f => { const rc = f.getBoundingClientRect(); return rc.width > 0 && mx > rc.left - 80 && mx < rc.right + 80 && my > rc.top - 80 && my < rc.bottom + 80; });
       root.classList.toggle('fx-on', !near); el.classList.toggle('gone', near); el.classList.toggle('hot', !near && !!(e.target.closest && e.target.closest(HOT)));
       if (!raf) raf = requestAnimationFrame(loop);
     }, { passive: true });
