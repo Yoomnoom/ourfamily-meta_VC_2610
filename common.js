@@ -1,4 +1,4 @@
-/* 가상의 가족 극장 – 공개 페이지 공통 스크립트 (index · works · watch · making · album · about) */
+/* 우리 가족 극장 – 공개 페이지 공통 스크립트 (index · works · watch · making · album · about) */
 (() => {
   const has = s => typeof s === 'string' && s.trim() !== '';
   const arr = a => Array.isArray(a) ? a : [];
@@ -453,7 +453,7 @@
   /* ---------- 헤더 / 푸터 ---------- */
   function header(site, av) {
     const shown = NAV.filter(([p]) => p === 'index.html' || av[{ 'works.html': 'works', 'making.html': 'making', 'album.html': 'album', 'about.html': 'about' }[p]]);
-    const name = has(site.name) ? site.name : '가상의 가족 극장';
+    const name = has(site.name) ? site.name : '우리 가족 극장';
     const burger = h('button', { type: 'button', class: 'burger', 'aria-expanded': 'false', 'aria-controls': 'nav', 'aria-label': '메뉴 열기' },
       h('span', { 'aria-hidden': 'true' }), h('span', { 'aria-hidden': 'true' }), h('span', { 'aria-hidden': 'true' }));
     const hd = h('header', { class: 'site-header', 'data-section': 'header' }, h('div', { class: 'wrap bar' },
@@ -485,7 +485,7 @@
     ].filter(Boolean);
     return h('footer', { 'data-section': 'footer' }, h('div', { class: 'wrap foot' },
       h('div', { class: 'foot-brand' },
-        h('a', { class: 'brand', href: href('index.html') }, logoMark(site), h('span', { text: has(site.name) ? site.name : '가상의 가족 극장' })),
+        h('a', { class: 'brand', href: href('index.html') }, logoMark(site), h('span', { text: has(site.name) ? site.name : '우리 가족 극장' })),
         has(site.footer) && h('p', { raw: true, text: site.footer })),
       info.length > 0 && h('dl', { class: 'foot-info' }, info),
       sns.length > 0 && h('ul', { class: 'foot-sns', 'aria-label': 'SNS' }, sns.map(s =>
