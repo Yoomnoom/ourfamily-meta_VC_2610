@@ -28,6 +28,9 @@ foreach ($f in $publicFiles) {
 # 방문 기록 중계 함수(Vercel Functions): deploy/api/ 로 복사
 $apiSrc = Join-Path $root 'api'
 if (Test-Path -LiteralPath $apiSrc) { Copy-Item -LiteralPath $apiSrc -Destination $deploy -Recurse }
+# 매주 자동 실행 설정(Vercel Cron)
+$vj = Join-Path $root 'vercel.json'
+if (Test-Path -LiteralPath $vj) { Copy-Item -LiteralPath $vj -Destination $deploy -Force }
 $mediaSrc = Join-Path $root 'media'
 if (Test-Path -LiteralPath $mediaSrc) {
   Get-ChildItem -LiteralPath $mediaSrc -Recurse -File | ForEach-Object {

@@ -191,3 +191,5 @@
 - CMS: 필수 항목(req 표시된 칸)이 비어 있으면 왼쪽 단계 목록 줄 끝에 빨간 "필수" 표시, 작품 선택 목록에 "필수 n" 개수 표시(stepReqLeft·reqLeft). 저장을 막지는 않는다.
 
 - 방문 집계 3차: db/ourfamilymeta_pageviews_v3.sql(영상 이벤트 play/progress/end/watch + ourfamilymeta_pageview_report_v3). 사용자가 SQL Editor 에서 한 번 실행해야 켜진다. 실행 전에는 CMS가 2차 보고서로 대체 표시. 영상 이벤트는 common.js buildVideo(vSend)·api/track.js. 노션 정리는 CMS 방문 집계를 연 상태에서 Claude가 읽어 옮긴다.
+
+- 주간 자동 보고: db/ourfamilymeta_weekly_summary.sql(비밀문구 표 + ourfamilymeta_weekly_summary) · api/weekly.js(Vercel Cron 매주 월 09:00 KST, vercel.json) → Notion "주별 기록"에 새 줄. 환경변수 CRON_SECRET, WEEKLY_SECRET, NOTION_TOKEN, NOTION_DATABASE_ID 필요(값은 코드에 넣지 않는다). SQL 실행·환경변수 등록 전에는 동작하지 않는다.
