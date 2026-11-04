@@ -187,7 +187,9 @@
   const finePointer = () => matchMedia('(hover:hover) and (pointer:fine)').matches;
   /* 마우스 모양: 작품마다 CMS에서 이모지나 그림으로 고른다. 비워 두면 제목 속 낱말로 정하고, 그래도 없으면 홈 모양(팝콘)을 쓴다 */
   const CURSOR_HOME = '🍿';
-  const CURSOR_WORDS = [['지영', '📖'], ['찰칵', '📷'], ['보은', '🐕'], ['풍산', '🐗'], ['잘먹', '🥄'], ['마음', '🏠'], ['식탁', '🥢'], ['식당', '🥢']];   // 제목의 공백은 무시하고 비교한다
+  const CURSOR_WORDS = [['지영', '📕'], ['찰칵', '📷'], ['보은', '🐕'], ['풍산', '🐗'], ['잘먹', '🥄'], ['마음', '🏠'], ['식탁', '🥢'], ['식당', '🥢']];   // 제목의 공백은 무시하고 비교한다
+  const CURSOR_ACTIVE = { '📕': '📖', '📷': '📸', '🥄': '🍚', '🥢': '🍜', '🏠': '🏡', '🐕': '🐶', '🍿': '🎬' };   // 눌릴 만한 곳에 올리거나 누르면 바뀌는 모양 (책이 펼쳐진다, 셔터가 터진다…). 없는 것은 커졌다 작아지기만 한다
+  const CURSOR_FAMILY = [['👨', 22, 18, .6], ['👩', 38, 10, .5], ['👧', 34, 30, .42]];   // 아이콘 옆을 바짝 따라다니는 작은 가족 [모양, 가로, 세로, 따라가는 빠르기]
   function cursorSpec(emoji, image, ...titles) {
     if (has(image)) return { img: mediaPath(image) };
     if (has(emoji)) return { text: emoji.trim() };
@@ -200,13 +202,17 @@
     if (!finePointer() || window.parent !== window) return;   // 관리 페이지 미리보기 안에서는 쓰지 않는다
     const el = h('div', { class: 'fx-cursor', 'aria-hidden': 'true' }), inner = h('span', { class: 'fx-c-in' });
     el.append(inner); document.body.append(el);
+    const fam = h('div', { class: 'fx-fam', 'aria-hidden': 'true' }), kin = CURSOR_FAMILY.map(([g, dx, dy, k], i) => ({ dx, dy, k, x: 0, y: 0, e: h('span', { class: 'fx-f' }, h('span', { text: g, style: `animation-delay:${-i * .4}s` })) }));
+    fam.append(...kin.map(f => f.e)); document.body.append(fam);
+    const both = (c, on) => { el.classList.toggle(c, on); fam.classList.toggle(c, on); };
     const root = document.documentElement, HOT = 'a[href],button,[role="button"],.tile,.arrow,summary,label';
-    let spec = null, mx = 0, my = 0, px = 0, tilt = 0, raf = 0, seen = false, near = false, live = 0;
+    let spec = null, mx = 0, my = 0, px = 0, tilt = 0, raf = 0, seen = false, near = false, live = 0, hotNow = false, down = false;
     const content = () => spec.img ? h('img', { src: spec.img, alt: '', draggable: 'false' }) : document.createTextNode(spec.text);
+    const glyph = () => { if (!spec || spec.img) return; const t = (hotNow || down) && CURSOR_ACTIVE[spec.text] || spec.text; if (inner.textContent !== t) inner.textContent = t; };   // 책이 펼쳐지는 식의 모양 바꾸기
     setCursor = sp => {
       spec = sp || null;
-      if (!spec) { root.classList.remove('fx-on'); el.hidden = true; return; }
-      el.hidden = false; inner.replaceChildren(content());
+      if (!spec) { root.classList.remove('fx-on'); el.hidden = true; fam.hidden = true; return; }
+      el.hidden = false; fam.hidden = false; inner.replaceChildren(content());
       const im = inner.querySelector('img'); if (im) im.addEventListener('error', () => { spec = { text: CURSOR_HOME }; inner.replaceChildren(content()); });
       if (seen && !near) root.classList.add('fx-on');
     };
@@ -214,7 +220,9 @@
       el.style.transform = `translate(${mx}px,${my}px)`;   // 마우스 위치에 바로 붙인다 (지연 없음)
       tilt += (Math.max(-28, Math.min(28, (mx - px) * 1.4)) - tilt) * .3; px = mx;   // 기울기만 부드럽게: 움직이는 방향으로 흔들리고 멈추면 돌아온다
       inner.style.setProperty('--tilt', tilt + 'deg');
-      raf = Math.abs(tilt) > .5 ? requestAnimationFrame(loop) : 0;
+      let busy = Math.abs(tilt) > .5;
+      for (const f of kin) { const tx = mx + f.dx, ty = my + f.dy; f.x += (tx - f.x) * f.k; f.y += (ty - f.y) * f.k; f.e.style.transform = `translate(${f.x}px,${f.y}px)`; if (Math.abs(tx - f.x) + Math.abs(ty - f.y) > .3) busy = true; }   // 가족은 마우스 가까이에서 바짝 따라온다 (멈추면 곧 제자리)
+      raf = busy ? requestAnimationFrame(loop) : 0;
       if (!raf) inner.style.setProperty('--tilt', '0deg');
     };
     const bit = (cx, cy) => {   // 클릭하면 같은 모양의 작은 조각이 톡 튀어 오른다 (팝콘 튀기듯)
@@ -226,17 +234,18 @@
     document.addEventListener('pointermove', e => {
       if (e.pointerType === 'touch' || !spec) return;
       mx = e.clientX; my = e.clientY;
-      if (!seen) { seen = true; px = mx; el.classList.add('on'); }
+      if (!seen) { seen = true; px = mx; for (const f of kin) { f.x = mx + f.dx; f.y = my + f.dy; } both('on', true); }
       // 영상·스토리보드·게임·앱 화면(사진 확대 창의 영상 포함)과 그 둘레(80px)에서는 사이트 아이콘을 숨기고 원래 마우스 모양으로 돌려 놓는다 (조작에 방해가 되지 않게)
       near = [...document.querySelectorAll('.screen-frame,video.lb-img')].some(f => { const rc = f.getBoundingClientRect(); return rc.width > 0 && mx > rc.left - 80 && mx < rc.right + 80 && my > rc.top - 80 && my < rc.bottom + 80; });
-      root.classList.toggle('fx-on', !near); el.classList.toggle('gone', near); el.classList.toggle('hot', !near && !!(e.target.closest && e.target.closest(HOT)));
+      hotNow = !near && !!(e.target.closest && e.target.closest(HOT));
+      root.classList.toggle('fx-on', !near); both('gone', near); both('hot', hotNow); glyph();
       if (!raf) raf = requestAnimationFrame(loop);
     }, { passive: true });
-    document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' || !spec || near) return; el.classList.add('press'); for (let i = 0; i < 6; i++) bit(e.clientX, e.clientY); });
-    document.addEventListener('pointerup', () => el.classList.remove('press'));
-    document.addEventListener('mouseout', e => { if (e.relatedTarget && e.relatedTarget.tagName === 'IFRAME') el.classList.add('gone'); });   // 게임·앱 화면 안에서는 그쪽 마우스 모양을 쓴다
-    root.addEventListener('mouseleave', () => el.classList.remove('on'));
-    root.addEventListener('mouseenter', () => { if (seen) el.classList.add('on'); });
+    document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' || !spec || near) return; down = true; both('press', true); glyph(); for (let i = 0; i < 6; i++) bit(e.clientX, e.clientY); });
+    document.addEventListener('pointerup', () => { down = false; both('press', false); glyph(); });
+    document.addEventListener('mouseout', e => { if (e.relatedTarget && e.relatedTarget.tagName === 'IFRAME') both('gone', true); });   // 게임·앱 화면 안에서는 그쪽 마우스 모양을 쓴다
+    root.addEventListener('mouseleave', () => both('on', false));
+    root.addEventListener('mouseenter', () => { if (seen) both('on', true); });
   }
   function tooltips() {   // 브라우저 기본 말풍선(title) 대신 꾸민 말풍선을 보여 준다
     if (!finePointer()) return;

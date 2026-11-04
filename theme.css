@@ -370,6 +370,12 @@ html.fx-on,html.fx-on *{cursor:none!important}
 html.fx-on :is(input,textarea,select,[contenteditable]){cursor:auto!important}
 .fx-cursor{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;will-change:transform}
 .fx-cursor.on{opacity:1}.fx-cursor.gone{opacity:0}
+.fx-fam{position:fixed;left:0;top:0;z-index:9998;pointer-events:none;opacity:0;transition:opacity .2s}
+.fx-fam.on{opacity:1}.fx-fam.gone,.fx-fam[hidden]{opacity:0}
+.fx-f{position:absolute;left:-8px;top:-8px;width:16px;height:16px;will-change:transform;font-size:14px;line-height:16px;text-align:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.fx-f>span{display:block;animation:fx-bob 1.3s ease-in-out infinite}
+.fx-fam.press .fx-f>span{animation-duration:.25s}
+@keyframes fx-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .fx-c-in{display:block;will-change:transform;margin:-18px 0 0 -18px;width:36px;height:36px;line-height:36px;text-align:center;font-size:30px;transform:rotate(var(--tilt,0deg));transition:scale .18s cubic-bezier(.3,1.6,.5,1);filter:drop-shadow(0 3px 3px rgba(0,0,0,.55));font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .fx-c-in img{width:100%;height:100%;object-fit:contain;display:block}
 .fx-cursor.hot .fx-c-in{scale:1.3}
