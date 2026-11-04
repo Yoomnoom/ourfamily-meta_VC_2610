@@ -233,9 +233,9 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .story-head h2{font-size:clamp(1.6rem,4vw,2.1rem);margin:0 0 6px}
 .story-head p{margin:0;color:var(--muted)}
 .tablist{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}
-.tab{font:inherit;font-weight:700;font-size:1.05rem;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-height:56px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,border-color .2s,transform .2s}
-.tab:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tab{font:inherit;font-weight:700;font-size:1.05rem;color:var(--muted);background:none;border:1px solid transparent;border-radius:14px;padding:14px 16px;min-height:56px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,color .2s,transform .2s}
+.tab:hover:not(.on){color:var(--text);background:rgba(255,255,255,.06)}
 .tab.on{background:linear-gradient(135deg,#ff6b78,var(--accent));border-color:transparent;color:#fff;box-shadow:0 12px 26px -14px rgba(211,32,47,.9)}
 .tab:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .tabpanel[hidden]{display:none}
