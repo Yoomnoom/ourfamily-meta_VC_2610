@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
     const body = {
       parent: { database_id: NOTION_DATABASE_ID }, icon: { type: 'emoji', emoji: '📅' },
       properties: {
-        '보고서': { title: [txt(`${s.week_start} 주 (${d5})`)] }, '주 시작(월)': { date: { start: s.week_start } },
+        '보고서': { title: [txt(`${s.week_start} 주 (${d5})`)] }, '주 시작(월)': { date: { start: s.week_start, end: s.week_end } },   // 시작~끝(월~일) 범위로 넣어 타임라인·캘린더에서 한 주가 막대로 보인다
         '월': { select: { name: s.week_start.slice(0, 7) } },
         '방문': { number: s.views }, '방문자': { number: s.visitors }, '신규방문자': { number: s.new_visitors }, '세션': { number: s.sessions },
         '머문시간(초)': { number: s.avg_page_secs || 0 }, '영상 재생': { number: s.plays }, '이탈률(%)': { number: bounce },
