@@ -169,6 +169,7 @@
   /* ---------- 렌더 ---------- */
   boot((d, site, av) => {
     const home = obj(d.home), T = { ...T0, ...obj(home.titles) };
+    if (T.album === '가족 앨범') T.album = T0.album;   // CMS에 예전 이름이 저장돼 있어도 "비하인드 컷"으로 보인다
     const works = App.listing(d);
     const main = h('main', { id: 'main' });
     main.append(hero(d, site, av));
@@ -186,7 +187,7 @@
 
     const photos = arr(obj(d.album).photos).filter(g => has(g.file) || has(g.caption)).slice(0, 6);
     if (photos.length) main.append(section('album', T.album, '', ...gallery(photos),
-      h('a', { class: 'btn ghost', href: href('album.html') }, '앨범 전체보기')));
+      h('a', { class: 'btn ghost', href: href('album.html') }, '비하인드 컷 전체보기')));
 
     if (av.making) {
       const names = [...new Set([...toolList(obj(d.making).tools), ...works.flatMap(w => toolList(production(w, d).tools))].map(t => (t.name || '').trim()).filter(Boolean))];
