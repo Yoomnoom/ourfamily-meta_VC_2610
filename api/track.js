@@ -2,6 +2,7 @@
    비밀 키는 쓰지 않는다 — 공개용(publishable) 키로 "기록 추가"만 가능한 표에 넣을 뿐이다. */
 const URL_ = 'https://pkucszwwnwpzvzqczmhh.supabase.co/rest/v1/ourfamilymeta_pageviews';
 const KEY = 'sb_publishable_ipfRTlcNU5mwSkgqcAKjmg_i8H0pM94';
+const EVENTS = ['view', 'leave', 'play', 'progress', 'end', 'watch'];   // 영상 이벤트는 db/ourfamilymeta_pageviews_v3.sql 실행 후부터 저장된다
 const cut = (v, n) => (v == null || v === '' ? null : String(v).slice(0, n));
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
@@ -11,11 +12,12 @@ module.exports = async (req, res) => {
   b = b || {};
   let city = null; try { city = req.headers['x-vercel-ip-city'] ? decodeURIComponent(req.headers['x-vercel-ip-city']) : null; } catch {}
   const row = {
-    event: b.event === 'leave' ? 'leave' : 'view', page: cut(b.page, 80), work: cut(b.work, 80), visitor: cut(b.visitor, 40),
+    event: EVENTS.includes(b.event) ? b.event : 'view', page: cut(b.page, 80), work: cut(b.work, 80), visitor: cut(b.visitor, 40),
     pv: cut(b.pv, 40), session: cut(b.session, 40), entry: b.entry === true, seconds: Number.isFinite(+b.seconds) ? Math.max(0, Math.min(86400, Math.round(+b.seconds))) : null,
     referrer: cut(b.referrer, 100), device: cut(b.device, 20), browser: cut(b.browser, 30), os: cut(b.os, 30), lang: cut(b.lang, 20), tz: cut(b.tz, 40), screen: cut(b.screen, 20),
     country: cut(req.headers['x-vercel-ip-country'], 10), city: cut(city, 60),
   };
+  if (b.event === 'progress' && Number.isFinite(+b.pct)) row.pct = Math.max(0, Math.min(100, Math.round(+b.pct)));   // pct 칸은 v3 SQL 실행 후에만 있으므로 필요할 때만 보낸다
   if (!row.page || !row.visitor || row.visitor.length < 8) return res.status(400).end();
   try {
     const r = await fetch(URL_, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(row) });

@@ -136,6 +136,22 @@
     if (has(v.captions)) video.append(h('track', { kind: 'captions', srclang: 'ko', label: '한국어', src: mediaPath(v.captions), default: true }));
     video.addEventListener('error', () => { st.el.remove(); video.replaceWith(videoFallback(v, title)); if (onFail) onFail(); });
     slot.append(video, st.el);
+    {   // 방문 집계: 재생 시작 · 25/50/75% 지점 · 끝까지 · 실제로 본 시간 (건너뛴 구간은 세지 않는다)
+      let started = 0, next = 0, last = 0, watched = 0;
+      const marks = [25, 50, 75], push = () => { if (watched >= 1) vSend('watch', { seconds: Math.round(watched) }); };
+      video.addEventListener('play', () => { if (!started) { started = 1; vSend('play'); } });
+      video.addEventListener('timeupdate', () => {
+        const t = video.currentTime, d = t - last; last = t;
+        if (video.seeking || d <= 0 || d > 1.5) return;
+        watched += d;
+        const p = video.duration > 0 ? t / video.duration * 100 : 0;
+        while (next < 3 && p >= marks[next]) { if (p < marks[next] + 8) vSend('progress', { pct: marks[next] }); next++; }
+      });
+      video.addEventListener('ended', () => { vSend('end'); push(); });
+      video.addEventListener('pause', push);
+      addEventListener('pagehide', push);
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') push(); });
+    }
     if (has(v.endCover)) {   // 영상이 끝나면 끝 화면 이미지를 보여 준다 (다시 재생하면 사라진다). 아래쪽은 재생 막대를 위해 비워 둔다
       const end = h('div', { class: 'end-cover', hidden: true }, h('img', { src: mediaPath(v.endCover), alt: '', draggable: 'false' }));
       end.firstChild.addEventListener('error', () => end.remove());
@@ -419,6 +435,8 @@
 
 
   /* ---------- 방문 집계: 페이지를 열 때 1건, 떠날 때 머문 시간을 기록 (개인정보 없음, CMS "방문 집계"에서 본다) ---------- */
+  let vEv = null;   // track() 가 켜질 때 채워진다 (화면을 그린 뒤라서 영상 쪽은 vSend 로 늦게 연결한다)
+  const vSend = (e, x) => { if (vEv) vEv(e, x); };   // 방문 집계가 켜져 있을 때만 생기는 영상 이벤트 기록 함수
   function track() {
     if (window.parent !== window || !SB.url || navigator.webdriver || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;   // 미리보기·내 컴퓨터 시험은 세지 않는다
     const page = (location.pathname.split('/').pop() || 'index').replace(/\.html$/, '') || 'index', work = page === 'watch' ? (params.get('id') || '').slice(0, 80) : '';
@@ -443,6 +461,7 @@
           body: JSON.stringify({ page: o.page, work: o.work || null, visitor: o.visitor }) }).catch(() => {}); });
     };
     const id = { page, work: work || null, visitor: vid, pv, session: sid };
+    vEv = (event, extra) => send({ ...id, event, ...extra }, false);
     send({ ...id, event: 'view', entry, referrer, device, browser, os, lang: (navigator.language || '').slice(0, 20), tz, screen: innerWidth + 'x' + innerHeight }, true);
     let shown = 0, since = document.visibilityState === 'visible' ? performance.now() : 0;   // 화면에 실제로 보인 시간만 센다
     const flush = () => { if (since) { shown += performance.now() - since; since = 0; } const sec = Math.round(shown / 1000); if (sec >= 1) send({ ...id, event: 'leave', seconds: sec }, false); };

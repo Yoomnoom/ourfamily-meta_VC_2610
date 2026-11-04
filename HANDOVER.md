@@ -189,3 +189,5 @@
 - CMS 단계 순서: "연재물 정보 고치기"를 12단계에서 7단계(작품 6단계 바로 뒤, 사이트 공통 앞)로 옮김. 연재물을 고른 작품에서만 보이고 단독 작품에서는 단계 목록에서 빠진다(그래서 단독 작품은 사이트 공통이 7단계부터). cms/index.html 의 ALL_STEPS·syncSteps.
 
 - CMS: 필수 항목(req 표시된 칸)이 비어 있으면 왼쪽 단계 목록 줄 끝에 빨간 "필수" 표시, 작품 선택 목록에 "필수 n" 개수 표시(stepReqLeft·reqLeft). 저장을 막지는 않는다.
+
+- 방문 집계 3차: db/ourfamilymeta_pageviews_v3.sql(영상 이벤트 play/progress/end/watch + ourfamilymeta_pageview_report_v3). 사용자가 SQL Editor 에서 한 번 실행해야 켜진다. 실행 전에는 CMS가 2차 보고서로 대체 표시. 영상 이벤트는 common.js buildVideo(vSend)·api/track.js. 노션 정리는 CMS 방문 집계를 연 상태에서 Claude가 읽어 옮긴다.

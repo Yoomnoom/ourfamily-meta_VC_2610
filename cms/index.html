@@ -1639,45 +1639,94 @@ dialog#editors{width:min(680px,94vw)}
     dlg.addEventListener('cancel', () => dlg.remove());
     document.body.append(dlg); dlg.showModal();
     const n = v => Number(v || 0).toLocaleString('ko-KR');
-    const secs = v => v == null ? '—' : v >= 60 ? `${Math.floor(v / 60)}분 ${v % 60}초` : `${v}초`;
+    const secs = v => v == null ? '—' : v >= 3600 ? `${Math.floor(v / 3600)}시간 ${Math.floor(v % 3600 / 60)}분` : v >= 60 ? `${Math.floor(v / 60)}분 ${v % 60}초` : `${v}초`;
     const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
+    const delta = (a, b) => b ? (a >= b ? '+' : '') + Math.round((a - b) / b * 100) + '%' : (a ? '새로 생김' : '—');
     const sec = (title, ...kids) => el('section', { style: 'margin:18px 0 0' }, el('h3', { text: title, style: 'font-size:1.05rem;margin:0 0 8px' }), ...kids);
+    const note = t => el('p', { class: 'hint', text: t, style: 'white-space:pre-line;margin:6px 0 0' });
     const card = (k, v, sub) => el('div', { style: 'border:1.5px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fffdf7' },
       el('div', { text: k, style: 'font-size:.82rem;opacity:.75' }), el('div', { text: v, style: 'font-size:1.5rem;font-weight:700;line-height:1.3' }), sub ? el('div', { text: sub, style: 'font-size:.8rem;opacity:.75' }) : null);
+    const grid = (...kids) => el('div', { style: 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px' }, ...kids);
+    const none = () => el('p', { text: '아직 자료가 없어요.', style: 'margin:0;opacity:.7' });
     const bars = (list, lab) => { const rows = list.filter(x => x.n > 0), max = Math.max(1, ...rows.map(x => x.n)), tot = rows.reduce((a, x) => a + x.n, 0);
-      return rows.length ? el('div', {}, ...rows.map(x => el('div', { style: 'display:grid;grid-template-columns:130px 1fr 78px;gap:8px;align-items:center;margin:3px 0;font-size:.9rem' },
-        el('span', { text: lab(x), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }),
+      return rows.length ? el('div', {}, ...rows.map(x => el('div', { style: 'display:grid;grid-template-columns:150px 1fr 84px;gap:8px;align-items:center;margin:3px 0;font-size:.9rem' },
+        el('span', { text: lab(x), style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', title: lab(x) }),
         el('span', { style: 'background:#eadfcb;border-radius:6px;height:12px;overflow:hidden' }, el('span', { style: `display:block;height:100%;width:${Math.round(x.n / max * 100)}%;background:var(--accent,#d84d44)` })),
-        el('span', { text: `${n(x.n)} · ${pct(x.n, tot)}`, style: 'text-align:right' })))) : el('p', { text: '아직 자료가 없어요.', style: 'margin:0;opacity:.7' }); };
+        el('span', { text: `${n(x.n)} · ${pct(x.n, tot)}`, style: 'text-align:right' })))) : none(); };
+    const tbl = (heads, rows) => rows.length ? el('div', { style: 'overflow-x:auto' }, el('table', { style: 'width:100%;border-collapse:collapse;font-size:.88rem' },
+      el('thead', {}, el('tr', {}, ...heads.map((h, i) => el('th', { text: h, style: `padding:5px 8px;text-align:${i ? 'right' : 'left'};white-space:nowrap;border-bottom:1.5px solid var(--ink)` })))),
+      el('tbody', {}, ...rows.map(r => el('tr', {}, ...r.map((c, i) => el('td', { text: String(c), style: `padding:5px 8px;text-align:${i ? 'right' : 'left'};${i ? 'white-space:nowrap' : ''}` }))))))) : none();
+    const call = async fn => (await sbFetch('/rest/v1/rpc/' + fn, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
+    const col = (list, key, h, label) => { const mx = Math.max(1, ...list.map(x => x[key] || 0));   // 세로 막대 그래프 (칸마다 값·라벨)
+      return el('div', {}, el('div', { style: `display:flex;align-items:flex-end;gap:3px;height:${h}px;border-bottom:1.5px solid var(--ink)` }, ...list.map(x =>
+        el('div', { title: label(x), style: 'flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.66rem' },
+          el('span', { text: x[key] || '' }), el('span', { style: `display:block;width:100%;min-height:2px;height:${Math.round((x[key] || 0) / mx * (h - 20))}px;background:var(--accent,#d84d44);border-radius:3px 3px 0 0` })))),
+        el('div', { style: 'display:flex;gap:3px;font-size:.64rem;opacity:.75' }, ...list.map(x => el('span', { text: x.lab, style: 'flex:1;text-align:center;overflow:hidden' })))); };
     try {
-      const r = await (await sbFetch('/rest/v1/rpc/ourfamilymeta_pageview_report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
-      const t = r.total || {};
+      let r; try { r = await call('ourfamilymeta_pageview_report_v3'); } catch (e) { if (!/42883|function|does not exist|schema cache|404/i.test(e.message)) throw e; r = await call('ourfamilymeta_pageview_report'); }
+      const v3 = !!r.v3, t = r.total || {};
       if (!t.views) { body.replaceChildren(el('p', { text: '아직 기록된 방문이 없어요.\n공개 사이트를 실제 주소로 열면 여기에 쌓여요.\n(내 컴퓨터 localhost 와 관리 페이지 미리보기는 세지 않아요)', style: 'white-space:pre-line' })); return; }
       const cn = (() => { try { return new Intl.DisplayNames(['ko'], { type: 'region' }); } catch { return null; } })();
       const country = k => !k ? '알 수 없음' : (cn && cn.of(k)) || k;
-      const day = r.by_day || [], dmax = Math.max(1, ...day.map(x => x.views));
-      const hours = Array.from({ length: 24 }, (_, h) => ({ k: h, n: ((r.by_hour || []).find(x => x.k === h) || {}).n || 0 }));
-      body.replaceChildren(
-        el('div', { style: 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px' },
-          card('전체 방문', n(t.views), '페이지를 연 횟수'), card('방문자', n(t.visitors), '브라우저 기준(중복 제외)'),
-          card('재방문자', n(t.returning), `방문자의 ${pct(t.returning, t.visitors)} · 2일 이상 방문`), card('평균 머문 시간', secs(t.avg_page_secs), '한 페이지당'),
-          card('한 번 방문당', secs(t.avg_session_secs), `평균 ${t.avg_pages || '—'}페이지`), card('한 페이지만 보고 나감', pct(t.bounce, t.sessions), `${n(t.bounce)} / ${n(t.sessions)}번 방문`),
-          card('오늘', n(t.today), `방문자 ${n(t.today_visitors)}`), card('최근 7일 / 30일', `${n(t.week)} / ${n(t.month)}`, '방문 횟수')),
-        sec('최근 14일', el('div', { style: 'display:flex;align-items:flex-end;gap:4px;height:90px;border-bottom:1.5px solid var(--ink)' }, ...day.map(x =>
-          el('div', { title: `${x.d} · 방문 ${x.views} · 방문자 ${x.visitors}`, style: 'flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.7rem' },
-            el('span', { text: x.views || '' }), el('span', { style: `display:block;width:100%;min-height:2px;height:${Math.round(x.views / dmax * 70)}px;background:var(--accent,#d84d44);border-radius:4px 4px 0 0` })))),
-          el('div', { style: 'display:flex;gap:4px;font-size:.68rem;opacity:.75' }, ...day.map(x => el('span', { text: x.d.slice(8), style: 'flex:1;text-align:center' })))),
-        sec('페이지별', el('table', { style: 'width:100%;border-collapse:collapse;font-size:.92rem' },
-          el('thead', {}, el('tr', {}, ...['페이지', '방문', '방문자', '평균 머문 시간'].map((h, i) => el('th', { text: h, style: `padding:5px 8px;text-align:${i ? 'right' : 'left'};white-space:nowrap` })))),
-          el('tbody', {}, ...(r.by_page || []).map(x => el('tr', {}, el('td', { text: x.page === 'watch' && x.work ? '상영관 · ' + ((data.works.find(w => w.id === x.work) || {}).title || x.work) : (NAMES[x.page] || x.page), style: 'padding:5px 8px' }),
-            ...[n(x.views), n(x.visitors), secs(x.avg_secs)].map(v => el('td', { text: v, style: 'padding:5px 8px;text-align:right;white-space:nowrap' }))))))),
-        sec('시간대 (한국 시간)', el('div', { style: 'display:flex;align-items:flex-end;gap:2px;height:70px;border-bottom:1.5px solid var(--ink)' }, ...hours.map(x =>
-          el('span', { title: `${x.k}시 · ${x.n}`, style: `flex:1;min-height:2px;height:${Math.round(x.n / Math.max(1, ...hours.map(y => y.n)) * 64)}px;background:var(--accent,#d84d44);border-radius:3px 3px 0 0` }))),
-          el('div', { style: 'display:flex;gap:2px;font-size:.62rem;opacity:.75' }, ...hours.map(x => el('span', { text: x.k % 3 ? '' : x.k, style: 'flex:1;text-align:center' })))),
-        sec('기기', bars(r.by_device || [], x => x.k)), sec('브라우저', bars(r.by_browser || [], x => x.k)), sec('운영체제', bars(r.by_os || [], x => x.k)),
-        sec('국가', bars(r.by_country || [], x => country(x.k))), sec('도시 (상위 15)', bars(r.by_city || [], x => x.k + (x.c ? ` (${country(x.c)})` : ''))),
-        sec('어디서 들어왔나 (첫 페이지 기준)', bars(r.by_referrer || [], x => x.k || '직접 입력·북마크·앱')), sec('언어', bars(r.by_lang || [], x => x.k)),
-        el('p', { class: 'hint', text: '방문 = 페이지를 연 횟수(같은 탭에서 새로고침은 한 번). 방문자 = 브라우저마다 만든 임의 번호(같은 사람이 다른 브라우저로 오면 다른 방문자).\n재방문자 = 2일 이상 찾아온 방문자. 머문 시간 = 화면에 실제로 보인 시간(1초~1시간만 계산).\n나라·도시는 접속 지역을 대략 알려 주는 값이고, IP 주소와 이름은 저장하지 않아요. 내 컴퓨터(localhost)와 미리보기는 세지 않아요.', style: 'white-space:pre-line;margin:16px 0 0' }));
+      const DOW = ['월', '화', '수', '목', '금', '토', '일'], d2 = x => String(x).slice(5).replace('-', '/');
+      const workName = id => { const w = data.works.find(y => y.id === id); return w && has(w.title) ? w.title : id; };
+      const pname = x => x.page === 'watch' && x.work ? '상영관 · ' + workName(x.work) : (NAMES[x.page] || x.page);
+      const L = (m, k) => m[k] || String(k);
+      const out = [];
+      if (!v3) out.push(note('더 많은 수치(주간 비교·작품별 시청·들어온 곳 등)를 보려면 db/ourfamilymeta_pageviews_v3.sql 을 Supabase SQL Editor 에서 한 번 실행해 주세요.'));
+      if (v3) out.push(note(`기록 기간: ${String(t.first_record || '').slice(0, 10)} ~ ${String(t.last_record || '').slice(0, 10)} (UTC 날짜) · 기록 ${n(t.rows)}건`));
+      out.push(grid(
+        card('전체 방문', n(t.views), '페이지를 연 횟수'), card('방문자', n(t.visitors), '브라우저 기준(중복 제외)'),
+        card('재방문자', n(t.returning), `방문자의 ${pct(t.returning, t.visitors)} · 2일 이상 방문`), card('평균 머문 시간', secs(t.avg_page_secs), '한 페이지당'),
+        card('한 번 방문당', secs(t.avg_session_secs), `평균 ${t.avg_pages || '—'}페이지`), card('한 페이지만 보고 나감', pct(t.bounce, t.sessions), `${n(t.bounce)} / ${n(t.sessions)}번 방문`),
+        card('오늘', n(t.today), `방문자 ${n(t.today_visitors)}`), card('최근 7일 / 30일', `${n(t.week)} / ${n(t.month)}`, '방문 횟수'),
+        ...(v3 ? [card('처음 온 사람의 방문', pct(t.new_views, t.views), `${n(t.new_views)}번 (나머지는 재방문)`),
+          card('영상 재생', n(t.plays), `끝까지 본 ${n(t.ends)}번 (${pct(t.ends, t.plays)})`),
+          card('평균 시청 시간', secs(t.avg_watch_secs), `총 ${secs(t.watch_secs)}`)] : [])));
+      if (v3 && r.compare) {
+        const c = r.compare.cur, p = r.compare.prev, rows = [['방문', 'views', n], ['방문자', 'visitors', n], ['처음 온 방문자', 'new_visitors', n], ['방문(세션) 수', 'sessions', n], ['평균 머문 시간', 'avg_page_secs', secs], ['영상 재생', 'plays', n]];
+        out.push(sec('이번 주 vs 지난주', tbl(['', `최근 7일 (${d2(c.from)}~${d2(c.to)})`, `그 전 7일 (${d2(p.from)}~${d2(p.to)})`, '변화'],
+          rows.map(([k, key, f]) => [k, f(c[key]), f(p[key]), delta(c[key] || 0, p[key] || 0)])), note('최근 7일 = 오늘 포함 7일. 그 전 7일과 비교한 증감이에요.')));
+      }
+      const day = (r.by_day || []).map(x => ({ ...x, lab: x.d.slice(8) }));
+      out.push(sec(v3 ? '최근 30일 방문' : '최근 14일', col(day, 'views', 96, x => `${x.d} · 방문 ${x.views} · 방문자 ${x.visitors}` + (x.new_visitors != null ? ` · 처음 온 ${x.new_visitors}` : ''))));
+      if (v3) {
+        const wk = r.by_week || [];
+        out.push(sec('주별 (월요일 시작, 최근 12주)', tbl(['주', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
+          wk.slice().reverse().map(x => [d2(x.wk) + ' ~', n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)]))));
+        const dw = DOW.map((lab, i) => ({ lab, views: ((r.by_dow || []).find(x => x.k === i + 1) || {}).n || 0, v: ((r.by_dow || []).find(x => x.k === i + 1) || {}).visitors || 0 }));
+        out.push(sec('요일별 방문', col(dw, 'views', 80, x => `${x.lab}요일 · 방문 ${x.views} · 방문자 ${x.v}`)));
+        const hm = r.heat || [], hmax = Math.max(1, ...hm.map(x => x.n)), cell = (dw0, h) => (hm.find(x => x.dow === dw0 && x.h === h) || {}).n || 0;
+        out.push(sec('요일 × 시간대 (한국 시간, 진할수록 많음)', el('div', { style: 'display:grid;grid-template-columns:22px repeat(24,1fr);gap:2px;font-size:.62rem;align-items:center' },
+          el('span', {}), ...Array.from({ length: 24 }, (_, h) => el('span', { text: h % 3 ? '' : h, style: 'text-align:center;opacity:.75' })),
+          ...DOW.flatMap((lab, i) => [el('span', { text: lab, style: 'opacity:.75' }), ...Array.from({ length: 24 }, (_, h) => { const c = cell(i + 1, h);
+            return el('span', { title: `${lab}요일 ${h}시 · ${c}`, style: `height:16px;border-radius:3px;background:${c ? `rgba(216,77,68,${(0.18 + c / hmax * 0.82).toFixed(2)})` : '#f1e8d6'}` }); })]))));
+      } else {
+        const hours = Array.from({ length: 24 }, (_, h) => ({ lab: h % 3 ? '' : String(h), views: ((r.by_hour || []).find(x => x.k === h) || {}).n || 0 }));
+        out.push(sec('시간대 (한국 시간)', col(hours, 'views', 70, x => `${x.lab}시 · ${x.views}`)));
+      }
+      if (v3 && r.funnel) { const f = r.funnel;
+        out.push(sec('방문(세션) 단계별 이동', tbl(['단계', '방문 수', '전체 방문 중'], [['전체 방문(세션)', f.sessions], ['홈을 봄', f.home], ['상영작 목록을 봄', f.works], ['상영관(작품)을 봄', f.watch], ['영상을 재생함', f.played], ['영상을 끝까지 봄', f.ended]].map(([k, v]) => [k, n(v), pct(v, f.sessions)])),
+          note('한 번의 방문에서 해당 화면·행동이 한 번이라도 있었는지 센 값이에요. 영상 재생 기록은 새 SQL 실행·배포 이후부터 쌓여요.'))); }
+      const pageRows = (r.by_page || []).map(x => v3 ? [pname(x), n(x.views), n(x.visitors), secs(x.avg_secs), pct(x.bounces, x.views), n(x.entries)] : [pname(x), n(x.views), n(x.visitors), secs(x.avg_secs)]);
+      out.push(sec('페이지별', tbl(v3 ? ['페이지', '방문', '방문자', '평균 머문 시간', '한 페이지만 보고 나감', '여기로 들어옴'] : ['페이지', '방문', '방문자', '평균 머문 시간'], pageRows)));
+      if (v3) {
+        out.push(sec('작품별 시청', tbl(['작품', '방문', '방문자', '재생', '25%까지', '50%까지', '75%까지', '끝까지', '평균 시청', '총 시청'],
+          (r.by_work || []).map(x => [workName(x.work), n(x.views), n(x.visitors), `${n(x.plays)} (${pct(x.plays, x.views)})`, pct(x.p25, x.plays), pct(x.p50, x.plays), pct(x.p75, x.plays), pct(x.ends, x.plays), secs(x.avg_watch), secs(x.total_watch)])),
+          note('재생 = 상영관에 들어온 방문 중 재생 버튼을 누른 비율. 25~끝까지 = 재생한 방문 중 그 지점까지 이어서 본 비율(건너뛰기는 세지 않아요).\n평균 시청 = 실제로 재생된 시간. 영상이 아닌 작품(게임·앱·스토리보드)은 재생이 0으로 나와요.')));
+        out.push(sec('처음 들어온 페이지 TOP', tbl(['페이지', '횟수'], (r.entry_pages || []).map(x => [pname(x), n(x.n)]))));
+        out.push(sec('마지막으로 본 페이지 TOP (여기서 나감)', tbl(['페이지', '횟수'], (r.exit_pages || []).map(x => [pname(x), n(x.n)]))));
+        out.push(sec('한 번 방문에 본 페이지 수', bars(r.depth || [], x => x.k >= 5 ? '5페이지 이상' : x.k + '페이지')));
+        out.push(sec('한 번 방문에 머문 시간', bars(r.dur || [], x => L(['측정 안 됨', '10초 미만', '10~30초', '30초~1분', '1~3분', '3~10분', '10분 이상'], x.k)), note('"측정 안 됨"은 떠날 때 시간 기록이 오지 않은 방문이에요(바로 닫음·기록 도입 전 방문 등).')));
+        out.push(sec('방문자가 찾아온 날 수', bars(r.visit_freq || [], x => x.k >= 4 ? '4일 이상' : x.k + '일'), note('같은 브라우저가 서로 다른 날에 온 횟수예요. 1일만이면 한 번 보고 간 사람이에요.')));
+      }
+      out.push(sec('기기', bars(r.by_device || [], x => x.k)), sec('브라우저', bars(r.by_browser || [], x => x.k)), sec('운영체제', bars(r.by_os || [], x => x.k)));
+      if (v3) out.push(sec('화면 크기', bars(r.by_screen || [], x => L({ 1: '휴대폰 (폭 480 미만)', 2: '큰 휴대폰·작은 태블릿 (480~767)', 3: '태블릿·작은 노트북 (768~1279)', 4: '노트북·데스크톱 (1280~1919)', 5: '큰 모니터 (1920 이상)' }, x.k))));
+      out.push(sec('국가', bars(r.by_country || [], x => country(x.k))), sec('도시 (상위 15)', bars(r.by_city || [], x => x.k + (x.c ? ` (${country(x.c)})` : ''))),
+        sec('어디서 들어왔나 (첫 페이지 기준)', bars(r.by_referrer || [], x => x.k || '직접 입력·북마크·앱')), sec('언어', bars(r.by_lang || [], x => x.k)));
+      if (v3) out.push(sec('기록 정확도', note(`· 기기·브라우저를 모르는 방문 ${n(t.no_device)}번 (집계 2차 도입 전 기록)\n· 머문 시간이 기록되지 않은 방문 ${n(t.no_leave)}번 (평균 머문 시간은 기록된 방문만으로 계산)\n· 광고 차단 프로그램·봇 차단 등으로 일부 방문은 빠질 수 있어요.`)));
+      out.push(note('방문 = 페이지를 연 횟수(같은 탭에서 새로고침은 한 번). 방문자 = 브라우저마다 만든 임의 번호(같은 사람이 다른 브라우저로 오면 다른 방문자).\n재방문자 = 2일 이상 찾아온 방문자. 머문 시간 = 화면에 실제로 보인 시간(1초~1시간만 계산). 이탈 = 한 번 방문에 한 페이지만 본 경우.\n나라·도시는 접속 지역을 대략 알려 주는 값이고, IP 주소와 이름은 저장하지 않아요. 내 컴퓨터(localhost)와 미리보기는 세지 않아요.'));
+      body.replaceChildren(...out);
     } catch (e) {
       body.replaceChildren(el('p', { text: /42883|function|does not exist|schema cache|404/i.test(e.message) ? '집계 기능이 아직 준비되지 않았어요.\ndb/ourfamilymeta_pageviews_v2.sql 을 Supabase SQL Editor 에서 한 번 실행해 주세요.' : '불러오지 못했어요: ' + e.message, style: 'white-space:pre-line' }));
     }
