@@ -686,16 +686,19 @@
     probe.src = src;
   }
 
-  /** 가로로 이어지는 목록: 스크롤바 대신 좌우 화살표로 넘긴다 (터치·트랙패드 스와이프도 그대로). 끝에 닿으면 그쪽 화살표는 숨긴다 */
+  /** 가로로 이어지는 목록: 스크롤바 대신 좌우 화살표로 넘긴다 (터치·트랙패드 스와이프도 그대로). 끝에 닿으면 반대쪽 끝으로 돌아간다. 한 화면에 다 들어가면 화살표를 숨긴다 */
   function rail(list) {
     const btn = (dir, label) => h('button', { type: 'button', class: 'rail-btn ' + dir, 'aria-label': label, text: dir === 'prev' ? '‹' : '›' });
     const prev = btn('prev', '이전 작품 보기'), next = btn('next', '다음 작품 보기');
-    // 끝 판정에 6px 여유: 스냅 정렬로 몇 px 밀려 있어도 끝으로 본다
-    const sync = () => { prev.hidden = list.scrollLeft <= 6; next.hidden = list.scrollLeft >= list.scrollWidth - list.clientWidth - 6; };
-    const go = s => () => list.scrollBy({ left: s * Math.max(120, Math.round(list.clientWidth * .8)), behavior: 'smooth' });
+    const max = () => list.scrollWidth - list.clientWidth;
+    const sync = () => { prev.hidden = next.hidden = max() <= 6; };
+    const go = s => () => {
+      const x = list.scrollLeft, to = s > 0 && x >= max() - 6 ? 0 : s < 0 && x <= 6 ? max() : x + s * Math.max(120, Math.round(list.clientWidth * .8));   // 끝이면 반대쪽 끝으로
+      list.scrollTo({ left: to, behavior: 'smooth' });
+    };
     prev.addEventListener('click', go(-1)); next.addEventListener('click', go(1));
-    list.addEventListener('scroll', sync, { passive: true });
-    if (window.ResizeObserver) new ResizeObserver(sync).observe(list); else window.addEventListener('resize', sync);
+    if (window.ResizeObserver) { const ro = new ResizeObserver(sync); ro.observe(list); [...list.children].forEach(c => ro.observe(c)); } else window.addEventListener('resize', sync);   // 포스터가 뜨며 폭이 바뀌어도 따라간다
+    window.addEventListener('load', sync); list.addEventListener('scroll', sync, { passive: true });
     sync();
     return h('div', { class: 'rail' }, prev, list, next);
   }
