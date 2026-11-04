@@ -226,12 +226,8 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .dl{display:flex;justify-content:flex-end;max-width:1100px;margin:10px auto 0}
 .movie{padding:28px 0 8px}
 .movie-grid>*{min-width:0}
-.tabs-sec{padding:4px 0 28px}
+.tabs-sec{padding:20px 0 28px}
 .ico{display:inline-flex;flex:none;font-size:1.25em;line-height:1}
-.story-head{text-align:center;margin:36px 0 22px}
-.story-head .ico{font-size:2rem;color:var(--accent-hi);margin-bottom:6px}
-.story-head h2{font-size:clamp(1.6rem,4vw,2.1rem);margin:0 0 6px}
-.story-head p{margin:0;color:var(--muted)}
 .tablist{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}
 .tab{font:inherit;font-weight:700;font-size:1.05rem;color:var(--muted);background:none;border:1px solid transparent;border-radius:14px;padding:14px 16px;min-height:56px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,color .2s,transform .2s}
