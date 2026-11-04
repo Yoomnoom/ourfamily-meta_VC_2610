@@ -175,7 +175,7 @@
 
     if (works.length) main.append(section('now', T.works, '', carousel(works)));
 
-    const TOPIC_GO = ['works.html', '', 'making.html'];   // 카드 순서대로 이동할 페이지 (게임 전용 페이지는 아직 없어서 비워 둔다)
+    const TOPIC_GO = ['works.html', 'album.html', 'making.html'];   // 카드 순서대로 이동할 페이지 (연결→상영작, 발견→비하인드 컷, 즐거움→메이킹)
     const topics = arr(home.topics).filter(t => has(t.title) || has(t.text));
     if (topics.length) main.append(section('topics', T.topics, '', h('div', { class: 'topics' }, topics.map((t, i) =>
       h(TOPIC_GO[i] ? 'a' : 'article', TOPIC_GO[i] ? { class: 'topic go', href: href(TOPIC_GO[i]) } : { class: 'topic' },
