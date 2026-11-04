@@ -13,7 +13,7 @@
 <script src="common.js"></script>
 <script>
 (() => {
-  const { h, has, arr, obj, frameStatus, TITLES, workId, watchHref, poster, buildVideo, section, timeline, tools, toolList, roles, sourcesTable, href, mediaPath, boot, params, listing, metaLine, safeUrl, gallery, production, credit } = App;
+  const { h, has, arr, obj, frameStatus, TITLES, workId, watchHref, poster, buildVideo, section, timeline, tools, toolList, roles, sourcesTable, href, mediaPath, boot, params, listing, metaLine, safeUrl, gallery, production, credit, rail } = App;
 
   boot((d, site, av) => {
     const name = has(site.name) ? site.name : '우리 가족 극장';
@@ -83,9 +83,9 @@
 
     const side = ser && h('aside', { class: 'ep-side', id: 'episodes', 'aria-label': ser.title + ' 회차' },
       h('h2', { text: ser.title + ' 회차' }),
-      h('ol', { class: 'eps' }, epList.map(e =>
+      rail(h('ol', { class: 'eps' }, epList.map(e =>
         h('li', {}, h('a', { href: watchHref(e, works.indexOf(e)), 'aria-current': e === w ? 'true' : null },
-          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` }))))));
+          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` })))))));
     const jumps = [];
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
       openLink ? h('div', { class: 'title-row' }, h('h1', { text: title }), openLink) : h('h1', { text: title }),
@@ -135,10 +135,10 @@
     }
 
     const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
-    if (others.length) main.append(section('others', T.others, '', h('div', { class: 'mini' }, others.map(([o, i]) =>
+    if (others.length) main.append(section('others', T.others, '', rail(h('div', { class: 'mini' }, others.map(([o, i]) =>
       h('a', { href: watchHref(o, i) }, poster(o),
         h('h3', { text: has(o.title) ? o.title : '제목 미정' }),
-        has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') }))))));
+        has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') })))))));
 
     return { title: `${title} – ${name}`, main };
   });

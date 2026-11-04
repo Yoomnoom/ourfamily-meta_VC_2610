@@ -237,7 +237,7 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 @media (max-width:520px){.tablist{gap:0 2px}.tab{flex:1 1 auto;font-size:.86rem;padding:12px 6px;text-align:center}}
 .ep-side{margin-top:20px}
 .ep-side h2{margin:0 0 10px}
-.ep-side .eps{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;padding-bottom:10px}
+.ep-side .eps{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-bottom:10px}
 .ep-side .eps li{flex:none;width:220px;scroll-snap-align:start}
 .ep-side .eps a{flex-direction:column;align-items:stretch;gap:8px;padding:8px;height:100%}
 .ep-side .ep-thumb{width:100%}
@@ -298,7 +298,15 @@ td:first-child{font-weight:700}
   td::before{content:attr(data-label);display:block;font-size:.8rem;color:var(--muted);font-weight:500}
 }
 
-.mini{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;scrollbar-width:thin}
+.mini{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;scrollbar-width:none}
+.mini::-webkit-scrollbar,.ep-side .eps::-webkit-scrollbar{display:none}
+.rail{position:relative}
+.rail-btn{position:absolute;top:calc(50% - 22px);z-index:5;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(13,11,16,.8);color:#fff;font:inherit;font-size:1.5rem;line-height:1;
+  cursor:pointer;display:grid;place-items:center;padding:0 0 3px;backdrop-filter:blur(4px);transition:background .2s,transform .2s}
+.rail-btn:hover{background:var(--accent);border-color:var(--accent);transform:scale(1.08)}
+.rail-btn[hidden]{display:none}
+.rail-btn.prev{left:4px}
+.rail-btn.next{right:4px}
 .mini a{flex:0 0 140px;scroll-snap-align:start;text-decoration:none;color:var(--text)}
 .mini a:hover .poster{transform:translateY(-4px)}
 .mini h3{font-size:1.15rem;margin-top:8px}
