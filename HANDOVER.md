@@ -185,3 +185,5 @@
 - Supabase 프로젝트: ref `pkucszwwnwpzvzqczmhh`, URL `https://pkucszwwnwpzvzqczmhh.supabase.co`, 서울 리전, Free 플랜
 - **액세스 토큰(`sbp_…`)이 대화 중에 노출됨.** 문서·코드·커밋에 넣지 말 것. 작업 후 폐기.
 - 이 문서 작성은 커밋·push하지 않았음. 필요하면 별도로 올릴 것.
+
+- CMS 단계 순서: "연재물 정보 고치기"를 12단계에서 7단계(작품 6단계 바로 뒤, 사이트 공통 앞)로 옮김. 연재물을 고른 작품에서만 보이고 단독 작품에서는 단계 목록에서 빠진다(그래서 단독 작품은 사이트 공통이 7단계부터). cms/index.html 의 ALL_STEPS·syncSteps.

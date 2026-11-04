@@ -306,7 +306,7 @@ dialog#editors{width:min(680px,94vw)}
   const WATCH = 'watch.html';
 
   /* 단계: scope(work=선택한 작품, site=사이트 공통), pv=[페이지, 섹션], parts=[{ title, desc, pv, adv, fields }] */
-  const STEPS = [
+  const ALL_STEPS = [
     { id: 'video', scope: 'work', title: '작품 올리기', pv: [WATCH, 'player'],
       why: '작품 종류를 고르고, 연재물이면 시리즈를 정해요. 그다음 영상(또는 게임·앱·스토리보드)과 포스터를 올리면 오른쪽에서 상영관 모습을 바로 볼 수 있어요.',
       parts: [{ fields: [
@@ -316,7 +316,7 @@ dialog#editors{width:min(680px,94vw)}
           return [['', '단독 작품 (연재물 아님)'], ...data.series.filter(x => mine(x) || x.id === w.series).map(x => { const c = (data.works.find(y => y.series === x.id && has(y.creator)) || {}).creator; return [x.id, (has(x.title) ? x.title : '(제목 없음)') + (has(c) ? ` (© ${c})` : '')]; }), ['__new', '＋ 새 연재물 만들기…']];
         },
           { rerender: true, show: () => !online || isAdmin() || data.series.some(x => mine(x)) || !!(data.works[ui.work] || {}).series,
-            hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 12단계에서 고쳐요.',
+            hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 7단계에서 고쳐요.',
             onChange: (v, o) => setSeriesFor(o, v) }),
         T('episode', '회차 번호 (몇 화)', { ph: '예) 3', show: () => { const w = data.works[ui.work] || {}; return !!w.series && !isSolo(w); },
           hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' })] },
@@ -366,7 +366,7 @@ dialog#editors{width:min(680px,94vw)}
       checks: w => [ck('제목', st(w.title), false, 'title'), ck('한 줄 소개', st(w.tagline), false, 'tagline'), ck('기획 의도', st(w.intent), false, 'intent'),
         ck('작품 주소(ID) – 영문·숫자·하이픈, 중복 없음', workIdOk(w) ? 2 : 0, false, 'id')] },
     { id: 'process', scope: 'work', prod: true, title: '만든 과정 쓰기', pv: [WATCH, 'process'],
-      why: '이 작품을 어떻게 만들었는지 순서대로 적어요. 모든 작품에 공통인 과정은 10단계에 써요.',
+      why: '이 작품을 어떻게 만들었는지 순서대로 적어요. 모든 작품에 공통인 과정은 메이킹 페이지 공통 단계에 써요.',
       parts: [{ fields: [STEPS_LIST('process')] }],
       checks: w => [ck('만든 과정 1단계 이상', best(arr(w.process).map(p => Math.min(st(p.title), st(p.desc)))), false, 'title', 'desc')] },
     { id: 'tools', scope: 'work', prod: true, title: 'AI 도구·프롬프트', pv: [WATCH, 'tools'],
@@ -382,6 +382,15 @@ dialog#editors{width:min(680px,94vw)}
       parts: [{ fields: [SOURCES_TABLE()] }],
       checks: w => [ck('외부 자료 출처·저작권', best(arr(w.sources).filter(s => !s.auto).map(s => Math.min(st(s.item), st(s.source)))), true, 'item', 'source')] },
 
+    { id: 'series', scope: 'site', title: '연재물 정보 고치기', pv: ['works.html', 'list'],
+      why: '시리즈는 1단계에서 작품을 올릴 때 만들어요. 여기서는 시리즈 소개, 연재 중·완결 상태, 대표 포스터를 고치고, 아래 회차 목록에서 다음 회차를 추가해요.',
+      parts: [{ fields: [{ type: 'list', key: 'series', itemLabel: i => `연재물 ${i + 1}`, addLabel: '연재물 추가', fields: [
+        T('title', '연재물 제목', { req: 1, uuid: 1, ph: '예) 우리 가족 이야기' }),
+        A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
+        S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
+        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 잘려요.' }),
+        F('logo', '대표 로고 (선택, 포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
+        RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' })] }] }] },
     { id: 'site', scope: 'site', title: '사이트 이름·슬로건·연락처', pv: ['index.html', 'hero'],
       why: '모든 페이지의 맨 위와 맨 아래에 나오는 정보예요.',
       parts: [
@@ -450,17 +459,10 @@ dialog#editors{width:min(680px,94vw)}
         { title: '공모전 안내', pv: ['about.html', 'contest'], fields: [{ group: 'site', fields: [
           T('contestName', '공모전 이름'), A('contestInfo', '접수 정보', { rows: 4, ph: '예) 접수 기간: 2026. 10. 1. ~ 10. 31. 접수 방법과 문의처를 적어요.' })] }] }],
       checks: d => [ck('만든 사람 소개', Math.min(st(obj(obj(d.about).producer).name), st(obj(obj(d.about).producer).text)), false, 'producer/name', 'producer/text'),
-        ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] },
-    { id: 'series', scope: 'site', title: '연재물 정보 고치기', pv: ['works.html', 'list'],
-      why: '시리즈는 1단계에서 작품을 올릴 때 만들어요. 여기서는 시리즈 소개, 연재 중·완결 상태, 대표 포스터를 고치고, 아래 회차 목록에서 다음 회차를 추가해요.',
-      parts: [{ fields: [{ type: 'list', key: 'series', itemLabel: i => `연재물 ${i + 1}`, addLabel: '연재물 추가', fields: [
-        T('title', '연재물 제목', { req: 1, uuid: 1, ph: '예) 우리 가족 이야기' }),
-        A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
-        S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
-        F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 잘려요.' }),
-        F('logo', '대표 로고 (선택, 포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
-        RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' })] }] }] }
+        ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] }
   ];
+  let STEPS = ALL_STEPS;
+  const syncSteps = () => { const sr = seriesOf(data.works[ui.work]); STEPS = ALL_STEPS.filter(x => x.id !== 'series' || (sr && !isSolo(data.works[ui.work]))); };   // 연재물 정보 단계는 연재물을 고른 작품에서만 보인다
   const stepsFor = () => STEPS;
   // 제작 기록(3~6단계)은 단독 작품이면 연재물 공통 정보를, 연재 회차는 '이번 회차 추가분'(또는 공통 내용)을 고친다
   const curScopeOf = step => step.scope === 'work' ? (step.prod ? prodTarget() : data.works[ui.work]) : data;
@@ -1161,7 +1163,7 @@ dialog#editors{width:min(680px,94vw)}
   const allStatus = () => STEPS.map(s => statusOf(s, scopeForStatus(s, data.works[ui.work])));
   const firstLeft = () => allStatus().findIndex(s => s !== 'done');
 
-  function renderNav() {
+  function renderNav() { syncSteps();
     const sts = allStatus(), left = sts.filter(s => s !== 'done').length;
     const todo = el('button', { type: 'button', class: 'todo' + (left ? '' : ' done'), text: left ? `할 일 ${left}개 남음` : '할 일을 모두 마쳤어요 ✓', disabled: !left,
       title: left ? '누르면 처음 남은 단계로 가요.' : null, onclick: () => goStep(firstLeft(), true) });
@@ -1212,14 +1214,14 @@ dialog#editors{width:min(680px,94vw)}
   }
   function updateAll() {
     renderNav(); updateHeader();
-    const ph = document.getElementById('eppanel'); if (ph) ph.replaceWith(episodePanel());   // 12단계에서 연재물을 고치거나 지우면 회차 목록도 바로 맞춘다
+    const ph = document.getElementById('eppanel'); if (ph) ph.replaceWith(episodePanel());   // 7단계에서 연재물을 고치거나 지우면 회차 목록도 바로 맞춘다
   }
 
   const hasReq = fs => fs.some(f => f.req || (f.fields && hasReq(f.fields)));
   function renderStep() {
     blobUrls.forEach(u => URL.revokeObjectURL(u)); blobUrls = []; fileRefreshers.clear();
+    ui.work = Math.max(0, Math.min(ui.work, Math.max(0, data.works.length - 1))); syncSteps();
     ui.step = Math.max(0, Math.min(ui.step, STEPS.length - 1));
-    ui.work = Math.max(0, Math.min(ui.work, Math.max(0, data.works.length - 1)));
     const step = STEPS[ui.step], scope = curScopeOf(step);
     if (step.scope === 'work' && !scope) {
       $('stepmain').replaceChildren(el('div', { class: 'stephead' }, el('h1', { text: '작품이 아직 없어요' }), el('p', { class: 'why', text: '작품을 추가하면 이 단계부터 입력할 수 있어요.' })),
@@ -1245,7 +1247,7 @@ dialog#editors{width:min(680px,94vw)}
     const roText = readOnlyInfo(step), body = el('div', { class: 'stepbody' }, parts);
     $('stepmain').replaceChildren(...[head, step.prod ? prodBar() : null, roText && el('p', { class: 'ro-note', role: 'status', text: brk(roText) }),
       roText ? el('fieldset', { class: 'ro', disabled: true }, body) : body, step.id === 'series' ? episodePanel() : null, el('div', { class: 'stepnav' }, prev, next)].filter(Boolean));
-    if (step.id === 'series' && online && !isAdmin()) {   // 12단계: 남의 연재물 줄은 읽기만
+    if (step.id === 'series' && online && !isAdmin()) {   // 7단계: 남의 연재물 줄은 읽기만
       $('stepmain').querySelectorAll('[data-l="series"] [data-row]').forEach(r => {
         const x = data.series[+r.getAttribute('data-row')];
         if (x && !mine(x)) { r.classList.add('ro-row'); r.querySelectorAll('input,textarea,select,button').forEach(c => { c.disabled = true; }); }
@@ -1281,7 +1283,7 @@ dialog#editors{width:min(680px,94vw)}
     ui.work = data.works.length - 1; ui.step = 0; saveUi(); changed(); renderStep();
     toast(`${nw.episode}화를 추가했어요. 영상과 포스터부터 올려 보세요.`);
   }
-  /** 12단계 아래에 붙는 회차 목록. 내 연재물이 있을 때만 나온다 */
+  /** 7단계 아래에 붙는 회차 목록. 내 연재물이 있을 때만 나온다 */
   function episodePanel() {
     const mineSeries = data.series.filter(x => mine(x) && (has(x.title) || data.works.some(w => w.series === x.id)));   // 제목도 회차도 없는 빈 연재물은 목록에서 뺀다
     return el('div', { id: 'eppanel', class: 'eppanel' }, mineSeries.map(x => {
