@@ -403,6 +403,7 @@ body.is-preview .pv-hl{outline:4px solid #ffd54a;outline-offset:-4px;box-shadow:
 .game-cta{margin:14px 0;text-align:center}
 /* 앱용(세로형): 휴대폰 화면 비율. 화면 높이를 넘지 않게 폭을 줄인다 */
 .screen-frame.portrait{max-width:min(100%,calc(82vh*9/16))}
+.screen-frame.portrait video{aspect-ratio:9/16}
 .game-frame.portrait{aspect-ratio:9/16;border-radius:0}
 .howto-sec{padding:4px 0 8px}
 .game-how{max-width:1100px;margin:0 auto}

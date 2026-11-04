@@ -323,7 +323,8 @@ dialog#editors{width:min(680px,94vw)}
         { fields: [
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
-            F('cover', '상영관 가로 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 가로 이미지예요.\n가로 16:9, 1920×1080px 권장이에요.\n비워 두면 영상의 첫 장면이 나와요.' }),
+            { type: 'check', key: 'portrait', label: '세로 영상 (세로형 9:16 화면으로 보여주기)', show: () => kindOf() === 'video' },
+            F('cover', '상영관 표지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '재생 전에 영상 화면에 먼저 보이는 이미지예요.\n가로 영상은 16:9(1920×1080px), 세로 영상은 9:16(1080×1920px)을 권장해요.\n비워 두면 영상의 첫 장면이 나와요.' }),
             { type: 'check', key: 'coverLogo', label: '표지 위에 로고 얹기 (연재물 로고 사용)', rerender: true, show: () => kindOf() === 'video' },
             RR('표지 로고 위치·크기', [{ key: 'coverLogoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'coverLogoY', label: '세로', min: 0, max: 100, def: 50 }, { key: 'coverLogoW', label: '크기', min: 10, max: 100, def: 40 }], { show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '영상을 재생하면 로고는 사라져요. 크기는 영상 폭 비율이에요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
@@ -475,7 +476,7 @@ dialog#editors{width:min(680px,94vw)}
   function blankWork(id) {
     return { id, kind: 'video', title: '', creator: '', tagline: '', intent: '',
       game: { url: '', embed: false, portrait: false, howto: '' }, app: { url: '', embed: false, portrait: true, howto: '' }, storyboard: { pages: [{ file: '', caption: '', alt: '' }], pdf: '' },
-      video: { file: '', poster: '', cover: '', endCover: '', duration: '', captions: '', showDownload: true },
+      video: { file: '', poster: '', cover: '', endCover: '', portrait: false, duration: '', captions: '', showDownload: true },
       process: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] },
       sources: [{ item: '', source: '', license: '' }], series: '', episode: '', useCommon: true, owner: '' };
   }
