@@ -9,8 +9,10 @@ create table if not exists public.ourfamilymeta_cron_secret (
 alter table public.ourfamilymeta_cron_secret enable row level security;
 insert into public.ourfamilymeta_cron_secret (id) values (1) on conflict do nothing;
 
--- 2) 요약 함수: 인자로 비밀 문구와 주 시작일(월요일). 주 시작일을 비우면 "지난 월~일"을 쓴다 (한국 시간).
-create or replace function public.ourfamilymeta_weekly_summary(p_secret text, p_week date default null)
+-- 2) 요약 함수: 인자로 비밀 문구, 시작일, 끝일. 끝일을 비우면 시작일+6(한 주), 둘 다 비우면 "지난 월~일"을 쓴다 (한국 시간).
+--    하루짜리는 시작일=끝일로 부른다. 비교 대상(prev)은 같은 길이의 바로 앞 기간이다.
+drop function if exists public.ourfamilymeta_weekly_summary(text, date);
+create or replace function public.ourfamilymeta_weekly_summary(p_secret text, p_week date default null, p_end date default null)
 returns jsonb
 language plpgsql
 security definer
@@ -22,7 +24,7 @@ begin
     raise exception 'not allowed' using errcode = '42501';
   end if;
   w0 := coalesce(p_week, date_trunc('week', (now() at time zone 'Asia/Seoul'))::date - 7);
-  w1 := w0 + 6;
+  w1 := coalesce(p_end, w0 + 6);
   with v as (
     select id, page, nullif(split_part(coalesce(work, ''), '?', 1), '') as work, visitor, pv, coalesce(session, pv, id::text) as sid,
            device, country, (created_at at time zone 'Asia/Seoul')::date as d
@@ -33,7 +35,7 @@ begin
   watched as (select pv, max(seconds) as s from public.ourfamilymeta_pageviews where event = 'watch' and pv is not null and seconds between 1 and 14400 group by pv),
   evp as (select distinct pv, event from public.ourfamilymeta_pageviews where event in ('play', 'end') and pv is not null),
   cur as (select v.* from v where d between w0 and w1),
-  prev as (select v.* from v where d between w0 - 7 and w0 - 1),
+  prev as (select v.* from v where d between w0 - (w1 - w0 + 1) and w0 - 1),
   ses as (select sid, count(*) as pages from cur group by sid)
   select jsonb_build_object(
     'week_start', w0, 'week_end', w1,
@@ -57,5 +59,5 @@ begin
   return r;
 end;
 $$;
-revoke all on function public.ourfamilymeta_weekly_summary(text, date) from public;
-grant execute on function public.ourfamilymeta_weekly_summary(text, date) to anon, authenticated;
+revoke all on function public.ourfamilymeta_weekly_summary(text, date, date) from public;
+grant execute on function public.ourfamilymeta_weekly_summary(text, date, date) to anon, authenticated;
