@@ -328,7 +328,7 @@ dialog#editors{width:min(680px,94vw)}
             { type: 'check', key: 'coverLogo', label: '표지 위에 로고 얹기 (연재물 로고 사용)', rerender: true, show: () => kindOf() === 'video' },
             RR('표지 로고 위치·크기', [{ key: 'coverLogoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'coverLogoY', label: '세로', min: 0, max: 100, def: 50 }, { key: 'coverLogoW', label: '크기', min: 10, max: 100, def: 40 }], { show: () => kindOf() === 'video' && !!obj(data.works[ui.work].video).coverLogo, hint: '영상을 재생하면 로고는 사라져요. 크기는 영상 폭 비율이에요.' }),
             F('poster', '포스터 사진', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 위아래·좌우가 잘려요. 목록과 상영관에 나와요.' }),
-            F('logo', '작품 로고 (포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
+            F('logo', '작품 로고 (선택, 포스터 위에 얹기)', 'image', { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '올리면 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 연재물은 "연재물 정보 고치기"에서 올려요.' }),
             RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { show: () => { const x = seriesOf(data.works[ui.work]); return !x || x.solo; }, hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' }),
             T('duration', '영상 길이', { ph: '03:30', show: () => kindOf() === 'video' }),
             F('endCover', '끝 화면 이미지 (선택)', 'image', { show: () => kindOf() === 'video', hint: '영상이 끝나면 영상 화면에 보이는 가로 이미지예요. 다시 재생하면 사라져요.\n예) "다음 화에서 계속됩니다." 이미지. 가로 16:9, 1920×1080px 권장이에요.\n비워 두면 아무것도 보이지 않아요.' }),
@@ -458,7 +458,7 @@ dialog#editors{width:min(680px,94vw)}
         A('summary', '연재물 소개', { rows: 3, ph: '예) 매주 한 편씩 올리는 가족 이야기예요.' }),
         S('status', '상태', [['ongoing', '연재 중'], ['completed', '완결']]),
         F('poster', '대표 포스터 (없으면 첫 회 포스터)', 'image', { hint: '세로 2:3 비율, 1500×2168px(기본 포스터 규격)을 권장해요. 다른 비율은 가운데만 남기고 잘려요.' }),
-        F('logo', '대표 로고 (포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
+        F('logo', '대표 로고 (선택, 포스터 위에 얹기)', 'image', { hint: '올리면 연재물 포스터 아래쪽 가운데에 자동으로 얹혀요. 투명 배경 PNG가 좋아요. 회차마다 올리지 않아도 돼요.' }),
         RR('로고 위치·크기', [{ key: 'logoX', label: '가로', min: 0, max: 100, def: 50 }, { key: 'logoY', label: '세로', min: 0, max: 100, def: 85 }, { key: 'logoW', label: '크기', min: 20, max: 100, def: 80 }], { hint: '가로·세로는 0~100(세로 기본 85=아래쪽), 크기는 포스터 폭 비율이에요.' })] }] }] }
   ];
   const stepsFor = () => STEPS;
