@@ -32,6 +32,7 @@ module.exports = async (req, res) => {
       parent: { database_id: NOTION_DATABASE_ID }, icon: { type: 'emoji', emoji: '📅' },
       properties: {
         '보고서': { title: [txt(`${s.week_start} 주 (${d5})`)] }, '주 시작(월)': { date: { start: s.week_start } },
+        '월': { select: { name: s.week_start.slice(0, 7) } },
         '방문': { number: s.views }, '방문자': { number: s.visitors }, '신규방문자': { number: s.new_visitors }, '세션': { number: s.sessions },
         '머문시간(초)': { number: s.avg_page_secs || 0 }, '영상 재생': { number: s.plays }, '이탈률(%)': { number: bounce },
         '메모': { rich_text: [txt('자동 생성 (매주 월요일)')] },
