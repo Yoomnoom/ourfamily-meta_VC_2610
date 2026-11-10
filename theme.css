@@ -484,7 +484,6 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .kind-pill.game{background:rgba(52,92,170,.92)}
 .kind-pill.app{background:rgba(30,130,110,.94)}
 .kind-pill.storyboard{background:rgba(130,90,40,.94)}
-.poster>.kind-pill{position:absolute;left:10px;top:10px;z-index:3;pointer-events:none}
 .title-row .kind-pill{font-size:.85rem;padding:5px 13px 5px 10px}
 .title-row .kind-pill svg{width:15px;height:15px}
 

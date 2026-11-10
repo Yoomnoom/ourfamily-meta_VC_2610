@@ -132,7 +132,6 @@
     const peek = has(work.intent) ? work.intent : work.tagline;   // 마우스를 올리면 기획 의도(없으면 한 줄 소개)가 나온다
     if (has(peek)) box.append(h('div', { class: 'poster-peek', 'aria-hidden': 'true' }, h('span', { class: 'peek-label', text: has(work.intent) ? '기획 의도' : '소개' }),
       h('p', { class: 'peek-text', raw: true, text: peek.trim().replace(/\s*\n\s*/g, ' ') })));
-    box.append(kindPill(work));   // 종류(영상·게임·앱·스토리보드) 알약
 
     return box;
   }
@@ -681,6 +680,7 @@
   /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
   const credit = w => has(w.creator) ? '© ' + w.creator.trim() : '';
   const metaLine0 = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
+    : w.kind === 'game' ? '게임' : w.kind === 'app' ? '앱' : w.kind === 'storyboard' ? '스토리보드'
     : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
   const metaLine = w => [metaLine0(w), credit(w)].filter(Boolean).join(' · ');
 
