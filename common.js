@@ -680,7 +680,6 @@
   /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
   const credit = w => has(w.creator) ? '© ' + w.creator.trim() : '';
   const metaLine0 = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
-    : w.kind === 'game' ? '게임' : w.kind === 'app' ? '앱' : w.kind === 'storyboard' ? '스토리보드'
     : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
   const metaLine = w => [metaLine0(w), credit(w)].filter(Boolean).join(' · ');
 

@@ -88,7 +88,7 @@
         pLink,
         h('div', { class: 'slide-info' },
           h('h3', { text: title }),
-          has(App.metaLine(w)) && h('p', { class: 'meta', text: App.metaLine(w) }),
+          h('p', { class: 'meta' }, App.kindPill(w), App.metaLine(w)),
           link));
       slide.addEventListener('click', e => {
         if (swallow) { e.preventDefault(); return; }

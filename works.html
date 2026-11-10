@@ -24,7 +24,7 @@
         h('ul', { class: 'works-grid' }, works.map(([w, i]) => h('li', {},
           h('a', { class: 'wcard', href: watchHref(w, i) }, poster(w),
             h('h3', { text: has(w.title) ? w.title : '제목 미정' }),
-            has(metaLine(w)) && h('p', { class: 'meta', text: metaLine(w) })))))))) };
+            h('p', { class: 'meta' }, App.kindPill(w), metaLine(w))))))))) };
   });
 })();
 </script>
