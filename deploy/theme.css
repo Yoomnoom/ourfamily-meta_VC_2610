@@ -166,8 +166,11 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .topic h3{font-size:1.55rem;margin-bottom:8px}
 .topic p{margin:0;color:var(--muted)}
 a.topic{display:block;color:inherit;text-decoration:none;padding-bottom:72px}
-.topic .go-arrow{position:absolute;right:20px;bottom:18px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:var(--accent);color:#fff;font-weight:700;font-size:1.25rem;transition:transform .3s}
+.topic .go-arrow{position:absolute;right:20px;bottom:18px;height:44px;padding:0 16px 0 20px;gap:8px;border-radius:999px;display:flex;align-items:center;justify-content:center;white-space:nowrap;
+  background:var(--accent);color:#fff;font-weight:700;font-size:.95rem;transition:transform .3s}
+.topic .go-ico{font-size:1.2rem;line-height:1}
+.topic .go-pic{position:absolute;right:20px;top:22px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--accent-hi);background:rgba(211,32,47,.12);box-shadow:inset 0 0 0 1px rgba(211,32,47,.4)}
+a.topic h3{padding-right:52px}
 a.topic:hover .go-arrow{transform:translateX(4px)}
 a.topic:focus-visible{outline:3px solid var(--accent-hi);outline-offset:3px}
 
@@ -478,3 +481,18 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .ep-thumb img{display:block;width:100%;height:100%;object-fit:cover}
 .ep-thumb.tall img{object-fit:contain}
 @media (max-width:520px){.ep-thumb{width:96px}}
+/* 종류 알약 (영상·게임·앱·스토리보드): 포스터 왼쪽 위, 상영관 제목 옆 */
+.kind-pill{display:inline-flex;align-items:center;gap:5px;flex:none;padding:4px 11px 4px 8px;border-radius:999px;font-size:.78rem;font-weight:700;line-height:1.2;color:#fff;background:rgba(20,16,12,.78);box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.kind-pill svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.kind-pill.video{background:rgba(190,30,45,.92)}
+.kind-pill.game{background:rgba(52,92,170,.92)}
+.kind-pill.app{background:rgba(30,130,110,.94)}
+.kind-pill.storyboard{background:rgba(130,90,40,.94)}
+.meta .kind-pill{font-size:.72rem;padding:2px 9px 2px 7px;margin-right:8px;vertical-align:middle}
+.meta .kind-pill svg{width:12px;height:12px}
+/* 상영관 하단 '다른 작품 보기': 포스터 바로 아래 · 제목 위 한 줄 */
+.mini a>.kind-pill{display:flex;width:max-content;margin-top:10px;font-size:.72rem;padding:2px 9px 2px 7px}
+.mini a>.kind-pill svg{width:12px;height:12px}
+.mini a>.kind-pill+h3{margin-top:6px}
+.meta-line .kind-pill{font-size:.8rem;padding:3px 11px 3px 8px;margin-right:0}
+

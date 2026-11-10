@@ -97,6 +97,21 @@
     l.setAttribute('type', 'image/svg+xml'); l.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(svg));
   }
 
+  /* ---------- 종류 알약 (영상·게임·앱·스토리보드) ---------- */
+  const KINDS = {
+    video: ['영상', '<polygon points="7 4 20 12 7 20 7 4"/>'],
+    game: ['게임', '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5"/><circle cx="16" cy="11.5" r=".6"/><circle cx="18.5" cy="14" r=".6"/>'],
+    app: ['앱', '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18.5h2"/>'],
+    storyboard: ['스토리보드', '<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>']
+  };
+  const kindOf = w => w && (w.kind === 'game' || w.kind === 'app' || w.kind === 'storyboard') ? w.kind : 'video';
+  function kindPill(work) {
+    const k = kindOf(work), e = h('span', { class: 'kind-pill ' + k });
+    e.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + KINDS[k][1] + '</svg>';
+    e.append(KINDS[k][0]); return e;
+  }
+
+
   /* ---------- 포스터 / 영상 ---------- */
   function poster(work) {
     const box = h('div', { class: 'poster' }, h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
@@ -117,14 +132,35 @@
     const peek = has(work.intent) ? work.intent : work.tagline;   // 마우스를 올리면 기획 의도(없으면 한 줄 소개)가 나온다
     if (has(peek)) box.append(h('div', { class: 'poster-peek', 'aria-hidden': 'true' }, h('span', { class: 'peek-label', text: has(work.intent) ? '기획 의도' : '소개' }),
       h('p', { class: 'peek-text', raw: true, text: peek.trim().replace(/\s*\n\s*/g, ' ') })));
+
     return box;
   }
+
+  // 다른 도메인(Supabase) 파일은 download 속성이 무시되므로, 받아서 저장한다. 실패하면 새 탭으로 연다.
+  function dlLink(file, label, cls) {
+    const url = mediaPath(file), name = decodeURIComponent(url.split('?')[0].split('/').pop() || 'video.mp4');
+    const a = h('a', { class: cls || 'btn', href: url, download: name }, label);
+    a.addEventListener('click', async e => {
+      e.preventDefault();
+      if (a.dataset.busy) return;
+      a.dataset.busy = '1'; const old = a.textContent; a.textContent = '내려받는 중…';
+      try {
+        const r = await fetch(url, { mode: 'cors' }); if (!r.ok) throw 0;
+        const b = URL.createObjectURL(await r.blob()), t = document.createElement('a');
+        t.href = b; t.download = name; document.body.append(t); t.click(); t.remove();
+        setTimeout(() => URL.revokeObjectURL(b), 10000);
+      } catch (_) { window.open(url, '_blank', 'noopener'); }
+      a.textContent = old; delete a.dataset.busy;
+    });
+    return a;
+  }
+
 
   function videoFallback(v, title) {
     const box = h('div', { class: 'video-fallback', role: 'group', 'aria-label': title + ' 영상 안내' },
       h('strong', { text: '영상을 불러오지 못했습니다' }),
       h('small', { text: has(v.file) ? `media/${v.file.trim()} 파일을 찾을 수 없거나 재생할 수 없어요.` : '영상 파일명이 아직 설정되지 않았어요.' }));
-    if (has(v.file)) box.append(h('a', { class: 'btn', href: mediaPath(v.file), download: '' }, '영상 파일 다운로드'));
+    if (has(v.file)) box.append(dlLink(v.file, '영상 파일 다운로드', 'btn'));
     return box;
   }
   function buildVideo(v, title, onFail) {
@@ -644,7 +680,6 @@
   /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
   const credit = w => has(w.creator) ? '© ' + w.creator.trim() : '';
   const metaLine0 = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
-    : w.kind === 'game' ? '게임' : w.kind === 'app' ? '앱' : w.kind === 'storyboard' ? '스토리보드'
     : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
   const metaLine = w => [metaLine0(w), credit(w)].filter(Boolean).join(' · ');
 
@@ -703,6 +738,7 @@
     return h('div', { class: 'rail' }, prev, list, next);
   }
 
+
   let tracked = false;
   function boot(build) {
     const app = document.getElementById('app');
@@ -722,6 +758,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
+  window.App = { kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, rail, boot, params };
 })();

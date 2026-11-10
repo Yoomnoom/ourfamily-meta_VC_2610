@@ -85,7 +85,7 @@
       screen = h('div', { class: 'screen-frame sb-frame' }, pages.length ? gallery(pages) : !has(sb.pdf) && h('div', { class: 'video-fallback' }, h('strong', { text: '스토리보드가 아직 없어요' })),
         has(sb.pdf) && h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: mediaPath(sb.pdf), target: '_blank', rel: 'noopener noreferrer' }, 'PDF로 보기')));
     } else {
-      dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, h('a', { class: 'btn ghost sm', href: mediaPath(v.file), download: '' }, '영상 다운로드'));
+      dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, App.dlLink(v.file, '영상 다운로드', 'btn ghost sm'));
       screen = h('div', { class: 'screen-frame' + (v.portrait === true || v.portrait === 'true' ? ' portrait' : '') }, buildVideo(v, title, () => dl && dl.remove()));
       const cl = ser && !ser.solo ? ser.logo : v.logo, vid = screen.querySelector('video');
       if (vid) vid.addEventListener('loadedmetadata', () => { if (vid.videoHeight > vid.videoWidth) screen.classList.add('portrait'); });   // 체크를 깜빡해도 세로 영상이면 세로 틀로   // 표지 위 로고: 연재물 로고(단독 작품은 작품 로고)를 불러와 쓴다
@@ -117,7 +117,7 @@
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
       openLink ? h('div', { class: 'title-row' }, h('h1', { text: title }), openLink) : h('h1', { text: title }),
       h('div', {},
-        h('p', { class: 'meta meta-line' },
+        h('p', { class: 'meta meta-line' }, App.kindPill(w),
           ser && h('span', { text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),
           has(v.duration) && h('span', { text: '러닝타임 ' + v.duration.trim() }),
           has(credit(w)) && h('span', { text: credit(w) })),
@@ -163,7 +163,7 @@
 
     const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
     if (others.length) main.append(section('others', T.others, '', rail(h('div', { class: 'mini' }, others.map(([o, i]) =>
-      h('a', { href: watchHref(o, i) }, poster(o),
+      h('a', { href: watchHref(o, i) }, poster(o), App.kindPill(o),
         h('h3', { text: has(o.title) ? o.title : '제목 미정' }),
         has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') })))))));
 
