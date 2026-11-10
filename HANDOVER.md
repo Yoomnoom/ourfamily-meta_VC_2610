@@ -3,6 +3,16 @@
 세션이 끝날 때마다 **맨 위에** 새 항목을 추가합니다. 기존 기록은 지우지 않습니다.
 
 ---
+## 2026-11-10 (비하인드 컷: 등록된 편집자 모두 수정 가능)
+
+- 요청: 비하인드 컷(CMS 9번)을 관리자만이 아니라 등록된 사람(편집자 포함) 모두 수정. 원래 비하인드 컷은 사이트 공통 `site` 행 안에 있어 관리자만 쓸 수 있었다.
+- 방식: 비하인드 컷만 `ourfamilymeta_settings`의 **`key='album'` 행으로 분리**, 그 행만 편집자가 쓸 수 있게 함(`site` 행은 그대로 관리자만). `db/ourfamilymeta_album.sql`(**아직 Supabase에 실행 안 함 — SQL Editor에서 한 번 실행해야 편집자 저장이 켜진다**): album 행 insert/update 정책(`ourfamilymeta_is_editor()`).
+- CMS(`cms/index.html`): 비하인드 컷 단계에 `shared: true`(편집자도 편집 가능, `readOnlyInfo`), `rowsOf`가 `album` 행을 만듦, `loadOnline`은 `key in (site,album)`로 읽고 album 행이 있으면 그것을 우선, `saveOnline`은 편집자도 album 행을 저장(행이 아직 없고 바꾼 게 없으면 보내지 않음 → SQL 실행 전에도 다른 저장은 정상). 권한이 없으면 "관리자에게 ourfamilymeta_album.sql 실행을 요청"하라는 안내를 띄움. 관리자는 SQL 없이도 저장됨(기존 관리자 정책이 모든 key에 적용).
+- 공개 사이트(`common.js` `fromDb`, `deploy/common.js`): `key in (site,album)`로 읽고 album 행이 있으면 `d.album`을 그걸로 덮어씨움(없으면 예전 site 안 값 그대로 → 기존 사진 유지).
+- **순서**: SQL 먼저 실행 → CMS·사이트 배포. 배포가 먼저여도 깨지는 않지만 편집자는 저장 시 안내 메시지만 본다.
+- 확인: JS 문법 검사만. **못 한 것**: SQL 실행, 실제 로그인·편집자 저장 시험.
+
+
 ## 2026-11-10 (홈 주제 카드 사진 배경 + deploy/ 반영 누락 수정)
 
 - **공개 사이트 Vercel 루트는 `deploy/`다.** 루트 파일만 고치고 push하면 사이트가 안 바뀐다(오늘 이걸 놓쳐 다운로드 수정·알약·카드가 한 번 뒤늦게 배포됨, 커밋 0509714). 공개용 파일을 고칠 때는 `deploy/`도 같이 갱신하고(루트와 다른 파일 비교로 확인), 커밋 뒤 push한다.
