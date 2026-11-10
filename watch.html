@@ -163,9 +163,9 @@
 
     const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
     if (others.length) main.append(section('others', T.others, '', rail(h('div', { class: 'mini' }, others.map(([o, i]) =>
-      h('a', { href: watchHref(o, i) }, poster(o),
+      h('a', { href: watchHref(o, i) }, poster(o), App.kindPill(o),
         h('h3', { text: has(o.title) ? o.title : '제목 미정' }),
-        h('p', { class: 'meta' }, App.kindPill(o), metaLine(o).replace('러닝타임 ', ''))))))));
+        has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') })))))));
 
     return { title: `${title} – ${name}`, main };
   });

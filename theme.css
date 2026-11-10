@@ -487,5 +487,9 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .kind-pill.storyboard{background:rgba(130,90,40,.94)}
 .meta .kind-pill{font-size:.72rem;padding:2px 9px 2px 7px;margin-right:8px;vertical-align:middle}
 .meta .kind-pill svg{width:12px;height:12px}
+/* 상영관 하단 '다른 작품 보기': 포스터 바로 아래 · 제목 위 한 줄 */
+.mini a>.kind-pill{display:flex;width:max-content;margin-top:10px;font-size:.72rem;padding:2px 9px 2px 7px}
+.mini a>.kind-pill svg{width:12px;height:12px}
+.mini a>.kind-pill+h3{margin-top:6px}
 .meta-line .kind-pill{font-size:.8rem;padding:3px 11px 3px 8px;margin-right:0}
 
