@@ -481,6 +481,7 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 /* 종류 알약 (영상·게임·앱·스토리보드): 포스터 왼쪽 위, 상영관 제목 옆 */
 .kind-pill{display:inline-flex;align-items:center;gap:5px;flex:none;padding:4px 11px 4px 8px;border-radius:999px;font-size:.78rem;font-weight:700;line-height:1.2;color:#fff;background:rgba(20,16,12,.78);box-shadow:0 1px 6px rgba(0,0,0,.35)}
 .kind-pill svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.kind-pill.video{background:rgba(190,30,45,.92)}
 .kind-pill.game{background:rgba(52,92,170,.92)}
 .kind-pill.app{background:rgba(30,130,110,.94)}
 .kind-pill.storyboard{background:rgba(130,90,40,.94)}
