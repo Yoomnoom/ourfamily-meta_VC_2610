@@ -115,7 +115,7 @@
           epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` })))))));
     const jumps = [];
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
-      openLink ? h('div', { class: 'title-row' }, h('h1', { text: title }), openLink) : h('h1', { text: title }),
+      h('div', { class: 'title-row' }, h('h1', { text: title }), App.kindPill(w), openLink),
       h('div', {},
         h('p', { class: 'meta meta-line' },
           ser && h('span', { text: `${ser.title} · ${has(w.episode) ? w.episode + '화' : '연재'}` }),

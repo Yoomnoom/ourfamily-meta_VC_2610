@@ -97,6 +97,21 @@
     l.setAttribute('type', 'image/svg+xml'); l.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(svg));
   }
 
+  /* ---------- 종류 알약 (영상·게임·앱·스토리보드) ---------- */
+  const KINDS = {
+    video: ['영상', '<polygon points="7 4 20 12 7 20 7 4"/>'],
+    game: ['게임', '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5"/><circle cx="16" cy="11.5" r=".6"/><circle cx="18.5" cy="14" r=".6"/>'],
+    app: ['앱', '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18.5h2"/>'],
+    storyboard: ['스토리보드', '<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>']
+  };
+  const kindOf = w => w && (w.kind === 'game' || w.kind === 'app' || w.kind === 'storyboard') ? w.kind : 'video';
+  function kindPill(work) {
+    const k = kindOf(work), e = h('span', { class: 'kind-pill ' + k });
+    e.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + KINDS[k][1] + '</svg>';
+    e.append(KINDS[k][0]); return e;
+  }
+
+
   /* ---------- 포스터 / 영상 ---------- */
   function poster(work) {
     const box = h('div', { class: 'poster' }, h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
@@ -117,6 +132,8 @@
     const peek = has(work.intent) ? work.intent : work.tagline;   // 마우스를 올리면 기획 의도(없으면 한 줄 소개)가 나온다
     if (has(peek)) box.append(h('div', { class: 'poster-peek', 'aria-hidden': 'true' }, h('span', { class: 'peek-label', text: has(work.intent) ? '기획 의도' : '소개' }),
       h('p', { class: 'peek-text', raw: true, text: peek.trim().replace(/\s*\n\s*/g, ' ') })));
+    box.append(kindPill(work));   // 종류(영상·게임·앱·스토리보드) 알약
+
     return box;
   }
 
@@ -664,7 +681,6 @@
   /** 목록 카드의 작은 글줄: 연재물은 "N화까지 공개", 단독 작품은 러닝타임 */
   const credit = w => has(w.creator) ? '© ' + w.creator.trim() : '';
   const metaLine0 = w => w.episodeCount ? `${w.episodeCount}화까지 공개 · ${w.seriesStatus === 'completed' ? '완결' : '연재 중'}`
-    : w.kind === 'game' ? '게임' : w.kind === 'app' ? '앱' : w.kind === 'storyboard' ? '스토리보드'
     : has(w.video && w.video.duration) ? '러닝타임 ' + w.video.duration.trim() : '';
   const metaLine = w => [metaLine0(w), credit(w)].filter(Boolean).join(' · ');
 
@@ -723,6 +739,7 @@
     return h('div', { class: 'rail' }, prev, list, next);
   }
 
+
   let tracked = false;
   function boot(build) {
     const app = document.getElementById('app');
@@ -742,6 +759,6 @@
     });
   }
 
-  window.App = { dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
+  window.App = { kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, rail, boot, params };
 })();
