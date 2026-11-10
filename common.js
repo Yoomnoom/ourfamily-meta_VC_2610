@@ -120,11 +120,31 @@
     return box;
   }
 
+  // 다른 도메인(Supabase) 파일은 download 속성이 무시되므로, 받아서 저장한다. 실패하면 새 탭으로 연다.
+  function dlLink(file, label, cls) {
+    const url = mediaPath(file), name = decodeURIComponent(url.split('?')[0].split('/').pop() || 'video.mp4');
+    const a = h('a', { class: cls || 'btn', href: url, download: name }, label);
+    a.addEventListener('click', async e => {
+      e.preventDefault();
+      if (a.dataset.busy) return;
+      a.dataset.busy = '1'; const old = a.textContent; a.textContent = '내려받는 중…';
+      try {
+        const r = await fetch(url, { mode: 'cors' }); if (!r.ok) throw 0;
+        const b = URL.createObjectURL(await r.blob()), t = document.createElement('a');
+        t.href = b; t.download = name; document.body.append(t); t.click(); t.remove();
+        setTimeout(() => URL.revokeObjectURL(b), 10000);
+      } catch (_) { window.open(url, '_blank', 'noopener'); }
+      a.textContent = old; delete a.dataset.busy;
+    });
+    return a;
+  }
+
+
   function videoFallback(v, title) {
     const box = h('div', { class: 'video-fallback', role: 'group', 'aria-label': title + ' 영상 안내' },
       h('strong', { text: '영상을 불러오지 못했습니다' }),
       h('small', { text: has(v.file) ? `media/${v.file.trim()} 파일을 찾을 수 없거나 재생할 수 없어요.` : '영상 파일명이 아직 설정되지 않았어요.' }));
-    if (has(v.file)) box.append(h('a', { class: 'btn', href: mediaPath(v.file), download: '' }, '영상 파일 다운로드'));
+    if (has(v.file)) box.append(dlLink(v.file, '영상 파일 다운로드', 'btn'));
     return box;
   }
   function buildVideo(v, title, onFail) {
@@ -722,6 +742,6 @@
     });
   }
 
-  window.App = { h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
+  window.App = { dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, rail, boot, params };
 })();

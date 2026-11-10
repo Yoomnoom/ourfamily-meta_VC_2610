@@ -85,7 +85,7 @@
       screen = h('div', { class: 'screen-frame sb-frame' }, pages.length ? gallery(pages) : !has(sb.pdf) && h('div', { class: 'video-fallback' }, h('strong', { text: '스토리보드가 아직 없어요' })),
         has(sb.pdf) && h('p', { class: 'game-cta' }, h('a', { class: 'btn', href: mediaPath(sb.pdf), target: '_blank', rel: 'noopener noreferrer' }, 'PDF로 보기')));
     } else {
-      dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, h('a', { class: 'btn ghost sm', href: mediaPath(v.file), download: '' }, '영상 다운로드'));
+      dl = v.showDownload && has(v.file) && h('div', { class: 'dl' }, App.dlLink(v.file, '영상 다운로드', 'btn ghost sm'));
       screen = h('div', { class: 'screen-frame' + (v.portrait === true || v.portrait === 'true' ? ' portrait' : '') }, buildVideo(v, title, () => dl && dl.remove()));
       const cl = ser && !ser.solo ? ser.logo : v.logo, vid = screen.querySelector('video');
       if (vid) vid.addEventListener('loadedmetadata', () => { if (vid.videoHeight > vid.videoWidth) screen.classList.add('portrait'); });   // 체크를 깜빡해도 세로 영상이면 세로 틀로   // 표지 위 로고: 연재물 로고(단독 작품은 작품 로고)를 불러와 쓴다
