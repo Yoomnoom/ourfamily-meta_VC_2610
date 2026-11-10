@@ -183,10 +183,11 @@
       '<rect x="3" y="9" width="18" height="11" rx="1.5"/><path d="M3 9l1.6-4.6 4.4 1.2L7.4 9M9 5.6l4.4 1.2L11.8 9M13.4 6.8l4.4 1.2L16.2 9M17.8 8l2.6.7L19.6 9"/>'];
     const topicIco = i => { const e = h('span', { class: 'go-pic', 'aria-hidden': 'true' });
       e.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + TOPIC_ICO[i] + '</svg>'; return e; };
+    const TOPIC_PIC = ['watch', 'behind', 'making'];   // 카드 배경 사진 media/topics/topic-○○.jpg (TOPIC_GO와 같은 순서)
     const TOPIC_GO = ['works.html', 'album.html', 'making.html'];   // 카드 순서대로 이동할 페이지 (연결→상영작, 발견→비하인드 컷, 즐거움→메이킹)
     const topics = arr(home.topics).filter(t => has(t.title) || has(t.text));
     if (topics.length) main.append(section('topics', T.topics, '', h('div', { class: 'topics' }, topics.map((t, i) =>
-      h(TOPIC_GO[i] ? 'a' : 'article', TOPIC_GO[i] ? { class: 'topic go', href: href(TOPIC_GO[i]) } : { class: 'topic' },
+      h(TOPIC_GO[i] ? 'a' : 'article', TOPIC_GO[i] ? { class: 'topic go has-pic pic-' + TOPIC_PIC[i], href: href(TOPIC_GO[i]) } : { class: 'topic' },
         has(t.label) && h('span', { class: 'tag', text: t.label }),
         has(t.title) && h('h3', { text: t.title }),
         has(t.text) && h('p', { text: t.text }),
