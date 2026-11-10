@@ -454,7 +454,8 @@ dialog#editors{width:min(680px,94vw)}
       why: '만든 사람, 기획 의도, 사이트 전체의 출처 표, 공모전 안내가 소개 페이지에 나와요.',
       parts: [
         { title: '만든 사람 소개', pv: ['about.html', 'producer'], fields: [{ group: 'about', fields: [{ group: 'producer', fields: [
-          T('name', '이름 또는 팀 이름', { ph: '예) 김○○ 가족' }), A('text', '소개', { rows: 4, ph: '예) 누가 어떤 역할로 참여했는지 적어요.' })] }] }] },
+          T('name', '이름 또는 팀 이름', { ph: '예) 김○○ 가족' }), A('text', '소개', { rows: 4, ph: '예) 누가 어떤 역할로 참여했는지 적어요.' }),
+          { type: 'list', key: 'members', itemLabel: i => `팀원 ${i + 1}`, addLabel: '팀원 추가', fields: [F('photo', '프로필 사진', 'image', { hint: '정사각형(1:1) 사진이 가장 예쁘게 보여요.' }), T('name', '이름', { ph: '예) 김○○' }), T('role', '맡은 일', { ph: '예) 시나리오 · 영상 편집' }), A('text', '한 일 소개', { rows: 3, ph: '예) 장면 12컷의 프롬프트를 쓰고 영상을 편집했어요.' })] }] }] }] },
         { title: '사이트 전체 기획 의도', pv: ['about.html', 'intent'], fields: [{ group: 'about', fields: [A('intent', '기획 의도', { rows: 7, ph: '사이트 전체의 기획 의도를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] }] },
         { title: '사이트 전체 출처·저작권', desc: '글꼴처럼 사이트 전체에 쓰인 자료를 적어요.\n작품별 자료는 6단계에 적어요.', pv: ['about.html', 'sources'], fields: [{ group: 'about', fields: [SOURCES_TABLE()] }] },
         { title: '공모전 안내', pv: ['about.html', 'contest'], fields: [{ group: 'site', fields: [
@@ -492,7 +493,7 @@ dialog#editors{width:min(680px,94vw)}
       topics: TOPIC_LABELS.map(label => ({ label, title: '', text: '' })) },
     making: { intro: '', timeline: [{ title: '', desc: '' }], tools: [blankTool()], roles: { ai: [''], human: [''] }, declaration: { title: '', text: '' } },
     album: { intro: '', photos: [{ file: '', caption: '', alt: '' }] },
-    about: { producer: { name: '', text: '' }, intent: '', sources: [{ ...FONT_ROW }, { item: '', source: '', license: '' }] },
+    about: { producer: { name: '', text: '', members: [] }, intent: '', sources: [{ ...FONT_ROW }, { item: '', source: '', license: '' }] },
     series: [], solos: [],
     works: [blankWork('work-1')]
   });
@@ -560,7 +561,7 @@ dialog#editors{width:min(680px,94vw)}
       declaration: { title: '', text: '', ...obj(mk.declaration) } };
     out.album = { intro: '', ...al, photos: arr(al.photos).map(g => ({ file: '', caption: '', alt: '', ...obj(g) })) };
     const src = arr(ab.sources).map(x => ({ item: '', source: '', license: '', ...obj(x) })).filter(x => !x.auto);
-    out.about = { ...ab, producer: { name: '', text: '', ...obj(ab.producer) }, intent: ab.intent || '', sources: [{ ...FONT_ROW }, ...src] };
+    out.about = { ...ab, producer: { name: '', text: '', ...obj(ab.producer), members: arr(obj(ab.producer).members).map(m => ({ photo: '', name: '', role: '', text: '', ...obj(m) })) }, intent: ab.intent || '', sources: [{ ...FONT_ROW }, ...src] };
     const sers = [...arr(d.series), ...arr(d.solos)].map(normSeries).map(x => ({ ...x, id: has(x.id) ? x.id : crypto.randomUUID() }));
     out.series = sers.filter(x => !x.solo); out.solos = sers.filter(x => x.solo);
     out.works = Array.isArray(d.works) ? d.works.map(normWork) : base.works;
@@ -580,7 +581,10 @@ dialog#editors{width:min(680px,94vw)}
   const isSolo = w => data.solos.some(x => x.id === (w || {}).series);
   const isAdmin = () => !!me && me.role === 'admin';
   /** 이 항목(작품·연재물)을 내가 고칠 수 있는가. 담당자가 비어 있으면(방금 만든 것) 내 것이다. */
-  const mine = o => !online || isAdmin() || !has(o && o.owner) || String(o.owner).toLowerCase() === String(me.email || '').toLowerCase();
+  const lcEmail = () => String(me.email || '').toLowerCase();
+  /** 관리자가 만든 것은 편집자 누구나 고칠 수 있다. 단 관리자가 잠그면(o.locked) 지정한 사람(o.lockedTo)만. DB 규칙(ourfamilymeta_can_edit)과 같다. */
+  const mine = o => !online || isAdmin() || !has(o && o.owner) || String(o.owner).toLowerCase() === lcEmail()
+    || (!!o.ownerAdmin && (!o.locked || arr(o.lockedTo).some(e => String(e).toLowerCase() === lcEmail())));
   const pickProd = o => ({ process: arr(obj(o).process), tools: arr(obj(o).tools), roles: normRoles(obj(o).roles), sources: arr(obj(o).sources) });
   /** 완성도 점검용: 공개 화면과 같은 규칙으로 합친 제작 기록 (표시용 병합은 common.js의 production) */
   function effProd(w) {
@@ -1350,6 +1354,7 @@ dialog#editors{width:min(680px,94vw)}
       el('hr'), el('div', { class: 'mh', text: '작품' }),
       mi('작품 추가', addWork), mi('이 작품 복제', dupWork, { disabled: !has1 }),
       mi('이 작품을 앞으로', () => swapWork(-1), { disabled: !has1 || ui.work === 0 }), mi('이 작품을 뒤로', () => swapWork(1), { disabled: !has1 || ui.work >= n - 1 }),
+      ...(online && isAdmin() ? [mi('이 작품 수정 잠금…', openLock, { disabled: !has1 })] : []),
       mi('이 작품 삭제', delWork, { danger: true, disabled: !has1 || !mine(data.works[ui.work] || {}) }),
       el('hr'), mi('사용 방법', () => $('intro').showModal()), mi(online ? '저장 안 한 내용 버리고 다시 불러오기' : '처음부터 다시', resetAll, { danger: true }),
       ...(online ? [el('hr'), mi('방문 집계', openStats), ...(me.role === 'admin' ? [mi('편집자 관리', openEditors)] : []), mi(`로그아웃 (${me.email})`, signOut)] : []));
@@ -1538,6 +1543,9 @@ dialog#editors{width:min(680px,94vw)}
   }
   const signOut = () => { setSession(null); location.reload(); };
 
+  /** 잠금 칸(locked_to)은 관리자만 보낸다. null=잠금 없음, 배열=잠금(지정한 사람만) */
+  const lockCols = o => isAdmin() ? { locked_to: o.locked ? [...new Set(arr(o.lockedTo).map(e => String(e).trim().toLowerCase()).filter(Boolean))] : null } : {};
+  const lockProps = x => ({ ownerAdmin: !!x.owner_admin, locked: Array.isArray(x.locked_to), lockedTo: Array.isArray(x.locked_to) ? x.locked_to : [] });
   /** 화면 데이터 <-> DB 행. 작품 한 편이 DB 한 줄이라, 서로 다른 작품은 동시에 고쳐도 덮어쓰지 않는다. */
   function rowsOf(d) {
     const used = new Set(arr(d.works).map(w => w.series));
@@ -1545,7 +1553,7 @@ dialog#editors{width:min(680px,94vw)}
     const all = [...arr(d.series), ...solos], sids = new Set(all.map(x => x.id));
     const series = all.map((x, i) => {
       const solo = soloIds.has(x.id), w0 = solo ? arr(d.works).find(w => w.series === x.id) : null;   // solo 연재물의 제목·포스터는 그 작품 것을 따른다
-      return { id: x.id, title: solo ? (w0 && has(w0.title) ? w0.title.trim() : '(제목 없음)') : has(x.title) ? x.title.trim() : '(제목 없음)',
+      return { id: x.id, ...lockCols(solo && w0 ? w0 : x), title: solo ? (w0 && has(w0.title) ? w0.title.trim() : '(제목 없음)') : has(x.title) ? x.title.trim() : '(제목 없음)',
         summary: has(x.summary) ? x.summary : null, status: x.status === 'completed' ? 'completed' : 'ongoing',
         poster_path: solo ? (w0 && has(obj(w0.video).poster) ? w0.video.poster.trim() : null) : has(x.poster) ? x.poster.trim() : null,
         sort_order: i, is_published: true, solo, common: { ...clone(normCommon(x.common)), ...(has(x.logo) && !solo ? { logo: x.logo.trim(), logoX: x.logoX || '', logoY: x.logoY || '', logoW: x.logoW || '' } : {}) } };   // 담당자(owner)는 보내지 않는다 – DB가 로그인한 사람으로 기록한다
@@ -1553,9 +1561,9 @@ dialog#editors{width:min(680px,94vw)}
     const works = arr(d.works).map((w, i) => {
       const inSeries = has(w.series) && sids.has(w.series), solo = soloIds.has(w.series);
       if (inSeries && !solo && !(+w.episode >= 1)) throw new Error(`"${has(w.title) ? w.title : w.id}"의 회차 번호를 1 이상의 숫자로 적어 주세요.`);
-      const c = clone(w); delete c.series; delete c.episode; delete c.owner;
+      const c = clone(w); delete c.series; delete c.episode; delete c.owner; delete c.ownerAdmin; delete c.locked; delete c.lockedTo;
       const slug = String(w.id || '').trim();
-      return { slug, kind: w.kind === 'app' ? 'game' : w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
+      return { slug, ...lockCols(w), kind: w.kind === 'app' ? 'game' : w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
         episode_no: inSeries ? (solo ? 1 : Math.floor(+w.episode)) : null, poster_path: has(obj(w.video).poster) ? w.video.poster.trim() : null,
         sort_order: i, is_published: has(w.title), content: c };
     });
@@ -1568,8 +1576,8 @@ dialog#editors{width:min(680px,94vw)}
     let d = null;
     if (st.length || ser.length || wk.length) {
       d = { ...obj(st[0] && st[0].value),
-        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoX: obj(x.common).logoX || '', logoY: obj(x.common).logoY || '', logoW: obj(x.common).logoW || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common) })),
-        works: wk.map(x => ({ ...obj(x.content), kind: obj(x.content).kind === 'app' ? 'app' : x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '' })) };
+        series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoX: obj(x.common).logoX || '', logoY: obj(x.common).logoY || '', logoW: obj(x.common).logoW || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common), ...lockProps(x) })),
+        works: wk.map(x => ({ ...obj(x.content), kind: obj(x.content).kind === 'app' ? 'app' : x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '', ...lockProps(x) })) };
     }
     return { d, st, ser, wk };
   }
@@ -1593,8 +1601,8 @@ dialog#editors{width:min(680px,94vw)}
         throw e;
       }
       if (!out.length) {   // 0줄이 바뀐 이유: 담당자가 아니라서(권한) / 그 사이 다른 사람이 고쳐서(동시 수정)
-        let cur = []; try { cur = await getJson(`${table}?${col}=eq.${encodeURIComponent(key)}&select=owner`); } catch {}
-        if (cur.length && !isAdmin() && String(cur[0].owner || '').toLowerCase() !== String(me.email || '').toLowerCase()) throw new Error(permMsg(table));
+        let cur = []; try { cur = await getJson(`${table}?${col}=eq.${encodeURIComponent(key)}&select=*`); } catch {}
+        if (cur.length && !isAdmin() && !mine({ owner: cur[0].owner || '', ...lockProps(cur[0]) })) throw new Error(permMsg(table));
         throw new Error('다른 사람이 먼저 이 항목을 고쳤어요.\n⋯ 메뉴의 "저장 안 한 내용 버리고 다시 불러오기"로 최신 내용을 받은 뒤 다시 수정하세요.');
       }
       map.set(key, { json, updated: out[0].updated_at });
@@ -1730,6 +1738,40 @@ dialog#editors{width:min(680px,94vw)}
     } catch (e) {
       body.replaceChildren(el('p', { text: /42883|function|does not exist|schema cache|404/i.test(e.message) ? '집계 기능이 아직 준비되지 않았어요.\ndb/ourfamilymeta_pageviews_v2.sql 을 Supabase SQL Editor 에서 한 번 실행해 주세요.' : '불러오지 못했어요: ' + e.message, style: 'white-space:pre-line' }));
     }
+  }
+
+  /** 관리자 전용: 관리자가 만든 작품을 잠그고, 고칠 수 있는 사람을 지정한다. 저장하면 DB 에 반영된다. */
+  async function openLock() {
+    const w = data.works[ui.work]; if (!w) return;
+    const x = seriesOf(w), serOk = x && !x.solo;
+    const adminMade = !has(w.owner) || w.ownerAdmin || String(w.owner).toLowerCase() === lcEmail();
+    const dlg = el('dialog', { id: 'editors', 'aria-labelledby': 'lkT' }), list = el('ul', { class: 'ed-list' });
+    const on = el('input', { type: 'checkbox', id: 'lkOn' }); on.checked = !!w.locked;
+    const withSer = el('input', { type: 'checkbox', id: 'lkSer' }); withSer.checked = serOk && !!x.locked;
+    const boxes = [];
+    let rows = [];
+    try { rows = (await getJson('ourfamilymeta_editors?select=email,role,memo&order=created_at')).filter(r => r.role !== 'admin'); }
+    catch (e) { try { rows = (await getJson('ourfamilymeta_editors?select=email,role&order=created_at')).filter(r => r.role !== 'admin'); } catch (e2) { toast('편집자 목록을 불러오지 못했어요: ' + e2.message); return; } }
+    rows.forEach(r => {
+      const cb = el('input', { type: 'checkbox', 'aria-label': r.email }); cb.checked = arr(w.lockedTo).some(e => String(e).toLowerCase() === r.email); cb.dataset.email = r.email; boxes.push(cb);
+      list.append(el('li', {}, el('label', { class: 'cb ed-who' }, cb, el('strong', { text: r.memo || '' }), el('span', { text: r.email }))));
+    });
+    const sync = () => boxes.forEach(b => { b.disabled = !on.checked; });
+    on.addEventListener('change', sync); sync();
+    const apply = () => {
+      const to = boxes.filter(b => b.checked).map(b => b.dataset.email);
+      w.locked = on.checked; w.lockedTo = on.checked ? to : [];
+      if (x) { if (x.solo) { x.locked = w.locked; x.lockedTo = [...w.lockedTo]; } else if (withSer.checked || (!on.checked && x.locked)) { x.locked = w.locked; x.lockedTo = [...w.lockedTo]; } }
+      changed(); dlg.close(); dlg.remove();
+      toast(on.checked ? (to.length ? `잠갔어요. ${to.length}명만 고칠 수 있어요.\n저장하면 반영돼요.` : '잠갔어요. 관리자만 고칠 수 있어요.\n저장하면 반영돼요.') : '잠금을 풀었어요.\n저장하면 반영돼요.');
+    };
+    dlg.append(el('h2', { id: 'lkT', text: `"${has(w.title) ? w.title : w.id}" 수정 잠금` }),
+      el('p', { text: adminMade ? '관리자가 만든 작품은 평소에 편집자 누구나 고칠 수 있어요.\n잠그면 아래에서 고른 사람만 고칠 수 있어요. 관리자는 항상 고칠 수 있어요.' : '이 작품은 관리자가 만든 것이 아니라서, 원래 담당자와 관리자만 고칠 수 있어요.\n잠금은 관리자가 만든 작품에만 쓰여요.', style: 'white-space:pre-line;margin:0' }),
+      el('label', { class: 'cb', for: 'lkOn' }, on, '이 작품 잠그기'),
+      list, ...(serOk ? [el('label', { class: 'cb', for: 'lkSer' }, withSer, '이 연재물(공통 제작 정보)에도 같은 잠금 적용')] : []),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: '적용', onclick: apply }),
+        el('button', { type: 'button', class: 'btn', text: '닫기', onclick: () => { dlg.close(); dlg.remove(); } })));
+    document.body.append(dlg); dlg.showModal();
   }
 
   async function openEditors() {
