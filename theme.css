@@ -508,10 +508,3 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .mini a>.kind-pill+h3{margin-top:6px}
 .meta-line .kind-pill{font-size:.8rem;padding:3px 11px 3px 8px;margin-right:0}
 
-/* 지금 상영 중: 종류 탭 */
-.kind-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 20px}
-.kind-tab{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.95rem;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
-.kind-tab .n{font-size:.78rem;font-weight:700;opacity:.7}
-.kind-tab:hover{color:var(--text);border-color:var(--accent)}
-.kind-tab[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
-.kind-tab:focus-visible{outline:3px solid var(--accent-hi);outline-offset:2px}
