@@ -508,3 +508,8 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .mini a>.kind-pill+h3{margin-top:6px}
 .meta-line .kind-pill{font-size:.8rem;padding:3px 11px 3px 8px;margin-right:0}
 
+/* 상영작 페이지: 종류별 구분 (영상 · 게임 · 웹앱) */
+.kind-sec+.kind-sec{margin-top:clamp(40px,7vw,72px)}
+.kind-head{display:flex;align-items:baseline;gap:10px;margin:0 0 20px;font-size:clamp(1.4rem,3.6vw,1.9rem)}
+.kind-head::before{content:"";align-self:center;flex:none;width:5px;height:1em;border-radius:3px;background:var(--accent)}
+.kind-head .n{font-size:.9rem;font-weight:700;color:var(--muted)}
