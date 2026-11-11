@@ -19,12 +19,21 @@
     const title = '상영작 – ' + name;
     const works = listing(d).map((w, i) => [w, i]);
     if (!works.length) return { title, main: emptyPage('상영작') };
+    // 종류별로 나눠 보여 준다: 영상 · 게임 · 웹앱 (스토리보드가 있으면 그것도). 종류가 하나뿐이면 나누지 않고 알약으로 보여 준다.
+    const KINDS = [['video', '영상'], ['game', '게임'], ['app', '웹앱'], ['storyboard', '스토리보드']];
+    const groups = KINDS.map(([k, label]) => [k, label, works.filter(([w]) => App.kindOf(w) === k)]).filter(g => g[2].length);
+    const split = groups.length > 1;
+    const card = ([w, i]) => h('li', {},
+      h('a', { class: 'wcard', href: watchHref(w, i) }, poster(w),
+        h('h3', { text: has(w.title) ? w.title : '제목 미정' }),
+        (!split || has(metaLine(w))) && h('p', { class: 'meta' }, !split && App.kindPill(w), metaLine(w))));
+    const body = split
+      ? groups.map(([k, label, list]) => h('section', { class: 'kind-sec', 'aria-labelledby': 'kg-' + k },
+          h('h2', { class: 'kind-head', id: 'kg-' + k }, label, h('span', { class: 'n', text: String(list.length) })),
+          h('ul', { class: 'works-grid' }, list.map(card))))
+      : h('ul', { class: 'works-grid' }, works.map(card));
     return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작'),
-      h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' },
-        h('ul', { class: 'works-grid' }, works.map(([w, i]) => h('li', {},
-          h('a', { class: 'wcard', href: watchHref(w, i) }, poster(w),
-            h('h3', { text: has(w.title) ? w.title : '제목 미정' }),
-            h('p', { class: 'meta' }, App.kindPill(w), metaLine(w))))))))) };
+      h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' }, body))) };
   });
 })();
 </script>
