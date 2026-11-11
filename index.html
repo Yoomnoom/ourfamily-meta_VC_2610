@@ -67,7 +67,7 @@
   }
 
   /* ---------- 카로셀 ---------- */
-  function carousel(works) {
+  function carousel(works, all = works) {   // all: 전체 목록(필터해도 작품 주소는 전체 순번 기준)
     const n = works.length;
     current = Math.max(0, Math.min(current, n - 1));
     let swallow = false, startX = null;
@@ -82,8 +82,8 @@
 
     const slides = works.map((w, i) => {
       const title = has(w.title) ? w.title : '제목 미정';
-      const link = h('a', { class: 'btn', href: watchHref(w, i) }, '관람하기', h('span', { class: 'sr', text: ' – ' + title }));
-      const pLink = h('a', { href: watchHref(w, i), tabindex: '-1', 'aria-hidden': 'true' }, poster(w));
+      const link = h('a', { class: 'btn', href: watchHref(w, all.indexOf(w)) }, '관람하기', h('span', { class: 'sr', text: ' – ' + title }));
+      const pLink = h('a', { href: watchHref(w, all.indexOf(w)), tabindex: '-1', 'aria-hidden': 'true' }, poster(w));
       const slide = h('article', { class: 'slide', 'aria-roledescription': 'slide', 'aria-label': `${i + 1} / ${n}` },
         pLink,
         h('div', { class: 'slide-info' },
@@ -166,6 +166,22 @@
     return box;
   }
 
+  /* ---------- 지금 상영 중: 종류 탭 (전체 · 영상 · 게임 · 웹앱) ---------- */
+  const KIND_TABS = [['all', '전체'], ['video', '영상'], ['game', '게임'], ['app', '웹앱']];
+  function nowBlock(works) {
+    const pick = k => k === 'all' ? works : works.filter(w => App.kindOf(w) === k);
+    const tabs = KIND_TABS.filter(([k]) => k === 'all' || pick(k).length > 0);
+    const body = h('div', { class: 'now-body' }, carousel(works, works));
+    if (tabs.length <= 2) return body;   // 종류가 하나뿐이면 탭을 두지 않는다
+    const bar = h('div', { class: 'kind-tabs', role: 'group', 'aria-label': '작품 종류' });
+    const paint = cur => [...bar.children].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === cur ? 'true' : 'false'));
+    tabs.forEach(([k, label]) => bar.append(h('button', { type: 'button', class: 'kind-tab', 'data-k': k, onclick: () => {
+      current = 0; paint(k); body.replaceChildren(carousel(pick(k), works));
+    } }, label, h('span', { class: 'n', text: String(pick(k).length) }))));
+    paint('all');
+    return h('div', { class: 'now-wrap' }, bar, body);
+  }
+
   /* ---------- 렌더 ---------- */
   boot((d, site, av) => {
     const home = obj(d.home), T = { ...T0, ...obj(home.titles) };
@@ -174,7 +190,7 @@
     const main = h('main', { id: 'main' });
     main.append(hero(d, site, av));
 
-    if (works.length) main.append(section('now', T.works, '', carousel(works)));
+    if (works.length) main.append(section('now', T.works, '', nowBlock(works)));
 
     const TOPIC_LABEL = ['상영작 가기', '비하인드 컷 가기', '메이킹 가기'];   // 화살표 옆 글자 (TOPIC_GO와 같은 순서)
     const TOPIC_ICO = [   // 카드 오른쪽 위 선 그림 (상영작=화면, 비하인드 컷=카메라, 메이킹=클래퍼보드)
