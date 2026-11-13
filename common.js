@@ -414,7 +414,11 @@
   /* ---------- 사진 갤러리 + 확대 ---------- */
   const RATIOS = [1.25, .8, 1, 1.4, .9, 1.1];   // masonry에서 사진이 없을 때의 대체 카드 비율
   const isVideo = f => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(String(f || ''));   // 비하인드 컷은 사진과 영상을 함께 담는다
-  function gallery(items, { masonry = false } = {}) {
+  function gallery(groups, { masonry = false } = {}) {
+    /* 한 장면(글·설명 하나)에 사진·영상이 여럿일 수 있다: file + more[]. 확대 보기는 모든 파일을 한 줄로 이어서 넘겨 본다. */
+    const filesOf = g => [{ file: g.file, alt: g.alt }, ...arr(g.more).map(m => ({ file: m && m.file, alt: m && has(m.alt) ? m.alt : g.alt }))].filter(f => has(f.file));
+    const items = [], first = [];
+    groups.forEach(g => { first.push(items.length); const fs = filesOf(g); (fs.length ? fs : [{ file: '', alt: g.alt }]).forEach(f => items.push({ file: f.file || '', alt: f.alt, caption: g.caption })); });
     const dlg = h('dialog', { class: 'lightbox', 'aria-label': '사진 확대 보기' });
     let cur = 0;
     const fig = h('figure', { class: 'lb-fig' });
@@ -447,23 +451,39 @@
       if (e.key === 'ArrowRight') show(cur + 1);
     });
 
-    const list = h('ul', { class: masonry ? 'masonry' : 'gallery' }, items.map((it, i) => {
-      const cap = has(it.caption) ? it.caption : '';
-      const btn = h('button', { type: 'button', class: 'tile', 'aria-label': `${it.alt || cap || '사진'} 확대 보기` });
-      if (masonry) btn.style.aspectRatio = RATIOS[i % RATIOS.length];
-      btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
+    const media = (it, big) => {
       if (has(it.file) && isVideo(it.file)) {
         const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
-        vd.muted = true; vd.addEventListener('error', () => vd.remove()); vd.addEventListener('loadedmetadata', () => { if (masonry) btn.style.aspectRatio = ''; });   // 영상 크기를 알면 그 비율대로 (위아래 빈 띠 없이)
-        btn.append(vd, h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
-      } else if (has(it.file)) {
-        const img = h('img', { src: mediaPath(it.file), alt: '', loading: 'lazy' });
-        img.addEventListener('load', () => { if (masonry) btn.style.aspectRatio = ''; });
-        img.addEventListener('error', () => img.remove());
-        btn.append(img);
+        vd.muted = true; vd.addEventListener('error', () => vd.remove());
+        return vd;
+      }
+      const img = h('img', { src: mediaPath(it.file), alt: '', loading: 'lazy' });
+      img.addEventListener('error', () => img.remove());
+      return img;
+    };
+    const list = h('ul', { class: masonry ? 'masonry' : 'gallery' }, groups.map((g, i) => {
+      const cap = has(g.caption) ? g.caption : '';
+      const mine = items.slice(first[i], i + 1 < first.length ? first[i + 1] : items.length), n = mine.length;
+      const mode = n > 1 ? (['auto', 'grid', 'stack'].includes(g.mode) ? g.mode : 'auto') : 'one';
+      const btn = h('button', { type: 'button', class: 'tile' + (n > 1 ? ' multi multi-' + mode : ''), 'aria-label': `${(mine[0] && mine[0].alt) || cap || '사진'}${n > 1 ? ` 외 ${n - 1}장` : ''} 확대 보기` });
+      if (masonry) btn.style.aspectRatio = RATIOS[i % RATIOS.length];
+      btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
+      const shown = mode === 'grid' ? mine.slice(0, 4) : mode === 'auto' ? mine : mine.slice(0, 1);
+      const els = shown.map(m => media(m));
+      els.forEach((el, k) => { if (mode === 'auto') el.classList.add('slide', k ? 'off' : 'on', k ? 'over' : 'base'); });
+      const unfix = () => { if (masonry) btn.style.aspectRatio = ''; };
+      if (mode === 'grid') { const gr = h('div', { class: 'mini mini-' + shown.length }); els.forEach(el => gr.append(el)); btn.append(gr); }
+      else els.forEach(el => btn.append(el));
+      if (mode !== 'grid' && els[0]) els[0].addEventListener(els[0].tagName === 'VIDEO' ? 'loadedmetadata' : 'load', unfix);
+      if (mode === 'grid') btn.style.aspectRatio = masonry ? '1 / 1' : '';
+      if (mine[0] && has(mine[0].file) && isVideo(mine[0].file) && mode !== 'auto') btn.append(h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
+      if (n > 1 && mode !== 'auto') btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
+      if (mode === 'auto') {
+        let at = 0; btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
+        setTimeout(() => setInterval(() => { els[at].classList.replace('on', 'off'); at = (at + 1) % els.length; els[at].classList.replace('off', 'on'); }, 3000), (i % 4) * 700);
       }
       if (cap) btn.append(h('span', { class: 'cap', 'aria-hidden': 'true', text: cap }));
-      btn.addEventListener('click', () => { show(i); dlg.showModal(); });
+      btn.addEventListener('click', () => { show(first[i]); dlg.showModal(); });
       return h('li', {}, btn);
     }));
     return [list, dlg];

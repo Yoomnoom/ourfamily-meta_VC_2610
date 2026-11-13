@@ -273,7 +273,7 @@ dialog.lightbox::backdrop{background:rgba(0,0,0,.9)}
 .timeline::before{content:"";position:absolute;left:21px;top:8px;bottom:8px;width:2px;background:var(--line)}
 .timeline li{position:relative;padding:0 0 26px 64px;counter-increment:step}
 .timeline li:last-child{padding-bottom:0}
-.timeline li::before{content:counter(step);position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--hand);font-weight:700;font-size:1.4rem;box-shadow:0 0 0 5px var(--bg)}
+.timeline li::before{content:counter(step);position:absolute;left:0;top:14px;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--hand);font-weight:700;font-size:1.4rem;box-shadow:0 0 0 5px var(--bg)}
 .timeline h3{font-size:1.4rem;margin-bottom:2px}
 .timeline p{margin:0;color:var(--muted)}
 
@@ -493,13 +493,40 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .ep-thumb img{display:block;width:100%;height:100%;object-fit:cover}
 .ep-thumb.tall img{object-fit:contain}
 @media (max-width:520px){.ep-thumb{width:96px}}
+
+/* 메이킹: 소개 페이지처럼 박스를 없애고 글 중심으로 */
+.toc.card{background:none;border:0;padding:0;box-shadow:none;border-radius:0}
+.tools{gap:0;border-top:1px solid var(--line)}
+details.tool{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0}
+details.tool summary{padding:18px 0}
+.tool-body{padding:4px 0 20px}
+.roles{gap:32px}
+.role{background:none;border:0;border-radius:0;padding:0}
+@media (min-width:720px){
+  .timeline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 32px}
+  .timeline::before{display:none}
+  .timeline li{padding:0 0 0 64px}
+  .tools{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+}
+/* 소개: 팀원 프로필 */
+.team{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:28px 32px;grid-template-columns:minmax(0,1fr)}
+.team li{display:flex;gap:18px;align-items:flex-start}
+.avatar{flex:none;width:88px;height:88px;border-radius:50%;overflow:hidden;background:var(--surface2);border:1px solid var(--line)}
+.avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.team h4{font-size:1.2rem;margin:0}
+.team b{display:block;color:var(--accent-hi);font-size:.92rem;margin:2px 0 6px}
+.team p{margin:0;color:var(--muted)}
+@media (min-width:720px){.team{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 /* 종류 알약 (영상·게임·앱·스토리보드): 포스터 왼쪽 위, 상영관 제목 옆 */
 .kind-pill{display:inline-flex;align-items:center;gap:5px;flex:none;padding:4px 11px 4px 8px;border-radius:999px;font-size:.78rem;font-weight:700;line-height:1.2;color:#fff;background:rgba(20,16,12,.78);box-shadow:0 1px 6px rgba(0,0,0,.35)}
 .kind-pill svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .kind-pill.video{background:rgba(190,30,45,.92)}
+
 .kind-pill.game{background:rgba(52,92,170,.92)}
 .kind-pill.app{background:rgba(30,130,110,.94)}
 .kind-pill.storyboard{background:rgba(130,90,40,.94)}
+/* 글줄 맨 앞 알약 (홈·상영작 목록) */
 .meta .kind-pill{font-size:.72rem;padding:2px 9px 2px 7px;margin-right:8px;vertical-align:middle}
 .meta .kind-pill svg{width:12px;height:12px}
 /* 상영관 하단 '다른 작품 보기': 포스터 바로 아래 · 제목 위 한 줄 */
@@ -513,3 +540,17 @@ a:hover>.poster .poster-peek,a:focus-visible>.poster .poster-peek,.poster:hover 
 .kind-head{display:flex;align-items:baseline;gap:10px;margin:0 0 20px;font-size:clamp(1.4rem,3.6vw,1.9rem)}
 .kind-head::before{content:"";align-self:center;flex:none;width:5px;height:1em;border-radius:3px;background:var(--accent)}
 .kind-head .n{font-size:.9rem;font-weight:700;color:var(--muted)}
+
+/* 메이킹 요약: 같은 줄 카드 높이 맞춤 */
+.toc li{display:flex}
+.toc li>a{flex:1;justify-content:center}
+
+/* 비하인드 컷: 한 장면에 사진·영상이 여럿일 때 (자동 넘김 · 작은 격자 · 장수 표시) */
+.tile .slide{transition:opacity .9s ease}
+.tile .slide.off{opacity:0}
+.tile .slide.on{opacity:1}
+.tile .slide.over{position:absolute;inset:0;width:100%;height:100%}
+.tile .mini{position:absolute;inset:0;display:grid;gap:2px;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;background:var(--bg)}
+.tile .mini img,.tile .mini video{height:100%;min-height:0}
+.tile .mini-3>:first-child{grid-row:span 2}
+.tile .count{position:absolute;right:8px;top:8px;padding:2px 9px;border-radius:999px;font-size:.74rem;font-weight:700;color:#fff;background:rgba(20,16,12,.78)}
