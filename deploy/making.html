@@ -13,7 +13,7 @@
 <script src="common.js"></script>
 <script>
 (() => {
-  const { h, has, arr, obj, TITLES, section, pagehead, emptyPage, timeline, tools, toolList, roles, href, boot } = App;
+  const { h, has, arr, obj, TITLES, section, pagehead, emptyPage, timeline, tools, toolList, toolNames, roles, href, boot } = App;
   boot((d, site, av) => {
     const title = '메이킹 – ' + (has(site.name) ? site.name : '우리 가족 극장');
     const mk = obj(d.making), T = { ...TITLES, ...obj(d.sectionTitles) };
@@ -35,7 +35,12 @@
     if (parts.length > 1) main.append(h('div', { class: 'wrap' }, h('nav', { class: 'toc card', 'aria-label': '심사 필수 항목 요약' },
       h('h2', { text: '필수항목 한눈에보기' }),
       h('ol', {}, parts.map(([id, t, sum]) => h('li', {}, h('a', { href: '#' + id }, h('b', { text: t }), has(sum) && h('small', { text: sum }))))))));
-    parts.forEach(([id, t, , body]) => main.append(section(id, t, '', body)));
+    const names = toolNames(d);
+    parts.forEach(([id, t, , body]) => {
+      if (id === 'process' && names.length) main.append(h('div', { class: 'wrap' }, h('h2', { class: 'toolnames-h', text: '사용한 AI 도구' }),
+        h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n })))));
+      main.append(section(id, t, '', body));
+    });
     if (av.works) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('works.html') }, '작품별 도구·프롬프트·출처는 상영관에서')));
     return { title, main };
   });

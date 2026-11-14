@@ -198,17 +198,6 @@
     if (photos.length) main.append(section('album', T.album, '', ...gallery(photos),
       h('a', { class: 'more-top', href: href('album.html') }, '비하인드 컷 전체보기 →')));
 
-    if (av.making) {
-      // 같은 도구가 철자·언어·묶음 표기만 달라 여러 번 보이지 않도록 대표 이름으로 합친다(표시용, 저장된 내용은 그대로)
-      const ALIAS = [[/claudecode/, 'Claude Code'], [/claude|클로드/, 'Claude'], [/chatgpt|챗gpt/, 'ChatGPT'], [/flow|플로우/, 'Google Flow'], [/vids|비즈/, 'Google Vids'],
-        [/제미나이|gemini/, 'Gemini'], [/나노바나나|nanobanana/, 'Nano Banana'], [/러버블|lovable/, 'Lovable'], [/capcut|캡컷/, 'CapCut'], [/ffmpeg/, 'FFmpeg'],
-        [/clipchamp|클립챔프/, 'Microsoft Clipchamp'], [/suno|수노/, 'Suno'], [/supabase/, 'Supabase'], [/vercel/, 'Vercel'], [/github|깃허브/, 'GitHub'], [/higgsfield/, 'Higgsfield']];
-      const canon = raw => { let s = raw.toLowerCase().replace(/\s+/g, ''), out = []; ALIAS.forEach(([re, n]) => { if (re.test(s)) { out.push(n); s = s.replace(re, ' '); } }); return out.length ? out : [raw]; };
-      const names = [...new Set([...toolList(obj(d.making).tools), ...works.flatMap(w => toolList(production(w, d).tools))].flatMap(t => canon((t.name || '').trim())).filter(Boolean))];
-      main.append(section('making', T.making, '',
-        names.length > 0 && h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n }))),
-        h('a', { class: 'more-top', href: href('making.html') }, '메이킹 전체보기 →')));
-    }
 
     return { title: has(site.name) ? site.name + (has(site.slogan) ? ' – ' + site.slogan : '') : '우리 가족 극장', main };
   });

@@ -764,6 +764,15 @@
     return listing(d).filter(o => set.has(has(o.seriesId) ? 's:' + o.seriesId : 'w:' + o.id));
   }
   /** 목록용: 단독 작품은 그대로, 연재물은 시리즈 하나로 묶어 첫 회로 연결한다 (solo 연재물은 연재물로 보이지 않는다) */
+  // 같은 도구가 철자·언어·묶음 표기만 달라 여러 번 보이지 않도록 대표 이름으로 합쳐 모은다 (메이킹 페이지 '사용한 AI 도구')
+  function toolNames(d) {
+      const ALIAS = [[/claudecode/, 'Claude Code'], [/claude|클로드/, 'Claude'], [/chatgpt|챗gpt/, 'ChatGPT'], [/flow|플로우/, 'Google Flow'], [/vids|비즈/, 'Google Vids'],
+        [/제미나이|gemini/, 'Gemini'], [/나노바나나|nanobanana/, 'Nano Banana'], [/러버블|lovable/, 'Lovable'], [/capcut|캡컷/, 'CapCut'], [/ffmpeg/, 'FFmpeg'],
+        [/clipchamp|클립챔프/, 'Microsoft Clipchamp'], [/suno|수노/, 'Suno'], [/supabase/, 'Supabase'], [/vercel/, 'Vercel'], [/github|깃허브/, 'GitHub'], [/higgsfield/, 'Higgsfield']];
+      const canon = raw => { let s = raw.toLowerCase().replace(/\s+/g, ''), out = []; ALIAS.forEach(([re, n]) => { if (re.test(s)) { out.push(n); s = s.replace(re, ' '); } }); return out.length ? out : [raw]; };
+      const names = [...new Set([...toolList(obj(d.making).tools), ...listing(d).flatMap(w => toolList(production(w, d).tools))].flatMap(t => canon((t.name || '').trim())).filter(Boolean))];
+    return names;
+  }
   function listing(d) {
     const ws = arr(d.works).filter(w => w && (has(w.id) || has(w.title)));
     const ser = new Map(arr(d.series).filter(x => x && !x.solo).map(x => [x.id, x]));
@@ -868,5 +877,5 @@
   }
 
   window.App = { kindOf, kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, linkify, listing, relatedOf, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
-    section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, rail, boot, params };
+    section, pagehead, emptyPage, timeline, tools, toolList, toolNames, roles, sourcesTable, gallery, rail, boot, params };
 })();
