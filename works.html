@@ -33,8 +33,7 @@
           h('h2', { class: 'kind-head', id: 'kg-' + k }, label, h('span', { class: 'n', text: String(list.length) })),
           h('ul', { class: 'works-grid' }, list.map(card))))
       : h('ul', { class: 'works-grid' }, works.map(card));
-    return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작', '가족의 기억과 일상에서 출발한 이야기를 만나 보세요.
-영상을 감상하고, 게임과 웹앱을 직접 체험할 수 있어요.'),
+    return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작', '가족의 기억과 일상에서 출발한 이야기를 만나 보세요.\n영상을 감상하고, 게임과 웹앱을 직접 체험할 수 있어요.'),
       h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' }, body))) };
   });
 })();
