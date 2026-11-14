@@ -636,3 +636,12 @@ details.tool.no-prompt summary::after{content:"활용 내용 보기 ＋"}
 details.tool.no-prompt[open] summary::after{content:"접기 －"}
 
 .wcard-tag{margin:4px 0 0;font-size:.85rem;line-height:1.5;color:var(--text);opacity:.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* 상영작 종류 거르기(전체·영상·게임·웹앱) */
+.kind-tabs{display:flex;justify-content:flex-end;margin:0 0 20px}
+.kind-tabs .kt{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;padding:9px 22px;cursor:pointer;border-left:1px solid var(--line)}
+.kind-tabs .kt:first-child{border-left:0}
+.kind-tabs{border:1px solid var(--line);border-radius:12px;overflow:hidden;width:max-content;margin-left:auto;background:rgba(255,255,255,.03)}
+.kind-tabs .kt.on{background:var(--accent);color:#fff}
+.kind-tabs .kt:focus-visible{outline:3px solid var(--accent-hi);outline-offset:-3px}
+.kind-sec[hidden]{display:none}

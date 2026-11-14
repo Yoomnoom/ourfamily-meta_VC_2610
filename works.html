@@ -29,12 +29,21 @@
         (!split || has(metaLine(w))) && h('p', { class: 'meta' }, !split && App.kindPill(w), metaLine(w)),
         has(w.tagline) && h('p', { class: 'wcard-tag', text: w.tagline.trim() })));   // 한 줄 소개 (마우스를 올리지 않아도 보인다)
     const body = split
-      ? groups.map(([k, label, list]) => h('section', { class: 'kind-sec', 'aria-labelledby': 'kg-' + k },
+      ? groups.map(([k, label, list]) => h('section', { class: 'kind-sec', 'data-k': k, 'aria-labelledby': 'kg-' + k },
           h('h2', { class: 'kind-head', id: 'kg-' + k }, label, h('span', { class: 'n', text: String(list.length) })),
           h('ul', { class: 'works-grid' }, list.map(card))))
       : h('ul', { class: 'works-grid' }, works.map(card));
+    // 종류 거르기: 전체 · 영상 · 게임 · 웹앱 (종류가 둘 이상일 때만). 누르면 해당 종류만 보인다.
+    const tabs = split && h('div', { class: 'kind-tabs', role: 'tablist', 'aria-label': '작품 종류' },
+      [['all', '전체'], ...groups.map(([k, label]) => [k, label])].map(([k, label], i) =>
+        h('button', { type: 'button', role: 'tab', class: 'kt' + (i ? '' : ' on'), 'aria-selected': i ? 'false' : 'true', 'data-k': k, text: label })));
+    if (tabs) tabs.addEventListener('click', e => {
+      const b = e.target.closest('button.kt'); if (!b) return;
+      tabs.querySelectorAll('button.kt').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      document.querySelectorAll('.kind-sec').forEach(sec => { sec.hidden = b.dataset.k !== 'all' && sec.dataset.k !== b.dataset.k; });
+    });
     return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작', '가족의 기억과 일상에서 출발한 이야기를 만나 보세요.\n영상을 감상하고, 게임과 웹앱을 직접 체험할 수 있어요.'),
-      h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' }, body))) };
+      h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' }, tabs, body))) };
   });
 })();
 </script>
