@@ -1882,11 +1882,11 @@ dialog#editors{width:min(680px,94vw)}
     document.body.append(dlg); dlg.showModal();
     try { await draw(); } catch (e) { toast('목록을 불러오지 못했어요: ' + e.message); }
   }
-  const MIME = { pdf: 'application/pdf', mp4: 'video/mp4', vtt: 'text/vtt', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+  const MIME = { pdf: 'application/pdf', mp4: 'video/mp4', vtt: 'text/vtt', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
   /** 파일을 Storage에 올리고 공개 주소를 돌려준다. 실패하면 빈 문자열 */
   async function uploadFile(file) {
     const ext = (file.name.split('.').pop() || '').toLowerCase();
-    if (!MIME[ext]) { toast('올릴 수 없는 파일이에요. (mp4, vtt, pdf, jpg, png, webp만 돼요)'); return ''; }
+    if (!MIME[ext]) { toast('올릴 수 없는 파일이에요. (mp4, vtt, pdf, jpg, png, webp, gif만 돼요)'); return ''; }
     if (file.size > MAX_UPLOAD) { toast(`파일이 ${fmtSize(file.size)}예요. 50MB 이하만 올릴 수 있어요.\n영상은 용량을 줄이거나 길이를 나눠 주세요.`, { ms: 7000 }); return ''; }
     const path = `${new Date().toISOString().slice(0, 7)}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}-${safeName(file.name)}`;
     toast(`"${file.name}" 올리는 중… (${fmtSize(file.size)})`, { ms: 2500 });
