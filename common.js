@@ -400,8 +400,9 @@
     flush(); return out;
   }
   /** 요약 묶음: 요청 박스와 같은 글꼴·간격. "1. …" 줄은 번호가 걸린 목록으로 보여 준다 */
-  function summaryBody(text) {
+  function summaryBody(text, title) {
     const box = h('div', { class: 'prompt-multi pm-sum' });
+    if (has(title)) box.append(h('h5', { text: title }));
     let ol = null;
     String(text).split(/\r?\n/).forEach(l => {
       const m = /^\s*(\d+)\.\s+(.*)$/.exec(l);
@@ -428,8 +429,8 @@
           const btn = h('button', { type: 'button', class: 'btn ghost sm', 'aria-label': `${ptitle || '프롬프트'} 복사` }, '복사');
           btn.addEventListener('click', () => copyText(p.text, btn));
           const box = h('div', { class: 'prompt' },
-            h('div', { class: 'prompt-head' }, h('h4', { text: ptitle || (group ? group : '프롬프트') }), group !== '요약' && btn),
-            group === '요약' ? summaryBody(p.text) : promptBody(p.text),
+            group !== '요약' && h('div', { class: 'prompt-head' }, h('h4', { text: ptitle || (group ? group : '프롬프트') }), btn),
+            group === '요약' ? summaryBody(p.text, ptitle) : promptBody(p.text),
             refs.length > 0 && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
           return head ? h('div', { class: 'prompt-set' }, head, box) : box;
         }) : h('p', { text: '공개된 프롬프트가 없습니다.' })));
