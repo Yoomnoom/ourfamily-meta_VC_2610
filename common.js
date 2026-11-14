@@ -586,7 +586,9 @@
 
   const t0 = performance.now();
   let loader = null;
-  let c = ''; try { c = localStorage.getItem('ft.logo') || sessionStorage.getItem('ft.logo') || ''; } catch {}   // 처음 오는 사람은 실제 로고를 아직 모른다. 임시 글자('극')를 보여 주지 않고, 데이터를 읽으면 진짜 로고를 보여 준다
+  // 처음 방문에도 로고가 바로 보이도록 지금 쓰는 로고를 기본값으로 박아 둔다. CMS에서 로고를 바꾸면 데이터를 읽은 뒤 자동으로 바뀌고, 이 값도 새 주소로 고쳐 두면 처음 방문부터 새 로고가 보인다.
+  const DEFAULT_LOGO = 'img:https://pkucszwwnwpzvzqczmhh.supabase.co/storage/v1/object/public/ourfamilymeta-media/2026-11/mw0ba3m2gct8-file-1.png';
+  let c = DEFAULT_LOGO; try { c = localStorage.getItem('ft.logo') || sessionStorage.getItem('ft.logo') || DEFAULT_LOGO; } catch {}
   let firstPage = true; try { firstPage = !sessionStorage.getItem('ft.seen'); sessionStorage.setItem('ft.seen', '1'); } catch {}   // 로딩 화면은 탭을 연 뒤 첫 페이지에서만 (메뉴를 옮길 때마다 뜨지 않게)
   const bar = h('i');
   let tick = 0;
@@ -598,7 +600,8 @@
     bar.style.width = pct + '%';
   }
   function paintLoaderLogo(v) {   // 로딩 화면의 로고 자리를 채운다 (모르면 비워 둔다)
-    const m = loader && loader.querySelector('.ld-mark'); if (!m || !v) return;
+    const m = loader && loader.querySelector('.ld-mark'); if (!m || !v || m.dataset.v === v) return;   // 같은 로고면 다시 그리지 않는다 (깜빡임 방지)
+    m.dataset.v = v;
     m.replaceChildren(v.startsWith('img:') ? h('img', { class: 'logo logo-img', src: v.slice(4), alt: '' }) : logoSvg(v));
   }
   function hideLoader() {
