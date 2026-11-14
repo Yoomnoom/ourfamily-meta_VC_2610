@@ -32,7 +32,8 @@
     const cur = App.cursorSpec(w.cursor, w.cursorImage, w.title, ser && ser.title) || App.siteCursor(site);
     App.setCursor(cur);   // 작품 주제에 맞는 마우스 모양
     const pr = production(w, d);   // 연재물 공통 제작 정보 + 이 회차 추가분 (미리보기와 같은 함수)
-    const title = has(w.title) ? w.title : '제목 미정';
+    const cleanT = t => String(t || '').replace(/^\s*\[연재\]\s*/, '').replace(/\s*\d+화\s*$/, '').trim();   // 회차 제목에서 '[연재]'와 끝의 'N화'는 뺀다 (시리즈명·회차 번호는 따로 보여 준다)
+    const title = has(w.title) ? (w.series ? cleanT(w.title) || w.title : w.title) : '제목 미정';
     const main = h('main', { id: 'main', class: 'pad' });
     const ICO = { camera: '<path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
       monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
@@ -112,7 +113,7 @@
       h('h2', { text: ser.title + ' 회차' }),
       rail(h('ol', { class: 'eps' }, epList.map(e =>
         h('li', {}, h('a', { href: watchHref(e, works.indexOf(e)), 'aria-current': e === w ? 'true' : null },
-          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? e.title : '제목 미정'}` })))))));
+          epThumb(e), h('span', { text: `${has(e.episode) ? e.episode + '화' : '연재'} · ${has(e.title) ? (cleanT(e.title) || e.title) : '제목 미정'}` })))))));
     const jumps = [];
     main.append(h('section', { class: 'movie', 'data-section': 'info', 'aria-label': '작품 정보' }, h('div', { class: 'wrap movie-grid' + (side ? ' has-side' : '') },
       openLink ? h('div', { class: 'title-row' }, h('h1', { text: title }), openLink) : h('h1', { text: title }),

@@ -630,3 +630,7 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 /* 홈 작품 카드: 제목 아래 한 줄 소개 (마우스·터치 없이 늘 보인다) */
 .slide-info .slide-tag{margin:2px auto 8px;max-width:var(--cw);color:var(--text);opacity:.88;font-size:.92rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .slide:not(.active) .slide-info .slide-tag{font-size:.78rem;-webkit-line-clamp:2}
+
+.toolnames-sub{margin:0 0 14px;color:var(--muted);font-size:.92rem}
+details.tool.no-prompt summary::after{content:"활용 내용 보기 ＋"}
+details.tool.no-prompt[open] summary::after{content:"접기 －"}

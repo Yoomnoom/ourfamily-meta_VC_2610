@@ -27,18 +27,19 @@
 
     const parts = [];   // [id, 제목, 요약, 본문]
     if (tl) parts.push(['process', T.process, `${tl_n}단계`, tl]);
-    if (tl_tools.length) parts.push(['tools', T.tools, `AI 도구 ${tl_tools.length}종 · 프롬프트 ${tl_prompts}개`, tools(mk.tools)]);
+    if (tl_tools.length) parts.push(['tools', T.tools, '사이트 제작에 활용한 도구와 주요 요청을 소개합니다.', tools(mk.tools)]);
     if (ro) parts.push(['roles', T.roles, `AI ${aiN}개 · 직접 ${huN}개`, ro]);
     if (declText) parts.push(['declaration', has(decl.title) ? decl.title : T.declaration, '', h('div', { class: 'decl' }, h('p', { class: 'prose', raw: true, text: declText }))]);
 
     const main = h('main', { id: 'main', class: 'pad' }, pagehead('메이킹', mk.intro));
     if (parts.length > 1) main.append(h('div', { class: 'wrap' }, h('nav', { class: 'toc card', 'aria-label': '심사 필수 항목 요약' },
-      h('h2', { text: '필수항목 한눈에보기' }),
+      h('h2', { text: '필수 항목 한눈에 보기' }),
       h('ol', {}, parts.map(([id, t, sum]) => h('li', {}, h('a', { href: '#' + id }, h('b', { text: t }), has(sum) && h('small', { text: sum }))))))));
     const names = toolNames(d);
     parts.forEach(([id, t, , body]) => {
-      if (id === 'process' && names.length) main.append(h('div', { class: 'wrap' }, h('h2', { class: 'toolnames-h', text: '사용한 AI 도구' }),
-        h('ul', { class: 'toolnames', 'aria-label': '사용한 AI 도구' }, names.map(n => h('li', { text: n })))));
+      if (id === 'process' && names.length) main.append(h('div', { class: 'wrap' }, h('h2', { class: 'toolnames-h', text: '사이트와 작품 제작에 사용한 도구' }),
+        h('p', { class: 'toolnames-sub', text: '작품에 활용한 생성형 AI와 사이트 제작, 영상 편집, 파일 관리 및 배포에 사용한 도구를 함께 소개합니다.' }),
+        h('ul', { class: 'toolnames', 'aria-label': '사이트와 작품 제작에 사용한 도구' }, names.map(n => h('li', { text: n })))));
       main.append(section(id, t, '', body));
     });
     if (av.works) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('works.html') }, '작품별 도구·프롬프트·출처는 상영관에서')));
