@@ -416,9 +416,9 @@
   const isVideo = f => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(String(f || ''));   // 비하인드 컷은 사진과 영상을 함께 담는다
   function gallery(groups, { masonry = false } = {}) {
     /* 한 장면(글·설명 하나)에 사진·영상이 여럿일 수 있다: file + more[]. 확대 보기는 모든 파일을 한 줄로 이어서 넘겨 본다. */
-    const filesOf = g => [{ file: g.file, alt: g.alt }, ...arr(g.more).map(m => ({ file: m && m.file, alt: m && has(m.alt) ? m.alt : g.alt }))].filter(f => has(f.file));
+    const filesOf = g => [{ file: g.file, alt: g.alt, fx: g.fx, fy: g.fy }, ...arr(g.more).map(m => ({ file: m && m.file, alt: m && has(m.alt) ? m.alt : g.alt, fx: m && m.fx, fy: m && m.fy }))].filter(f => has(f.file));
     const items = [], first = [];
-    groups.forEach(g => { first.push(items.length); const fs = filesOf(g); (fs.length ? fs : [{ file: '', alt: g.alt }]).forEach(f => items.push({ file: f.file || '', alt: f.alt, caption: g.caption })); });
+    groups.forEach(g => { first.push(items.length); const fs = filesOf(g); (fs.length ? fs : [{ file: '', alt: g.alt }]).forEach(f => items.push({ file: f.file || '', alt: f.alt, caption: g.caption, fx: f.fx, fy: f.fy })); });
     const dlg = h('dialog', { class: 'lightbox', 'aria-label': '사진 확대 보기' });
     let cur = 0;
     const fig = h('figure', { class: 'lb-fig' });
@@ -470,9 +470,8 @@
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
       const shown = mode === 'grid' ? mine.slice(0, 4) : mode === 'auto' ? mine : mine.slice(0, 1);
       const els = shown.map(m => media(m));
-      const op = { top: '50% 0%', bottom: '50% 100%', left: '0% 50%', right: '100% 50%' }[g.pos];   // 썸네일 칸에서 잘릴 때 보이게 할 부분 (CMS '썸네일에서 보일 부분')
-      if (op) els.forEach(el => { el.style.objectPosition = op; });
-      els.forEach((el, k) => { if (mode === 'auto') el.classList.add('slide', k ? 'off' : 'on', k ? 'over' : 'base'); });
+      shown.forEach((m, k) => { if (m.fx != null || m.fy != null) els[k].style.objectPosition = `${m.fx ?? 50}% ${m.fy ?? 50}%`; });   // 썸네일 칸에서 잘릴 때 보이게 할 부분 (CMS에서 사진을 끌어 맞춘 값)
+      els.forEach((el, k) => { if (mode === 'auto') el.classList.add('shot', k ? 'off' : 'on', k ? 'over' : 'base'); });
       const unfix = () => { if (masonry) btn.style.aspectRatio = ''; };
       if (mode === 'grid') { const gr = h('div', { class: 'mini mini-' + shown.length }); els.forEach(el => gr.append(el)); btn.append(gr); }
       else els.forEach(el => btn.append(el));
