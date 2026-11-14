@@ -21,7 +21,7 @@
     const main = h('main', { id: 'main', class: 'pad' }, pagehead('소개'));
     const mem = arr(pr.members).filter(m => has(m.name) || has(m.role) || has(m.text) || has(m.photo));
     const team = mem.length ? h('ul', { class: 'team' }, mem.map(m => h('li', {},
-      h('div', { class: 'avatar' }, has(m.photo) ? h('img', { src: mediaPath(m.photo), alt: has(m.name) ? m.name + ' 프로필' : '', loading: 'lazy', draggable: 'false' }) : null),
+      h('div', { class: 'avatar' }, has(m.photo) ? h('img', { src: mediaPath(m.photo), alt: has(m.name) ? m.name + ' 프로필' : '', loading: 'eager', decoding: 'async', draggable: 'false' }) : null),
       h('div', {}, has(m.name) && h('h4', { text: m.name }), has(m.role) && h('b', { text: m.role }), has(m.text) && h('p', { raw: true, text: m.text.trim() }))))) : null;
     if (has(pr.name) || has(pr.text) || team) main.append(section('producer', T.producer, '', h('div', { class: 'who' },
       has(pr.name) && h('h3', { text: pr.name }), has(pr.text) && h('p', { class: 'prose', raw: true, text: pr.text.trim() }), team)));
