@@ -300,6 +300,11 @@ details.tool[open] summary::after{content:"접기 －"}
 .prompt-multi{background:#08070b;border:1px solid var(--line);color:#f3ecdd;border-radius:12px;padding:6px 18px 14px}
 .prompt-multi h5{margin:24px 0 6px;font-size:1.15rem;line-height:1.4;color:#fff}
 .prompt-multi h5:first-child{margin-top:12px}
+.pm-sum{padding-top:12px}
+.pm-sum .pm-body{margin-bottom:8px}
+.pm-list{margin:0;padding-left:1.6em;font-size:.88rem;line-height:1.65;color:rgba(243,236,221,.88)}
+.pm-list li{margin:0 0 6px;padding-left:2px}
+.pm-list li::marker{color:var(--accent-hi);font-weight:700}
 .prompt-multi .pm-body{margin:0;white-space:pre-wrap;word-break:break-word;font-size:.88rem;line-height:1.65;color:rgba(243,236,221,.88)}
 .prompt pre{margin:0;background:#08070b;border:1px solid var(--line);color:#f3ecdd;border-radius:12px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-size:.88rem;line-height:1.65}
 .prompt code{font-family:ui-monospace,"Cascadia Mono",Consolas,"Noto Sans KR",monospace}

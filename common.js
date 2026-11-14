@@ -399,6 +399,17 @@
     if (!found) return [h('pre', {}, h('code', { text: String(text), raw: true }))];
     flush(); return out;
   }
+  /** 요약 묶음: 요청 박스와 같은 글꼴·간격. "1. …" 줄은 번호가 걸린 목록으로 보여 준다 */
+  function summaryBody(text) {
+    const box = h('div', { class: 'prompt-multi pm-sum' });
+    let ol = null;
+    String(text).split(/\r?\n/).forEach(l => {
+      const m = /^\s*(\d+)\.\s+(.*)$/.exec(l);
+      if (m) { if (!ol) { ol = h('ol', { class: 'pm-list' }); box.append(ol); } ol.append(h('li', { value: m[1], text: m[2] })); }
+      else if (l.trim()) { ol = null; box.append(h('p', { class: 'pm-body', text: l.trim() })); }
+    });
+    return [box];
+  }
   function tools(items) {
     items = toolList(items);
     if (!items.length) return null;
@@ -418,7 +429,7 @@
           btn.addEventListener('click', () => copyText(p.text, btn));
           const box = h('div', { class: 'prompt' },
             h('div', { class: 'prompt-head' }, h('h4', { text: ptitle || (group ? group : '프롬프트') }), group !== '요약' && btn),
-            promptBody(p.text),
+            group === '요약' ? summaryBody(p.text) : promptBody(p.text),
             refs.length > 0 && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
           return head ? h('div', { class: 'prompt-set' }, head, box) : box;
         }) : h('p', { text: '공개된 프롬프트가 없습니다.' })));
