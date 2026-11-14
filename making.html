@@ -42,7 +42,7 @@
         h('ul', { class: 'toolnames', 'aria-label': '사이트와 작품 제작에 사용한 도구' }, names.map(n => h('li', { text: n })))));
       main.append(section(id, t, '', body));
     });
-    if (av.works) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('works.html') }, '작품별 도구·프롬프트·출처는 상영관에서')));
+    if (av.works) main.append(h('div', { class: 'wrap more' }, h('a', { class: 'btn ghost', href: href('works.html') }, '작품별 도구·요청·출처는 각 작품의 상세 페이지에서 확인할 수 있어요')));
     return { title, main };
   });
 })();
