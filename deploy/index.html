@@ -190,7 +190,7 @@
       h(TOPIC_GO[i] ? 'a' : 'article', TOPIC_GO[i] ? { class: 'topic go has-pic pic-' + TOPIC_PIC[i], href: href(TOPIC_GO[i]) } : { class: 'topic' },
         has(t.label) && h('span', { class: 'tag', text: t.label }),
         has(t.title) && h('h3', { text: t.title }),
-        has(t.text) && h('p', { text: t.text }),
+        has(t.text) && h('p', {}, ...(m => m ? [m[1], h('br', { class: 'mbr' }), m[2]] : [t.text])(t.text.match(/^(.+?,)\s+([^,]+)$/) || t.text.match(/^(.+)\s+(\S+)$/))),
         TOPIC_GO[i] && topicIco(i),
         TOPIC_GO[i] && h('span', { class: 'go-arrow' }, h('span', { text: TOPIC_LABEL[i] }), h('span', { class: 'go-ico', 'aria-hidden': 'true', text: '→' })))))));
 
