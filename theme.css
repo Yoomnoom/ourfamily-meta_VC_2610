@@ -122,7 +122,7 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 
 /* ===== 홈: 카로셀 ===== */
 .carousel{position:relative;overflow-x:clip}
-.stage{position:relative;height:calc(var(--cw)*1.5 + 168px);touch-action:pan-y;user-select:none;-webkit-user-select:none;outline-offset:-4px}
+.stage{position:relative;height:calc(var(--cw)*1.5 + 228px);touch-action:pan-y;user-select:none;-webkit-user-select:none;outline-offset:-4px}
 .slide{position:absolute;left:50%;top:0;width:var(--cw);transform-origin:50% 0;
   transform:translateX(-50%) translateX(calc(var(--o)*var(--cw)*.86)) scale(var(--s));
   opacity:var(--op);transition:transform .8s cubic-bezier(.22,.8,.2,1),opacity .6s ease;cursor:pointer}
@@ -626,3 +626,7 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 @media (min-width:720px){.hero p{max-width:none}}
 
 .toolnames-h{font-size:1.1rem;margin:36px 0 12px;color:var(--muted)}
+
+/* 홈 작품 카드: 제목 아래 한 줄 소개 (마우스·터치 없이 늘 보인다) */
+.slide-info .slide-tag{margin:2px auto 8px;max-width:var(--cw);color:var(--text);opacity:.88;font-size:.92rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.slide:not(.active) .slide-info .slide-tag{font-size:.78rem;-webkit-line-clamp:2}

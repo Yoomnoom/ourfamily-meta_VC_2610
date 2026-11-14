@@ -19,7 +19,7 @@
 <script>
 (() => {
   const { h, has, arr, obj, mediaPath, watchHref, href, poster, section, gallery, tools: _t, toolList, boot, production, mediaStatus, isVideo } = App;
-  const T0 = { works: '지금 상영 중', topics: '이 영화들이 담은 것', album: '비하인드 컷', making: '메이킹' };
+  const T0 = { works: '지금 만나는 가족 이야기', topics: '우리 가족 극장 둘러보기', album: '비하인드 컷', making: '메이킹' };
   let current = 0;           // 카로셀 위치는 다시 그려도 유지한다
 
   /* ---------- 히어로 ---------- */
@@ -62,7 +62,7 @@
         h('h1', { text: title || '' }),
         has(hr.text) && h('p', { text: hr.text }),
         h('div', { class: 'hero-cta' },
-          av.works && h('a', { class: 'btn', href: '#now', text: has(hr.ctaWatch) ? hr.ctaWatch : '지금 관람하기' }),
+          av.works && h('a', { class: 'btn', href: '#now', text: has(hr.ctaWatch) ? hr.ctaWatch : '작품 감상·체험하기' }),
           av.making && h('a', { class: 'btn ghost', href: href('making.html'), text: has(hr.ctaMaking) ? hr.ctaMaking : '메이킹 보기' }))));
   }
 
@@ -82,12 +82,13 @@
 
     const slides = works.map((w, i) => {
       const title = has(w.title) ? w.title : '제목 미정';
-      const link = h('a', { class: 'btn', href: watchHref(w, i) }, '관람하기', h('span', { class: 'sr', text: ' – ' + title }));
+      const link = h('a', { class: 'btn', href: watchHref(w, i) }, '작품 보기', h('span', { class: 'sr', text: ' – ' + title }));
       const pLink = h('a', { href: watchHref(w, i), tabindex: '-1', 'aria-hidden': 'true' }, poster(w));
       const slide = h('article', { class: 'slide', 'aria-roledescription': 'slide', 'aria-label': `${i + 1} / ${n}` },
         pLink,
         h('div', { class: 'slide-info' },
           h('h3', { text: title }),
+          has(w.tagline) && h('p', { class: 'slide-tag', text: w.tagline.trim() }),   // 작품 한 줄 소개 (CMS의 작품 소개 문구 / 연재물 요약)
           h('p', { class: 'meta' }, App.kindPill(w), App.metaLine(w)),
           link));
       slide.addEventListener('click', e => {
@@ -174,9 +175,9 @@
     const main = h('main', { id: 'main' });
     main.append(hero(d, site, av));
 
-    if (works.length) main.append(section('now', T.works, '', carousel(works), h('a', { class: 'more-top', href: href('works.html') }, '상영작 전체보기 →')));
+    if (works.length) main.append(section('now', T.works, '', carousel(works), h('a', { class: 'more-top', href: href('works.html') }, '모든 작품 보기 →')));
 
-    const TOPIC_LABEL = ['상영작 가기', '비하인드 컷 가기', '메이킹 가기'];   // 화살표 옆 글자 (TOPIC_GO와 같은 순서)
+    const TOPIC_LABEL = ['작품 보러 가기', '비하인드 컷 보기', '제작 과정 보기'];   // 화살표 옆 글자 (TOPIC_GO와 같은 순서)
     const TOPIC_ICO = [   // 카드 오른쪽 위 선 그림 (상영작=화면, 비하인드 컷=카메라, 메이킹=클래퍼보드)
       '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><polygon points="10 7.5 15 10.5 10 13.5 10 7.5"/>',
       '<path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
