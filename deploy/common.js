@@ -853,6 +853,12 @@
     if (window.ResizeObserver) { const ro = new ResizeObserver(sync); ro.observe(list); [...list.children].forEach(c => ro.observe(c)); } else window.addEventListener('resize', sync);   // 포스터가 뜨며 폭이 바뀌어도 따라간다
     window.addEventListener('load', sync); list.addEventListener('scroll', sync, { passive: true });
     sync();
+    // 현재 보는 회차(aria-current)가 있으면 목록 안에서 가운데로 맞춘다 (목록만 움직이고 페이지는 움직이지 않는다)
+    const centerCurrent = () => {
+      const cur = list.querySelector('[aria-current="true"]'); if (!cur || max() <= 6) return;
+      list.scrollLeft += cur.getBoundingClientRect().left - list.getBoundingClientRect().left - (list.clientWidth - cur.offsetWidth) / 2;
+    };
+    requestAnimationFrame(centerCurrent); window.addEventListener('load', centerCurrent, { once: true });
     return h('div', { class: 'rail' }, prev, list, next);
   }
 
