@@ -97,6 +97,7 @@ main.pad{padding-top:calc(var(--hh) + clamp(12px,3vw,32px))}
 .sec-head h2::before{content:"";flex:none;width:6px;height:1.1em;border-radius:3px;background:var(--accent)}
 .sec-head p{color:var(--muted);margin:6px 0 0 18px}
 .prose{white-space:pre-line;max-width:760px}
+.prose a{color:var(--accent-hi);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 14px 34px -18px rgba(0,0,0,.9)}
 .empty{text-align:center;color:var(--muted);padding:60px 0}
 .more{display:flex;justify-content:center;padding:8px 0 0}

@@ -38,6 +38,19 @@
   const workId = (w, i) => has(w && w.id) ? w.id.trim() : 'work-' + (i + 1);
   const watchHref = (w, i) => href('watch.html?id=' + encodeURIComponent(workId(w, i)));
   const safeUrl = u => has(u) && /^https?:\/\//i.test(u.trim()) ? u.trim() : null;
+  /** 글 속의 링크를 눌러지는 <a>로 바꾼다 (새 탭으로 열림, innerHTML 안 씀).
+      [바로가기](https://…) → "바로가기" 글자에 링크 / 그냥 https://… 주소는 주소 글자 그대로 링크. 끝의 . , ) 같은 문장부호는 링크에 넣지 않는다 */
+  const linkify = text => {
+    const frag = document.createDocumentFragment(), s = String(text), re = /\[([^\]\n]+)\]\((https?:\/\/[^\s<>"')]+)\)|(https?:\/\/[^\s<>"']*[^\s<>"'.,;:!?)\]])/g;
+    let at = 0, m;
+    while ((m = re.exec(s))) {
+      if (m.index > at) frag.append(s.slice(at, m.index));
+      frag.append(h('a', { href: m[2] || m[3], target: '_blank', rel: 'noopener noreferrer', raw: true, text: m[1] || m[3] }));
+      at = m.index + m[0].length;
+    }
+    if (at < s.length) frag.append(s.slice(at));
+    return frag;
+  };
 
   const TITLES = {
     intent: '기획 의도', process: '창작 과정', tools: '사용한 AI 도구와 주요 프롬프트', roles: 'AI가 한 것 vs 직접 한 것',
@@ -811,6 +824,6 @@
     });
   }
 
-  window.App = { kindOf, kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, relatedOf, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
+  window.App = { kindOf, kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, linkify, listing, relatedOf, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, rail, boot, params };
 })();

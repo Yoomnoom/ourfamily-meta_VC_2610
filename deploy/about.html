@@ -29,7 +29,7 @@
     const src = sourcesTable(ab.sources, T.sources);
     if (src) main.append(section('sources', T.sources, '', src));
     if (has(site.contestName) || has(site.contestInfo)) main.append(section('contest', T.contest, '', h('div', { class: 'contest' },
-      has(site.contestName) && h('h3', { text: site.contestName }), has(site.contestInfo) && h('p', { class: 'prose', raw: true, text: site.contestInfo.trim() }))));
+      has(site.contestName) && h('h3', { text: site.contestName }), has(site.contestInfo) && h('p', { class: 'prose' }, App.linkify(site.contestInfo.trim())))));
     return { title, main };
   });
 })();

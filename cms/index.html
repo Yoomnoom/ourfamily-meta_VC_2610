@@ -115,6 +115,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--sky-d)}
 select{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:8px 12px;min-height:42px}
 .cb{display:flex;gap:10px;align-items:center;font-weight:700}
 .cb input{width:22px;height:22px;accent-color:var(--ok)}
+.linkrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.linkrow input[type=text]{flex:1 1 180px;width:auto;min-width:0}
 .picked{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}.pick{display:inline-flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border:2px solid var(--ok);border-radius:999px;font-weight:700}.pick button{width:28px;height:28px;border:0;border-radius:50%;background:rgba(0,0,0,.12);font-size:1.1rem;line-height:1;cursor:pointer}
 .sub-title{font-weight:700;margin:8px 0 6px}
 /* [예시] 값: 회색 글자 + "예시" 표시, 클릭하면 전체 선택 */
@@ -505,7 +506,7 @@ dialog#editors{width:min(680px,94vw)}
         { title: '사이트 전체 기획 의도', pv: ['about.html', 'intent'], fields: [{ group: 'about', fields: [A('intent', '기획 의도', { rows: 7, ph: '사이트 전체의 기획 의도를 2~3문단으로 적어요.', hint: '문단 사이에 빈 줄을 넣어요.' })] }] },
         { title: '사이트 전체 출처·저작권', desc: '글꼴처럼 사이트 전체에 쓰인 자료를 적어요.\n작품별 자료는 6단계에 적어요.', pv: ['about.html', 'sources'], fields: [{ group: 'about', fields: [SOURCES_TABLE()] }] },
         { title: '공모전 안내', pv: ['about.html', 'contest'], fields: [{ group: 'site', fields: [
-          T('contestName', '공모전 이름'), A('contestInfo', '접수 정보', { rows: 4, ph: '예) 접수 기간: 2026. 10. 1. ~ 10. 31. 접수 방법과 문의처를 적어요.' })] }] }],
+          T('contestName', '공모전 이름'), A('contestInfo', '접수 정보', { rows: 4, ph: '예) 접수 기간: 2026. 10. 1. ~ 10. 31. 접수 방법과 문의처를 적어요.', link: true, hint: '링크를 넣으려면 글 속에서 넣을 자리를 누른 뒤, 아래에 "보이는 글자"(예: 바로가기, 링크)와 "주소"를 적고 [링크 넣기]를 눌러요.\n소개 페이지에서 그 글자를 누르면 주소가 새 탭으로 열려요.' })] }] }],
       checks: d => [ck('만든 사람 소개', Math.min(st(obj(obj(d.about).producer).name), st(obj(obj(d.about).producer).text)), false, 'producer/name', 'producer/text'),
         ck('사이트 전체 기획 의도', st(obj(d.about).intent), false, 'intent')] }
   ];
@@ -905,7 +906,22 @@ dialog#editors{width:min(680px,94vw)}
         let nid = s, n = 2; while (used.has(nid)) nid = s + '-' + n++;
         o.id = nid; const idInp = document.querySelector('[data-k="id"]'); if (idInp) idInp.value = nid; changed();
       });
-      return el('div', { class: 'field' }, lab(f.label, id), exWrap(input), hintEl(f));
+      let linkRow = null;
+      if (f.link) {   // 링크 넣기: 보이는 글자 + 주소를 적으면 [글자](주소)를 글 속 커서 자리에 끼워 넣는다 (마크다운을 몰라도 되게)
+        const lt = el('input', { type: 'text', class: 'fld', placeholder: '보이는 글자 (예: 바로가기)', 'aria-label': '링크로 보일 글자', autocomplete: 'off' });
+        const lu = el('input', { type: 'text', class: 'fld', placeholder: '주소 (https://…)', 'aria-label': '링크 주소', autocomplete: 'off' });
+        const add = el('button', { type: 'button', class: 'btn sm', text: '링크 넣기', onclick: () => {
+          let url = lu.value.trim(), label = lt.value.trim() || input.value.slice(input.selectionStart, input.selectionEnd).trim() || '바로가기';
+          if (url && !/^https?:\/\//i.test(url) && /^[\w-]+(\.[\w-]+)+/.test(url)) url = 'https://' + url;
+          if (!/^https?:\/\/[^\s)]+$/i.test(url)) { toast('주소는 https://로 시작하고, 띄어쓰기와 )가 없어야 해요.'); lu.focus(); return; }
+          label = label.replace(/[\[\]\n]/g, ' ');
+          const a = input.selectionStart ?? input.value.length, b = input.selectionEnd ?? a, ins = `[${label}](${url})`;
+          input.value = input.value.slice(0, a) + ins + input.value.slice(b); o[f.key] = input.value; changed();
+          lt.value = ''; lu.value = ''; input.focus(); input.setSelectionRange(a + ins.length, a + ins.length);
+        } });
+        linkRow = el('div', { class: 'linkrow' }, lt, lu, add);
+      }
+      return el('div', { class: 'field' }, lab(f.label, id), exWrap(input), linkRow, hintEl(f));
     });
   }
 
