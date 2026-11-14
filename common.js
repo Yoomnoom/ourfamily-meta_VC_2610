@@ -495,7 +495,20 @@
     });
 
     // 4:3 칸보다 가로로 넓은 사진은 가로를 칸에 맞춰 양옆이 잘리지 않게 한다 (세로로 긴 사진은 가로에 맞추고 위아래만 잘림)
-    const fitW = (el, w, h) => { if (masonry && w && h && w / h > 4 / 3) el.style.objectFit = 'contain'; };
+    const edgeFill = (el, src) => {   // 4:3보다 넓은 사진은 통째로 보여 주므로, 남는 위아래 여백을 사진 가장자리 색으로 채운다 (읽지 못하면 기존 배경 그대로)
+      try {
+        const im = new Image(); im.crossOrigin = 'anonymous';
+        im.onload = () => { try {
+          const S = 24, c = document.createElement('canvas'); c.width = c.height = S;
+          const x = c.getContext('2d'); x.drawImage(im, 0, 0, S, S);
+          let r = 0, g = 0, b = 0, n = 0;
+          for (let i = 0; i < S; i++) for (const [px, py] of [[i, 0], [i, S - 1], [0, i], [S - 1, i]]) { const d = x.getImageData(px, py, 1, 1).data; r += d[0]; g += d[1]; b += d[2]; n++; }
+          el.style.backgroundColor = `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`;
+        } catch (e) {} };
+        im.src = src;
+      } catch (e) {}
+    };
+    const fitW = (el, w, h) => { if (masonry && w && h && w / h > 4 / 3) { el.style.objectFit = 'contain'; if (el.tagName === 'IMG') edgeFill(el, el.currentSrc || el.src); } };
     const media = (it, big) => {
       if (has(it.file) && isVideo(it.file)) {
         const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
