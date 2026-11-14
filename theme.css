@@ -613,3 +613,6 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 /* 홈 첫 화면: 제목은 두 줄로 끊고, 설명 문장 왼쪽에 빨간 줄 */
 .hero h1{max-width:10.5em}
 .hero p{max-width:26em;padding-left:14px;border-left:3px solid var(--accent);line-height:1.6}
+
+/* 사이트 요청 박스: 제목 아래 작은 글씨는 들여쓰기 */
+.prompt-multi:not(.pm-sum) .pm-body{padding-left:1.1em}
