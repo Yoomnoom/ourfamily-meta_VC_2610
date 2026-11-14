@@ -188,7 +188,7 @@ a.topic.has-pic .go-pic{background:rgba(10,6,8,.55);backdrop-filter:blur(3px)}
 a.topic:hover .go-arrow{transform:translateX(4px)}
 .mbr{display:none}
 @media (min-width:720px){a.topic.has-pic{justify-content:flex-start;aspect-ratio:auto;padding-top:43%}}
-@media (max-width:719px){a.topic.has-pic{aspect-ratio:3/2;padding:26px 20px 24px}.mbr{display:inline}a.topic.has-pic h3{padding-right:52px}a.topic.has-pic .go-arrow{right:16px;bottom:24px;height:40px;padding:0 14px 0 16px;font-size:.9rem}}
+@media (max-width:719px){a.topic.has-pic{aspect-ratio:auto;justify-content:flex-start;padding:48% 20px 84px}.mbr{display:inline}a.topic.has-pic h3{padding-right:52px}a.topic.has-pic .go-arrow{right:16px;bottom:24px;height:40px;padding:0 14px 0 16px;font-size:.9rem}}
 a.topic:focus-visible{outline:3px solid var(--accent-hi);outline-offset:3px}
 
 /* ===== 홈: 메이킹 하이라이트 ===== */
