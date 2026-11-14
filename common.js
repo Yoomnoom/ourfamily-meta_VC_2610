@@ -484,9 +484,8 @@
         let at = 0; btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
         setTimeout(() => setInterval(() => { els[at].classList.replace('on', 'off'); at = (at + 1) % els.length; els[at].classList.replace('off', 'on'); }, 3000), (i % 4) * 700);
       }
-      if (cap) btn.append(h('span', { class: 'cap', 'aria-hidden': 'true', text: cap }));
       btn.addEventListener('click', () => { show(first[i]); dlg.showModal(); });
-      return h('li', {}, btn);
+      return h('li', {}, btn, cap ? h('p', { class: 'cap-below', text: cap }) : null);   // 글은 사진 위가 아니라 아래에 둔다 (사진을 가리지 않게)
     }));
     return [list, dlg];
   }
