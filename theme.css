@@ -196,7 +196,7 @@ a.topic:focus-visible{outline:3px solid var(--accent-hi);outline-offset:3px}
 .toolnames li{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 18px;font-weight:700;font-family:var(--hand);font-size:1.1rem}
 
 /* ===== 사진: 홈 미리보기 그리드 / 앨범 masonry ===== */
-.gallery{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:clamp(120px,32vw,200px)}
+.gallery{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto;align-items:start}
 .masonry{list-style:none;margin:0;padding:0;columns:2;column-gap:10px}
 .masonry li{break-inside:avoid;margin-bottom:10px}
 .page.tight{padding-top:clamp(14px,2.5vw,24px)}   /* 비하인드 컷: 소개글 바로 아래에 붙인다 */
@@ -390,7 +390,7 @@ footer{margin-top:48px;border-top:1px solid var(--line);padding:38px 0 46px;back
   .topics{grid-template-columns:repeat(3,minmax(0,1fr))}
   .roles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .toc ol{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .gallery{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(150px,20vw,230px)}
+  .gallery{grid-template-columns:repeat(3,minmax(0,1fr))}
   .masonry{columns:3}
   .works-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 20px}
 }
@@ -398,6 +398,7 @@ footer{margin-top:48px;border-top:1px solid var(--line);padding:38px 0 46px;back
   :root{--cw:340px}
   .works-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .masonry{columns:4}
+  .gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media (min-width:1200px){.works-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 
@@ -573,7 +574,8 @@ details.tool summary{padding:18px 0}
 
 /* 비하인드 컷·사진 목록: 글은 사진 아래에 (사진을 가리지 않게) */
 .masonry li,.gallery li{display:flex;flex-direction:column;gap:6px}
-.gallery .tile{flex:1;min-height:0;height:auto}
+.gallery .tile{flex:none;height:auto;aspect-ratio:4/3}   /* 홈 미리보기도 비하인드 컷과 같은 4:3 */
+.gallery .tile img,.gallery .tile video{height:100%}
 .cap-below{margin:0;padding:0 2px;font-size:.88rem;line-height:1.45;color:var(--muted);text-align:left;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .prompt-refs .gallery{grid-auto-rows:auto}
 .prompt-refs .gallery .tile{flex:none;height:110px}
