@@ -620,3 +620,7 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 .more-top{position:absolute;top:0;right:0;margin:0;display:inline-flex;align-items:center;min-height:44px;padding:0 2px;color:var(--accent-hi);font-weight:700;font-size:.95rem;text-decoration:none;white-space:nowrap}   /* 섹션 제목 줄의 오른쪽 끝, 테두리 없는 글자 링크 */
 .more-top:hover{color:#fff;text-decoration:underline;text-underline-offset:4px}
 @media (max-width:719px){.more-top{font-size:.85rem}}
+
+/* 홈 첫 화면: PC에서 설명은 한 줄, 제목은 글자·줄 간격을 모바일처럼 촘촘하게 */
+.hero h1{font-size:clamp(2.4rem,5vw,3.6rem);line-height:1.12;letter-spacing:-.03em}
+@media (min-width:720px){.hero p{max-width:none}}
