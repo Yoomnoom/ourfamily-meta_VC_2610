@@ -480,8 +480,11 @@
       if (mine[0] && has(mine[0].file) && isVideo(mine[0].file) && mode !== 'auto') btn.append(h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
       if (n > 1 && mode !== 'auto') btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
       if (mode === 'auto') {
-        let at = 0; btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
-        setTimeout(() => setInterval(() => { els[at].classList.replace('on', 'off'); at = (at + 1) % els.length; els[at].classList.replace('off', 'on'); }, 3000), (i % 4) * 700);
+        let at = 0, hold = 0; btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
+        const go = k => { els[at].classList.replace('on', 'off'); at = k; els[at].classList.replace('off', 'on'); };
+        setTimeout(() => setInterval(() => { if (Date.now() > hold) go((at + 1) % els.length); }, 3000), (i % 4) * 700);
+        btn._files = mine.map(m => m.file || '');
+        btn._show = k => { hold = Date.now() + 12000; go(k); };   // CMS(미리보기)에서 이 사진을 만지는 동안은 자동 넘김을 멈추고 이 사진을 보여 준다
       }
       btn.addEventListener('click', () => { show(first[i]); dlg.showModal(); });
       return h('li', {}, btn, cap ? h('p', { class: 'cap-below', text: cap }) : null);   // 글은 사진 위가 아니라 아래에 둔다 (사진을 가리지 않게)
@@ -713,6 +716,10 @@
       window.addEventListener('message', e => {
         if (e.source !== host || !e.data) return;
         if (e.data.type === 'content') run(e.data.data);
+        else if (e.data.type === 'show-photo') {   // 관리 페이지에서 만지고 있는 사진을 썸네일에 바로 보여 준다
+          const t = [...document.querySelectorAll('.tile')].find(b => b._files && b._files.includes(e.data.file));
+          if (t) { t._show(t._files.indexOf(e.data.file)); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        }
         else if (e.data.type === 'highlight') { hlSection = e.data.section || null; applyHl(true); }   // 관리 페이지가 지금 입력 중인 구역을 알려 준다
       });
       host.postMessage({ type: 'preview-ready' }, '*');

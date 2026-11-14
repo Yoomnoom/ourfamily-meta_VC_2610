@@ -750,7 +750,7 @@ dialog#editors{width:min(680px,94vw)}
 
   /* ---------- 저장 상태 / 미리보기 전송 ---------- */
   const targets = new Set();   // 미리보기 창 (iframe, 새 탭)
-  let pushTimer, dirty = false, lastSaved = null, autosavedAt = null;
+  let focusFile = '', pushTimer, dirty = false, lastSaved = null, autosavedAt = null;
   const hhmm = d => d ? d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
   const previewData = () => { const { solos, ...rest } = data; return { ...rest, series: [...data.series, ...data.solos] }; };
   function pushPreview(target) {
@@ -767,7 +767,7 @@ dialog#editors{width:min(680px,94vw)}
     try { localStorage.setItem(KEY, JSON.stringify(data)); autosavedAt = new Date(); }
     catch { toast('⚠ 자동 저장에 실패했어요. 저장으로 백업하세요.'); }
     dirty = true; renderStatus(); updateAll();
-    clearTimeout(pushTimer); pushTimer = setTimeout(() => pushPreview(), 150);
+    clearTimeout(pushTimer); pushTimer = setTimeout(() => { pushPreview(); if (focusFile) setTimeout(() => { try { $('frame').contentWindow.postMessage({ type: 'show-photo', file: focusFile }, '*'); } catch {} }, 250); }, 150);
   }
   window.addEventListener('message', e => {
     if (e.data && e.data.type === 'preview-ready' && e.source) { targets.add(e.source); pushPreview(e.source); }
@@ -1156,6 +1156,8 @@ dialog#editors{width:min(680px,94vw)}
     function bindFocus(im) {   // 칸(4:3)은 고정. 칸 안에서 사진을 마우스로 끌어 옮기면, 칸에 보이는 모습이 곧 썸네일이다 (o.fx, o.fy = 0~100%, object-position 값)
       thumb.classList.add('focusable'); box.classList.add('fbfocus'); im.draggable = false;
       im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`;
+      const tell = () => { focusFile = o[f.key] || ''; try { $('frame').contentWindow.postMessage({ type: 'show-photo', file: focusFile }, '*'); } catch {} };   // 오른쪽 미리보기 썸네일이 이 사진을 보여 주게
+      thumb.addEventListener('pointerenter', tell); thumb.addEventListener('pointerdown', tell);
       const pos = () => { im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`; };
       thumb.onpointerdown = e => {
         const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight;
