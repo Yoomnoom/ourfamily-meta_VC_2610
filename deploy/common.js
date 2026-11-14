@@ -451,14 +451,18 @@
       if (e.key === 'ArrowRight') show(cur + 1);
     });
 
+    // 4:3 칸보다 가로로 넓은 사진은 가로를 칸에 맞춰 양옆이 잘리지 않게 한다 (세로로 긴 사진은 가로에 맞추고 위아래만 잘림)
+    const fitW = (el, w, h) => { if (masonry && w && h && w / h > 4 / 3) el.style.objectFit = 'contain'; };
     const media = (it, big) => {
       if (has(it.file) && isVideo(it.file)) {
         const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
         vd.muted = true; vd.addEventListener('error', () => vd.remove());
+        vd.addEventListener('loadedmetadata', () => fitW(vd, vd.videoWidth, vd.videoHeight));
         return vd;
       }
       const img = h('img', { src: mediaPath(it.file), alt: '', loading: 'lazy' });
       img.addEventListener('error', () => img.remove());
+      img.addEventListener('load', () => fitW(img, img.naturalWidth, img.naturalHeight));
       return img;
     };
     const list = h('ul', { class: masonry ? 'masonry' : 'gallery' }, groups.map((g, i) => {

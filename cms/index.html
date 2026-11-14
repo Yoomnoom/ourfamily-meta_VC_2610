@@ -1161,11 +1161,13 @@ dialog#editors{width:min(680px,94vw)}
       thumb.addEventListener('pointerenter', tell); thumb.addEventListener('pointerdown', tell);
       thumb.addEventListener('pointerleave', () => { if (thumb.hasPointerCapture && thumb.onpointermove) return; focusFile = ''; try { $('frame').contentWindow.postMessage({ type: 'show-photo', file: '' }, '*'); } catch {} });
       const pos = () => { im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`; };
+      const fitW = () => { const w = im.naturalWidth || im.videoWidth, h = im.naturalHeight || im.videoHeight; if (w && h) im.style.objectFit = w / h > 4 / 3 ? 'contain' : 'cover'; };   // 가로가 넓은 사진은 가로에 맞춰 양옆이 잘리지 않게 (공개 썸네일과 같게)
+      im.addEventListener(im.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', fitW); fitW();
       thumb.onpointerdown = e => {
         const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight;
         if (!iw || !ih) return;
         e.preventDefault(); thumb.setPointerCapture(e.pointerId);
-        const sc = Math.max(W / iw, H / ih), ox = iw * sc - W, oy = ih * sc - H, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
+        const sc = W / iw, ox = 0, oy = ih * sc - H, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
         const cl = v => Math.max(0, Math.min(100, Math.round(v)));
         thumb.onpointermove = ev => {   // 사진이 마우스를 따라 움직이도록 반대 부호
           if (ox > 1) o.fx = cl(fx0 - (ev.clientX - sx) / ox * 100);
