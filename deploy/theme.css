@@ -598,3 +598,10 @@ details.tool summary{padding:18px 0}
 
 /* 모바일: 메이킹 아래 도구 태그가 너무 크지 않게 */
 @media (max-width:719px){.toolnames{gap:7px;margin-bottom:16px}.toolnames li{padding:4px 11px;font-size:.84rem;border-radius:11px}}
+
+/* 메이킹 도구 카드: 펼치면 어두운 박스 하나가 전체를 감싸고, 그 안에 요약·사이트 요청 프롬프트가 박스 없이 이어진다 */
+details.tool[open]{background:#08070b;border:1px solid var(--line);border-radius:14px;padding:0 20px}
+details.tool[open] .tool-body{padding:4px 0 22px}
+details.tool .prompt-multi{background:none;border:0;border-radius:0;padding:0}
+details.tool .prompt-multi h5:first-child{margin-top:4px}
+details.tool .pm-sum{padding-top:0}
