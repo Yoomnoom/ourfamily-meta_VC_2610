@@ -369,6 +369,19 @@
   const toolList = items => arr(items).filter(t => has(t.name) || arr(t.prompts).some(p => has(p.text)));
   /** 프롬프트 글 안의 마크다운 표(| 로 구분)는 표로, 나머지는 쓴 그대로 보여 준다. 복사하면 원문 그대로 복사된다 */
   function promptBody(text) {
+    /* 한 박스 안에 여러 요청을 이어 쓴 글: "# 제목" 줄은 제목(크게), 그 아래는 내용(작게)으로 보여 준다. 복사하면 쓴 그대로 복사된다 */
+    if (/^# .+/m.test(String(text))) {
+      const box = h('div', { class: 'prompt-multi' });
+      let sec = null;
+      String(text).split(/\r?\n/).forEach(l => {
+        const m = /^# (.+)$/.exec(l);
+        if (m) { sec = { body: [], el: h('p', { class: 'pm-body' }) }; box.append(h('h5', { text: m[1].trim() }), sec.el); }
+        else if (sec) sec.body.push(l);
+        else if (l.trim()) box.append(h('p', { class: 'pm-body', text: l }));
+        if (sec) sec.el.textContent = sec.body.join('\n').replace(/^\n+|\n+$/g, '');
+      });
+      return [box];
+    }
     const lines = String(text).split(/\r?\n/), out = [], isRow = l => /^\s*\|.*\|\s*$/.test(l), isSep = l => isRow(l) && /^[\s|:-]+$/.test(l) && l.includes('---');
     const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
     let buf = [], found = false;

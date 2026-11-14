@@ -297,6 +297,11 @@ details.tool[open] summary::after{content:"접기 －"}
 .prompt-head h4{font-size:1.3rem;line-height:1.35}
 .prompt-group{margin:14px 0 2px;padding-bottom:8px;font-size:1.05rem;letter-spacing:.04em;color:var(--accent-hi);border-bottom:1px solid rgba(211,32,47,.45)}
 .prompt-set{display:grid;gap:12px}
+.prompt-multi{background:#08070b;border:1px solid var(--line);color:#f3ecdd;border-radius:12px;padding:6px 18px 14px}
+.prompt-multi h5{margin:18px 0 6px;font-size:1.15rem;line-height:1.4;color:#fff}
+.prompt-multi h5:first-child{margin-top:12px}
+.prompt-multi .pm-body{margin:0;white-space:pre-wrap;word-break:break-word;font-size:.88rem;line-height:1.65;color:rgba(243,236,221,.88)}
+.prompt-multi h5+.pm-body+h5{padding-top:14px;border-top:1px solid var(--line)}
 .prompt pre{margin:0;background:#08070b;border:1px solid var(--line);color:#f3ecdd;border-radius:12px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-size:.88rem;line-height:1.65}
 .prompt code{font-family:ui-monospace,"Cascadia Mono",Consolas,"Noto Sans KR",monospace}
 
