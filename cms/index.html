@@ -231,6 +231,11 @@ dialog#editors{width:min(680px,94vw)}
 .filebox.fbfocus{flex-direction:column;align-items:stretch}
 .f-thumb.focusable{position:relative;width:100%;max-width:320px;height:auto;aspect-ratio:4/3;cursor:grab;touch-action:none;user-select:none;margin:0 auto}
 .f-thumb.focusable:active{cursor:grabbing}
+.f-thumb.focusable{outline:3px solid #d3202f;outline-offset:-3px;border-radius:10px;overflow:hidden}
+.f-thumb .fbadge{position:absolute;left:6px;top:6px;padding:2px 8px;border-radius:999px;background:#d3202f;color:#fff;font-size:.72rem;font-weight:700;pointer-events:none}
+.f-thumb .frd{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;text-align:center;color:#fff;font-size:.7rem;background:linear-gradient(transparent,rgba(0,0,0,.75));pointer-events:none}
+.listhost[data-l="more"] .fbadge{font-size:.62rem;padding:1px 6px}
+.listhost[data-l="more"] .frd{font-size:.6rem}
 .f-thumb.focusable img,.f-thumb.focusable video{pointer-events:none}
 .f-thumb .fhint{position:absolute;left:6px;bottom:6px;padding:2px 8px;border-radius:999px;background:rgba(20,16,12,.75);color:#fff;font-size:.72rem;pointer-events:none}
 .listhost[data-l="more"] .f-thumb.focusable{height:auto;aspect-ratio:4/3}
@@ -1153,8 +1158,16 @@ dialog#editors{width:min(680px,94vw)}
     const clearBtn = el('button', { type: 'button', class: 'btn sm', text: '지우기', onclick: () => { o[f.key] = ''; changed(); refresh(); } });
     function bindFocus(im) {   // 칸(4:3)은 고정. 칸 안에서 사진을 마우스로 끌어 옮기면, 칸에 보이는 모습이 곧 썸네일이다 (o.fx, o.fy = 0~100%, object-position 값)
       thumb.classList.add('focusable'); box.classList.add('fbfocus'); im.draggable = false;
-      const pos = () => { im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`; };
-      pos(); thumb.append(el('span', { class: 'fhint', text: '사진을 끌어서 위치 맞추기' }));
+      const badge = el('span', { class: 'fbadge', text: '썸네일에 나오는 모습' }), rd = el('span', { class: 'frd' });
+      const pos = () => {
+        im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`;
+        const iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight, W = thumb.clientWidth, H = thumb.clientHeight;
+        if (!iw || !ih || !W) { rd.textContent = ''; return; }
+        const sc = Math.max(W / iw, H / ih), vert = ih * sc - H > 1, hor = iw * sc - W > 1;
+        rd.textContent = vert ? `사진의 위에서 ${o.fy ?? 50}% 지점 · 위아래로 끌어요` : hor ? `사진의 왼쪽에서 ${o.fx ?? 50}% 지점 · 좌우로 끌어요` : '사진이 칸에 딱 맞아요 (끌 필요 없음)';
+      };
+      im.addEventListener(im.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', pos);
+      pos(); thumb.append(badge, rd);
       thumb.onpointerdown = e => {
         const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight;
         if (!iw || !ih) return;
