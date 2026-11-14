@@ -466,17 +466,17 @@
       const mine = items.slice(first[i], i + 1 < first.length ? first[i + 1] : items.length), n = mine.length;
       const mode = n > 1 ? (['auto', 'grid', 'stack'].includes(g.mode) ? g.mode : 'auto') : 'one';
       const btn = h('button', { type: 'button', class: 'tile' + (n > 1 ? ' multi multi-' + mode : ''), 'aria-label': `${(mine[0] && mine[0].alt) || cap || '사진'}${n > 1 ? ` 외 ${n - 1}장` : ''} 확대 보기` });
-      if (masonry) btn.style.aspectRatio = RATIOS[i % RATIOS.length];
+      if (masonry) { btn.style.aspectRatio = '4 / 3'; btn.classList.add('fixed'); }   // 썸네일은 항상 4:3 (CMS 사진 칸과 같은 모양이라, CMS에서 맞춘 위치가 그대로 보인다)
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
       const shown = mode === 'grid' ? mine.slice(0, 4) : mode === 'auto' ? mine : mine.slice(0, 1);
       const els = shown.map(m => media(m));
       shown.forEach((m, k) => { if (m.fx != null || m.fy != null) els[k].style.objectPosition = `${m.fx ?? 50}% ${m.fy ?? 50}%`; });   // 썸네일 칸에서 잘릴 때 보이게 할 부분 (CMS에서 사진을 끌어 맞춘 값)
       els.forEach((el, k) => { if (mode === 'auto') el.classList.add('shot', k ? 'off' : 'on', k ? 'over' : 'base'); });
-      const unfix = () => { if (masonry) btn.style.aspectRatio = ''; };
+      const unfix = () => {};
       if (mode === 'grid') { const gr = h('div', { class: 'mini mini-' + shown.length }); els.forEach(el => gr.append(el)); btn.append(gr); }
       else els.forEach(el => btn.append(el));
       if (mode !== 'grid' && els[0]) els[0].addEventListener(els[0].tagName === 'VIDEO' ? 'loadedmetadata' : 'load', unfix);
-      if (mode === 'grid') btn.style.aspectRatio = masonry ? '1 / 1' : '';
+      
       if (mine[0] && has(mine[0].file) && isVideo(mine[0].file) && mode !== 'auto') btn.append(h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
       if (n > 1 && mode !== 'auto') btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
       if (mode === 'auto') {
