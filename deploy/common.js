@@ -508,7 +508,7 @@
         im.src = src;
       } catch (e) {}
     };
-    const fitW = (el, w, h) => { if (w && h && w / h > 4 / 3) { el.style.objectFit = 'contain'; if (el.tagName === 'IMG') edgeFill(el, el.currentSrc || el.src); } };
+    const fitW = (el, w, h) => { if (w && h && w / h > 3 / 2) { el.style.objectFit = 'contain'; if (el.tagName === 'IMG') edgeFill(el, el.currentSrc || el.src); } };
     const media = (it, big) => {
       if (has(it.file) && isVideo(it.file)) {
         const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
@@ -526,7 +526,7 @@
       const mine = items.slice(first[i], i + 1 < first.length ? first[i + 1] : items.length), n = mine.length;
       const mode = n > 1 ? (['auto', 'grid', 'stack'].includes(g.mode) ? g.mode : 'auto') : 'one';
       const btn = h('button', { type: 'button', class: 'tile' + (n > 1 ? ' multi multi-' + mode : ''), 'aria-label': `${(mine[0] && mine[0].alt) || cap || '사진'}${n > 1 ? ` 외 ${n - 1}장` : ''} 확대 보기` });
-      if (masonry) { btn.style.aspectRatio = '4 / 3'; btn.classList.add('fixed'); }   // 썸네일은 항상 4:3 (CMS 사진 칸과 같은 모양이라, CMS에서 맞춘 위치가 그대로 보인다)
+      if (masonry) { btn.style.aspectRatio = '3 / 2'; btn.classList.add('fixed'); }   // 썸네일은 항상 4:3 (CMS 사진 칸과 같은 모양이라, CMS에서 맞춘 위치가 그대로 보인다)
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
       const shown = mode === 'grid' ? mine.slice(0, 4) : mode === 'auto' ? mine : mine.slice(0, 1);
       const els = shown.map(m => media(m));

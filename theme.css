@@ -572,14 +572,14 @@ details.tool summary{padding:18px 0}
 
 /* 비하인드 컷·사진 목록: 글은 사진 아래에 (사진을 가리지 않게) */
 .masonry li,.gallery li{display:flex;flex-direction:column;gap:6px}
-.gallery .tile{flex:none;height:auto;aspect-ratio:4/3}   /* 홈 미리보기도 비하인드 컷과 같은 4:3 */
+.gallery .tile{flex:none;height:auto;aspect-ratio:3/2}   /* 홈 미리보기도 비하인드 컷과 같은 4:3 */
 .gallery .tile img,.gallery .tile video{height:100%}
 .cap-below{margin:0;padding:0 2px;font-size:.88rem;line-height:1.45;color:var(--muted);text-align:left;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .prompt-refs .gallery{grid-auto-rows:auto}
 .prompt-refs .gallery .tile{flex:none;height:110px}
 
 /* 비하인드 컷 썸네일은 4:3 고정 (사진 길이와 상관없이 칸을 채우고, 보일 부분은 CMS에서 고른 위치) */
-.masonry .tile.fixed{height:auto;aspect-ratio:4/3}
+.masonry .tile.fixed{height:auto;aspect-ratio:3/2}
 .masonry .tile.fixed img,.masonry .tile.fixed video{height:100%}
 .masonry .tile.fixed .shot.over{height:100%}
 
