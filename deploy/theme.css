@@ -359,8 +359,7 @@ td:first-child{font-weight:700}
 .toc a:hover{border-color:var(--accent-hi);transform:translateY(-2px)}
 .toc b{font-family:var(--hand);font-size:1.1rem}
 .toc small{color:var(--muted);font-size:.88rem}
-.decl{position:relative;padding:28px 26px 28px 32px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
-.decl::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:5px;border-radius:3px;background:var(--accent)}
+.decl{position:relative;padding:28px 32px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
 .decl .prose{max-width:none;margin:0;font-size:1.1rem}
 
 /* ===== 소개 ===== */
