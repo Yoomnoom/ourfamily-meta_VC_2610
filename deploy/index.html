@@ -174,7 +174,7 @@
     const main = h('main', { id: 'main' });
     main.append(hero(d, site, av));
 
-    if (works.length) main.append(section('now', T.works, '', carousel(works)));
+    if (works.length) main.append(section('now', T.works, '', carousel(works), h('a', { class: 'more-top', href: href('works.html') }, '상영작 전체보기 →')));
 
     const TOPIC_LABEL = ['상영작 가기', '비하인드 컷 가기', '메이킹 가기'];   // 화살표 옆 글자 (TOPIC_GO와 같은 순서)
     const TOPIC_ICO = [   // 카드 오른쪽 위 선 그림 (상영작=화면, 비하인드 컷=카메라, 메이킹=클래퍼보드)
