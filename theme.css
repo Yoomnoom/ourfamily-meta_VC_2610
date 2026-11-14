@@ -572,3 +572,6 @@ details.tool summary{padding:18px 0}
 
 /* 소개 페이지: 제작자 소개·기획 의도·공모전 안내의 글 폭을 팀원 영역과 같게 (한 줄로 맞춰 내려 보이게) */
 #producer .prose,#intent .prose,#contest .prose{max-width:none}
+
+/* 페이지 제목 아래 소개 문장도 본문과 같은 폭으로 (구역마다 글 폭이 달라 어색하지 않게) */
+.pagehead p{max-width:none}
