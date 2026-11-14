@@ -718,6 +718,7 @@
         if (e.data.type === 'content') run(e.data.data);
         else if (e.data.type === 'show-photo') {   // 관리 페이지에서 만지고 있는 사진을 썸네일에 바로 보여 준다
           const t = [...document.querySelectorAll('.tile')].find(b => b._files && b._files.includes(e.data.file));
+          host.postMessage({ type: 'show-photo-ack', found: !!t, index: t ? t._files.indexOf(e.data.file) : -1, tiles: document.querySelectorAll('.tile').length }, '*');
           if (t) { t._show(t._files.indexOf(e.data.file)); window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - innerHeight / 2 + t.offsetHeight / 2, behavior: 'smooth' }); /* 미리보기 창 안에서만 스크롤: CMS 화면은 밀리지 않게 */ }
         }
         else if (e.data.type === 'highlight') { hlSection = e.data.section || null; applyHl(true); }   // 관리 페이지가 지금 입력 중인 구역을 알려 준다
