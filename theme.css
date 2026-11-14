@@ -575,3 +575,6 @@ details.tool summary{padding:18px 0}
 
 /* 페이지 제목 아래 소개 문장도 본문과 같은 폭으로 (구역마다 글 폭이 달라 어색하지 않게) */
 .pagehead p{max-width:none}
+
+/* 모바일에서 구역 제목이 너무 크지 않게 (한 줄로 들어오도록 최소 크기를 낮춤) */
+.sec-head h2{font-size:clamp(1.45rem,5vw,2.5rem)}
