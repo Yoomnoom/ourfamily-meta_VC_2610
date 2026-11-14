@@ -472,7 +472,7 @@ dialog#editors{width:min(680px,94vw)}
           F('file', '사진·영상 파일', 'media', { focus: true, hint: '사진(jpg·png·webp) 또는 영상(mp4, 50MB 이하)을 올려요. 올린 사진을 손가락·마우스로 끌어서, 작은 썸네일에 보일 부분을 맞춰요. (크게 열면 전체가 나와요)' }),
           { type: 'list', key: 'more', multiDrop: true, itemLabel: i => `추가 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { focus: true, hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '사진 설명 (선택)', { hint: '비우면 위 사진 설명을 그대로 읽어 드려요.' })] },
           S('mode', '여러 장일 때 보여주는 방식', [['auto', '썸네일 안에서 자동으로 넘어가기'], ['grid', '작은 격자로 함께 보이기'], ['stack', '첫 장만 보이고 장수 표시']], { hint: '같은 장면에 사진을 더 추가했을 때만 적용돼요. 누르면 크게 넘겨 볼 수 있어요.' }),
-          T('caption', '사진 위에 보일 글', { ph: '예) 시나리오 회의' }),
+          T('caption', '사진 아래에 보일 글', { ph: '예) 시나리오 회의' }),
           T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진이 안 보이는 분께 읽어 드리는 글이에요.\n사진 속 모습을 한 문장으로 적어요.' })] }] }] }],
       checks: d => [ck('비하인드 컷 사진 (파일 + 설명)', best(arr(obj(d.album).photos).map(x => Math.min(st(x.file), st(x.alt)))), false, 'file', 'alt')] },
     { id: 'making', scope: 'site', title: '메이킹 페이지 공통', pv: ['making.html', 'process'],
