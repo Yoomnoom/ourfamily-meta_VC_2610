@@ -616,4 +616,6 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 /* 사이트 요청 박스: 제목 아래 작은 글씨는 들여쓰기 */
 .prompt-multi:not(.pm-sum) .pm-body{padding-left:1.1em}
 
-.more-r{display:flex;justify-content:flex-end}
+.wrap:has(>.more-top){position:relative}
+.more-top{position:absolute;top:0;right:0;margin:0}   /* 섹션 제목 줄의 오른쪽 끝 */
+@media (max-width:719px){.more-top{height:38px;padding:0 14px;font-size:.85rem}}
