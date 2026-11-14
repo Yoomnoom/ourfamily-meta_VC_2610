@@ -34,7 +34,7 @@
 - 비밀 값(`.env`, 토큰, service role 키)은 코드·문서·커밋에 넣지 않는다.
 
 ## 규칙
-- 폰트는 **Pretendard만** 사용한다. Gaegu·Google Fonts 금지, 외부 요청 0건.
+- 폰트는 **Pretendard만** 사용한다. Gaegu·Google Fonts 금지, 외부 요청 0건. 이 규칙의 범위는 **메인 전시 사이트(이 저장소의 HTML·CSS·JS)** 뿐이다. 2026-11-15 실측: 메인 사이트 7개 화면의 요청은 자기 도메인과 자체 Supabase(데이터·미디어)뿐이었다. 상세 페이지에 임베드되는 개별 게임·웹앱(찰칵은 Gaegu·Noto Sans KR을 Google Fonts에서 로드, 우리집식당은 Tailwind CDN·Google Fonts 등)은 별도 배포라 이 규칙의 대상이 아니며, 각 작품의 출처 표에 사실대로 적는다.
 - UI: 중복 요소 금지, 온점 뒤 줄바꿈, 대체 카드에 글자 넣지 않기, 히어로 CTA는 2개 유지.
 - force push 금지. `.env`·키가 들어간 커밋 금지.
 - 작업을 시작·마무리할 때 HANDOVER.md를 읽고 갱신한다.
