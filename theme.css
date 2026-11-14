@@ -566,3 +566,6 @@ details.tool summary{padding:18px 0}
 .masonry .tile.fixed{height:auto;aspect-ratio:4/3}
 .masonry .tile.fixed img,.masonry .tile.fixed video{height:100%}
 .masonry .tile.fixed .shot.over{height:100%}
+
+#loader .ld-mark{width:72px;height:72px;display:grid;place-items:center}
+#loader .ld-mark .logo{animation:pulse .9s ease-in-out infinite alternate}

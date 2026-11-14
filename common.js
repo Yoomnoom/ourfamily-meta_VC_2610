@@ -586,15 +586,20 @@
 
   const t0 = performance.now();
   let loader = null;
-  let c = '극'; try { c = sessionStorage.getItem('ft.logo') || c; } catch {}
+  let c = ''; try { c = localStorage.getItem('ft.logo') || sessionStorage.getItem('ft.logo') || ''; } catch {}   // 처음 오는 사람은 실제 로고를 아직 모른다. 임시 글자('극')를 보여 주지 않고, 데이터를 읽으면 진짜 로고를 보여 준다
   let firstPage = true; try { firstPage = !sessionStorage.getItem('ft.seen'); sessionStorage.setItem('ft.seen', '1'); } catch {}   // 로딩 화면은 탭을 연 뒤 첫 페이지에서만 (메뉴를 옮길 때마다 뜨지 않게)
   const bar = h('i');
   let tick = 0;
   if (firstPage && !previewMode) {
-    loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, c.startsWith('img:') ? h('img', { class: 'logo logo-img', src: c.slice(4), alt: '' }) : logoSvg(c), h('div', { class: 'ld-bar' }, bar));
+    loader = h('div', { id: 'loader', 'aria-hidden': 'true' }, h('div', { class: 'ld-mark' }), h('div', { class: 'ld-bar' }, bar));
+    paintLoaderLogo(c);
     document.body.append(loader);
     let pct = 6; tick = setInterval(() => { pct += (92 - pct) * .09; bar.style.width = pct + '%'; }, 90);   // 실제 진행률은 알 수 없어서 90%쪽으로 천천히 차오르다가, 다 불러오면 100%로 채운다
     bar.style.width = pct + '%';
+  }
+  function paintLoaderLogo(v) {   // 로딩 화면의 로고 자리를 채운다 (모르면 비워 둔다)
+    const m = loader && loader.querySelector('.ld-mark'); if (!m || !v) return;
+    m.replaceChildren(v.startsWith('img:') ? h('img', { class: 'logo logo-img', src: v.slice(4), alt: '' }) : logoSvg(v));
   }
   function hideLoader() {
     if (!loader) return;
@@ -785,7 +790,7 @@
       document.title = r.title;
       setFavicon(site);
       siteBg(obj(d.hero));
-      try { sessionStorage.setItem('ft.logo', has(site.logoImage) ? 'img:' + mediaPath(site.logoImage) : markText(site)); } catch {}
+      { const lg = has(site.logoImage) ? 'img:' + mediaPath(site.logoImage) : markText(site); try { sessionStorage.setItem('ft.logo', lg); localStorage.setItem('ft.logo', lg); } catch {} paintLoaderLogo(lg); }
       const frag = document.createDocumentFragment();
       frag.append(header(site, av), r.main, footer(site));
       app.replaceChildren(frag);
