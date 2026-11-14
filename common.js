@@ -429,7 +429,7 @@
     function show(i) {
       cur = (i + items.length) % items.length;
       const it = items[cur];
-      const cap = has(it.caption) ? it.caption : (it.alt || '');
+      const cap = has(it.alt) ? it.alt : (it.caption || '');   // 누르면 '사진 설명'이 보인다 (목록 밖에는 '사진 아래에 보일 글'만)
       let media;
       if (has(it.file) && isVideo(it.file)) {
         media = h('video', { class: 'lb-img', src: mediaPath(it.file), controls: true, playsinline: true, autoplay: true, 'aria-label': it.alt || cap });
