@@ -26,13 +26,15 @@
     const card = ([w, i]) => h('li', {},
       h('a', { class: 'wcard', href: watchHref(w, i) }, poster(w),
         h('h3', { text: has(w.title) ? w.title : '제목 미정' }),
-        (!split || has(metaLine(w))) && h('p', { class: 'meta' }, !split && App.kindPill(w), metaLine(w))));
+        (!split || has(metaLine(w))) && h('p', { class: 'meta' }, !split && App.kindPill(w), metaLine(w)),
+        has(w.tagline) && h('p', { class: 'wcard-tag', text: w.tagline.trim() })));   // 한 줄 소개 (마우스를 올리지 않아도 보인다)
     const body = split
       ? groups.map(([k, label, list]) => h('section', { class: 'kind-sec', 'aria-labelledby': 'kg-' + k },
           h('h2', { class: 'kind-head', id: 'kg-' + k }, label, h('span', { class: 'n', text: String(list.length) })),
           h('ul', { class: 'works-grid' }, list.map(card))))
       : h('ul', { class: 'works-grid' }, works.map(card));
-    return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작'),
+    return { title, main: h('main', { id: 'main', class: 'pad' }, pagehead('상영작', '가족의 기억과 일상에서 출발한 이야기를 만나 보세요.
+영상을 감상하고, 게임과 웹앱을 직접 체험할 수 있어요.'),
       h('section', { class: 'page', 'data-section': 'list', 'aria-label': '상영작 목록' }, h('div', { class: 'wrap' }, body))) };
   });
 })();

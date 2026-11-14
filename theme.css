@@ -634,3 +634,5 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 .toolnames-sub{margin:0 0 14px;color:var(--muted);font-size:.92rem}
 details.tool.no-prompt summary::after{content:"활용 내용 보기 ＋"}
 details.tool.no-prompt[open] summary::after{content:"접기 －"}
+
+.wcard-tag{margin:4px 0 0;font-size:.85rem;line-height:1.5;color:var(--text);opacity:.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
