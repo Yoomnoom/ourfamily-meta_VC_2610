@@ -590,3 +590,6 @@ details.tool summary{padding:18px 0}
   a.topic.has-pic .go-pic{top:14px;right:18px}
   a.topic.has-pic .go-arrow{right:22px;bottom:16px}
 }
+
+/* 모바일: 메이킹 아래 도구 태그가 너무 크지 않게 */
+@media (max-width:719px){.toolnames{gap:7px;margin-bottom:16px}.toolnames li{padding:4px 11px;font-size:.84rem;border-radius:11px}}
