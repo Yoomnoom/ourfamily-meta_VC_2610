@@ -294,8 +294,10 @@ details.tool[open] summary::after{content:"접기 －"}
 .tool-purpose{display:block;font-size:.93rem;color:var(--muted)}
 .tool-body{padding:4px 20px 20px;display:grid;gap:16px}
 .prompt-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
-.prompt-head h4{font-size:1.15rem}
-.prompt pre{margin:0;background:#08070b;border:1px solid var(--line);color:#f3ecdd;border-radius:12px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-size:.93rem;line-height:1.65}
+.prompt-head h4{font-size:1.3rem;line-height:1.35}
+.prompt-group{margin:14px 0 2px;padding-bottom:8px;font-size:1.05rem;letter-spacing:.04em;color:var(--accent-hi);border-bottom:1px solid rgba(211,32,47,.45)}
+.prompt-set{display:grid;gap:12px}
+.prompt pre{margin:0;background:#08070b;border:1px solid var(--line);color:#f3ecdd;border-radius:12px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-size:.88rem;line-height:1.65}
 .prompt code{font-family:ui-monospace,"Cascadia Mono",Consolas,"Noto Sans KR",monospace}
 
 .roles{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}

@@ -390,19 +390,24 @@
     items = toolList(items);
     if (!items.length) return null;
     return h('div', { class: 'tools' }, items.map((t, i) => {
-      const prompts = arr(t.prompts).filter(p => has(p.text));
+      const prompts = arr(t.prompts).filter(p => has(p.text)); let lastGroup = '';
       return h('details', { class: 'tool' },
         h('summary', {}, h('span', {},
           h('span', { class: 'tool-name', text: has(t.name) ? t.name : '(이름 없음)' }),
           has(t.purpose) && h('span', { class: 'tool-purpose', text: t.purpose }))),
         h('div', { class: 'tool-body' }, prompts.length ? prompts.map(p => {
           const refs = arr(p.refs).filter(x => x && has(x.file));
-          const btn = h('button', { type: 'button', class: 'btn ghost sm', 'aria-label': `${p.title || '프롬프트'} 복사` }, '복사');
+          /* 제목을 "[묶음 이름] 제목"으로 쓰면 같은 묶음끼리 소제목 아래에 모아 보여 준다 */
+          const gm = /^\s*\[([^\]]+)\]\s*(.*)$/.exec(p.title || ''), group = gm ? gm[1].trim() : '', ptitle = gm ? gm[2].trim() : (p.title || '');
+          const head = group && group !== lastGroup ? h('h3', { class: 'prompt-group', text: group }) : null;
+          if (group) lastGroup = group;
+          const btn = h('button', { type: 'button', class: 'btn ghost sm', 'aria-label': `${ptitle || '프롬프트'} 복사` }, '복사');
           btn.addEventListener('click', () => copyText(p.text, btn));
-          return h('div', { class: 'prompt' },
-            h('div', { class: 'prompt-head' }, h('h4', { text: has(p.title) ? p.title : '프롬프트' }), btn),
+          const box = h('div', { class: 'prompt' },
+            h('div', { class: 'prompt-head' }, h('h4', { text: ptitle || (group ? group : '프롬프트') }), btn),
             promptBody(p.text),
             refs.length > 0 && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
+          return head ? h('div', { class: 'prompt-set' }, head, box) : box;
         }) : h('p', { text: '공개된 프롬프트가 없습니다.' })));
     }));
   }
