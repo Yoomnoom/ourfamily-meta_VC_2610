@@ -375,7 +375,7 @@
       let sec = null;
       String(text).split(/\r?\n/).forEach(l => {
         const m = /^# (.+)$/.exec(l);
-        if (m) { sec = { body: [], el: h('p', { class: 'pm-body' }) }; box.append(h('h5', { text: m[1].trim() }), sec.el); }
+        if (m) { sec = { body: [], el: h('p', { class: 'pm-body' }) }; box.append(h('h5', { text: '# ' + m[1].trim() }), sec.el); }
         else if (sec) sec.body.push(l);
         else if (l.trim()) box.append(h('p', { class: 'pm-body', text: l }));
         if (sec) sec.el.textContent = sec.body.join('\n').replace(/^\n+|\n+$/g, '');

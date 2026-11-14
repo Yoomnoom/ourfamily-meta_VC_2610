@@ -605,3 +605,7 @@ details.tool[open] .tool-body{padding:4px 0 22px}
 details.tool .prompt-multi{background:none;border:0;border-radius:0;padding:0}
 details.tool .prompt-multi h5:first-child{margin-top:4px}
 details.tool .pm-sum{padding-top:0}
+
+/* 사이트 요청 박스: 제목도 내용과 같은 작은 글자로, 앞에 # 를 붙여 구분한다 */
+.prompt-multi:not(.pm-sum) h5{font-size:.88rem;margin:18px 0 2px;color:#fff}
+details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
