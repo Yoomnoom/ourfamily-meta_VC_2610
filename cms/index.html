@@ -231,7 +231,7 @@ dialog#editors{width:min(680px,94vw)}
 .filebox.fbfocus{flex-direction:column;align-items:stretch}
 .f-thumb.focusable{position:relative;width:100%;max-width:320px;height:auto;aspect-ratio:4/3;cursor:grab;touch-action:none;user-select:none;margin:0 auto}
 .f-thumb.focusable:active{cursor:grabbing}
-.f-thumb.focusable img{pointer-events:none}
+.f-thumb.focusable img,.f-thumb.focusable video{pointer-events:none}
 .f-thumb .fhint{position:absolute;left:6px;bottom:6px;padding:2px 8px;border-radius:999px;background:rgba(20,16,12,.75);color:#fff;font-size:.72rem;pointer-events:none}
 .listhost[data-l="more"] .f-thumb.focusable{height:auto;aspect-ratio:4/3}
 .f-thumb.framed{overflow:hidden;background:#111;position:relative}
@@ -1151,34 +1151,20 @@ dialog#editors{width:min(680px,94vw)}
     const input = el('input', { type: 'file', accept, hidden: true, tabindex: '-1' });
     const pickBtn = el('button', { type: 'button', class: 'btn sm', id, 'data-k': f.key, text: '파일 선택', onclick: () => input.click() });
     const clearBtn = el('button', { type: 'button', class: 'btn sm', text: '지우기', onclick: () => { o[f.key] = ''; changed(); refresh(); } });
-    function bindFocus(im) {   // 사진 전체를 보여 주고, 그 위의 "썸네일에 나올 영역" 네모를 끌어 고른다 (o.fx, o.fy = 0~100%, object-position 값)
-      const R = 4 / 3;   // 썸네일 칸 비율
-      thumb.classList.add('focusable', 'framed'); box.classList.add('fbfocus'); im.draggable = false;
-      const frame = el('div', { class: 'ffr' }), hint = el('span', { class: 'fhint', text: '밝은 네모를 끌어 보일 부분 고르기' });
-      let fw = 1, fh = 1, ready = false;
-      const place = () => {
-        frame.style.width = fw * 100 + '%'; frame.style.height = fh * 100 + '%';
-        frame.style.left = (o.fx ?? 50) / 100 * (1 - fw) * 100 + '%'; frame.style.top = (o.fy ?? 50) / 100 * (1 - fh) * 100 + '%';
-      };
-      const inner = el('div', { class: 'fin' });   // 칸(4:3)은 고정하고, 사진은 그 안에 통째로 줄여 넣는다
-      const setup = () => {
-        const iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight; if (!iw || !ih) return;
-        inner.style.aspectRatio = iw + ' / ' + ih;
-        if (iw / ih >= R) { inner.style.width = '100%'; inner.style.height = 'auto'; } else { inner.style.height = '100%'; inner.style.width = 'auto'; }
-        if (iw / ih > R) { fw = R * ih / iw; fh = 1; } else { fw = 1; fh = iw / (R * ih); }
-        ready = true; place();
-      };
-      im.addEventListener(im.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', setup);
-      inner.append(im, frame); thumb.replaceChildren(inner, hint); setup();
+    function bindFocus(im) {   // 칸(4:3)은 고정. 칸 안에서 사진을 마우스로 끌어 옮기면, 칸에 보이는 모습이 곧 썸네일이다 (o.fx, o.fy = 0~100%, object-position 값)
+      thumb.classList.add('focusable'); box.classList.add('fbfocus'); im.draggable = false;
+      const pos = () => { im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`; };
+      pos(); thumb.append(el('span', { class: 'fhint', text: '사진을 끌어서 위치 맞추기' }));
       thumb.onpointerdown = e => {
-        if (!ready) return;
+        const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight;
+        if (!iw || !ih) return;
         e.preventDefault(); thumb.setPointerCapture(e.pointerId);
-        const W = inner.clientWidth, H = inner.clientHeight, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
+        const sc = Math.max(W / iw, H / ih), ox = iw * sc - W, oy = ih * sc - H, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
         const cl = v => Math.max(0, Math.min(100, Math.round(v)));
-        thumb.onpointermove = ev => {
-          if (fw < 0.99) o.fx = cl(fx0 + (ev.clientX - sx) / (W * (1 - fw)) * 100);
-          if (fh < 0.99) o.fy = cl(fy0 + (ev.clientY - sy) / (H * (1 - fh)) * 100);
-          place();
+        thumb.onpointermove = ev => {   // 사진이 마우스를 따라 움직이도록 반대 부호
+          if (ox > 1) o.fx = cl(fx0 - (ev.clientX - sx) / ox * 100);
+          if (oy > 1) o.fy = cl(fy0 - (ev.clientY - sy) / oy * 100);
+          pos();
         };
         thumb.onpointerup = thumb.onpointercancel = () => { thumb.onpointermove = thumb.onpointerup = thumb.onpointercancel = null; changed(); };
       };
