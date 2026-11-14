@@ -41,7 +41,7 @@
 
   const TITLES = {
     intent: '기획 의도', process: '창작 과정', tools: '사용한 AI 도구와 주요 프롬프트', roles: 'AI가 한 것 vs 직접 한 것',
-    ai: 'AI가 한 것', human: '직접 한 것', sources: '출처 · 저작권', others: '다른 작품 보기',
+    ai: 'AI가 한 것', human: '직접 한 것', sources: '출처 · 저작권', others: '다른 작품 보기', world: '같은 세계관 이야기',
     declaration: '책임 있는 AI 활용 선언문', producer: '제작자 소개', contest: '공모전 안내'
   };
   const NAV = [['index.html', '홈'], ['works.html', '상영작'], ['making.html', '메이킹'], ['album.html', '비하인드 컷'], ['about.html', '소개']];
@@ -697,6 +697,14 @@
     };
   }
 
+  /** 같은 세계관 작품: 작품의 related(작품 id 목록)를 연재물 단위로 풀어 양쪽에서 보이게 한다 (한쪽에만 적어도 서로 보인다) */
+  function relatedOf(w, d) {
+    const ws = arr(d.works), ser = new Set(arr(d.series).filter(x => x && !x.solo).map(x => x.id));
+    const key = x => has(x.series) && ser.has(x.series) ? 's:' + x.series : 'w:' + x.id, me = key(w), set = new Set();
+    ws.forEach(a => arr(a.related).forEach(id => { const b = ws.find(x => x && x.id === id); if (!b) return;
+      const ka = key(a), kb = key(b); if (ka === me && kb !== me) set.add(kb); if (kb === me && ka !== me) set.add(ka); }));
+    return listing(d).filter(o => set.has(has(o.seriesId) ? 's:' + o.seriesId : 'w:' + o.id));
+  }
   /** 목록용: 단독 작품은 그대로, 연재물은 시리즈 하나로 묶어 첫 회로 연결한다 (solo 연재물은 연재물로 보이지 않는다) */
   function listing(d) {
     const ws = arr(d.works).filter(w => w && (has(w.id) || has(w.title)));
@@ -801,6 +809,6 @@
     });
   }
 
-  window.App = { kindOf, kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
+  window.App = { kindOf, kindPill, dlLink, h, has, arr, obj, filled, href, mediaPath, workId, watchHref, poster, buildVideo, safeUrl, listing, relatedOf, metaLine, credit, production, copyText, mediaStatus, frameStatus, isVideo, cursorSpec, siteCursor, setCursor: sp => setCursor(sp), TITLES, avail,
     section, pagehead, emptyPage, timeline, tools, toolList, roles, sourcesTable, gallery, rail, boot, params };
 })();

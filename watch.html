@@ -161,7 +161,12 @@
       main.append(h('section', { class: 'tabs-sec', 'data-section': 'tabs', 'aria-label': '작품 설명' }, h('div', { class: 'wrap' }, list, panels)));
     }
 
-    const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id).map((o, i) => [o, i]);
+    const world = App.relatedOf(w, d), worldIds = new Set(world.map(o => o.id));
+    const card = ([o, i]) => h('a', { href: watchHref(o, i) }, poster(o), App.kindPill(o),
+      h('h3', { text: has(o.title) ? o.title : '제목 미정' }),
+      has(metaLine(o)) && h('p', { class: 'meta', text: metaLine(o).replace('러닝타임 ', '') }));
+    if (world.length) main.append(section('world', T.world, '이어서 보면 좋은 작품이에요.', rail(h('div', { class: 'mini' }, world.map((o, i) => card([o, i]))))));
+    const others = listing(d).filter(o => !(ser && o.seriesId === ser.id) && o.id !== w.id && !worldIds.has(o.id)).map((o, i) => [o, i]);
     if (others.length) main.append(section('others', T.others, '', rail(h('div', { class: 'mini' }, others.map(([o, i]) =>
       h('a', { href: watchHref(o, i) }, poster(o), App.kindPill(o),
         h('h3', { text: has(o.title) ? o.title : '제목 미정' }),

@@ -115,6 +115,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--sky-d)}
 select{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:8px 12px;min-height:42px}
 .cb{display:flex;gap:10px;align-items:center;font-weight:700}
 .cb input{width:22px;height:22px;accent-color:var(--ok)}
+.picked{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}.pick{display:inline-flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border:2px solid var(--ok);border-radius:999px;font-weight:700}.pick button{width:28px;height:28px;border:0;border-radius:50%;background:rgba(0,0,0,.12);font-size:1.1rem;line-height:1;cursor:pointer}
 .sub-title{font-weight:700;margin:8px 0 6px}
 /* [예시] 값: 회색 글자 + "예시" 표시, 클릭하면 전체 선택 */
 .exw{position:relative;display:block}
@@ -358,7 +359,8 @@ dialog#editors{width:min(680px,94vw)}
             hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 7단계에서 고쳐요.',
             onChange: (v, o) => setSeriesFor(o, v) }),
         T('episode', '회차 번호 (몇 화)', { ph: '예) 3', show: () => { const w = data.works[ui.work] || {}; return !!w.series && !isSolo(w); },
-          hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' })] },
+          hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' }),
+        { type: 'multi', key: 'related', label: '같은 세계관 작품 (선택)', hint: '세계관을 함께 쓰는 다른 작품에 체크해요. 한쪽에서만 체크해도 두 작품의 상영관에 서로 "같은 세계관 이야기"로 보여요.', options: () => worldOptions() }] },
         { fields: [
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
@@ -618,6 +620,18 @@ dialog#editors{width:min(680px,94vw)}
     return id;
   }
   const allSeries = () => [...data.series, ...data.solos];
+  /* 같은 세계관: 작품의 related(작품 id 목록)를 연재물 단위로 묶어 고른다. 한쪽에만 적어도 서로 연결된 것으로 본다. */
+  const worldKey = x => has(x.series) && !isSolo(x) ? 's:' + x.series : 'w:' + x.id;
+  const worldGroups = w => { const g = new Map(); data.works.forEach(x => { if (!has(x.id) || worldKey(x) === worldKey(w)) return; const k = worldKey(x); (g.get(k) || g.set(k, []).get(k)).push(x); });
+    g.forEach(a => a.sort((p, q) => (+p.episode || 0) - (+q.episode || 0))); return g; };
+  const worldLinked = (a, b) => arr(a.related).some(id => b.some(x => x.id === id));
+  const worldOptions = () => { const w = data.works[ui.work] || {}, mine = data.works.filter(x => worldKey(x) === worldKey(w));
+    return [...worldGroups(w).values()].map(g => { const x = seriesOf(g[0]), t = x && !x.solo && has(x.title) ? x.title : has(g[0].title) ? g[0].title : '(제목 없음)';
+      return [g[0].id, t, worldLinked(w, g) || g.some(y => worldLinked(y, mine))]; }); };
+  const setWorld = (w, repId, on) => { const g = worldGroups(w).get(worldKey(data.works.find(x => x.id === repId))) || [], mine = data.works.filter(x => worldKey(x) === worldKey(w)), ids = new Set(g.map(x => x.id));
+    w.related = arr(w.related).filter(id => !ids.has(id)); g.forEach(y => { y.related = arr(y.related).filter(id => !mine.some(m => m.id === id)); });
+    if (on) w.related.push(repId); };
+
   const seriesOf = w => allSeries().find(x => x.id === (w || {}).series);
   const isSolo = w => data.solos.some(x => x.id === (w || {}).series);
   const isAdmin = () => !!me && me.role === 'admin';
@@ -830,6 +844,14 @@ dialog#editors{width:min(680px,94vw)}
         const cb = el('input', { type: 'checkbox', id, 'data-k': f.key }); cb.checked = !!o[f.key];
         cb.addEventListener('change', () => { o[f.key] = cb.checked; changed(); if (f.rerender) renderStep(); });
         return el('div', { class: 'field' }, el('label', { class: 'cb', for: id }, cb, f.label), hintEl(f));
+      }
+      if (f.type === 'multi') {   // 고르기 목록: 드롭다운에서 고르면 아래에 나열되고 ×로 뺀다. 고른 값의 id를 o[f.key] 배열에 담는다
+        const opts = f.options(), id = 'f' + (++uid), left = opts.filter(x => !x[2]), done = opts.filter(x => x[2]);
+        const sel = el('select', { id, class: 'fld' }, [el('option', { value: '', text: '작품 고르기…' }), ...left.map(([v, l]) => el('option', { value: v, text: l }))]);
+        sel.addEventListener('change', () => { if (!sel.value) return; setWorld(o, sel.value, true); changed(); renderStep(); });
+        const chosen = done.length ? el('div', { class: 'picked' }, done.map(([v, l]) => el('span', { class: 'pick' }, l,
+          el('button', { type: 'button', 'aria-label': l + ' 빼기', text: '×', onclick: () => { setWorld(o, v, false); changed(); renderStep(); } })))) : null;
+        return el('div', { class: 'field' }, lab(f.label, id), opts.length ? [chosen, left.length ? sel : null] : el('p', { class: 'hint', text: '연결할 다른 작품이 아직 없어요.' }), hintEl(f));
       }
       if (f.type === 'select') {
         const opts = typeof f.options === 'function' ? f.options() : f.options;
