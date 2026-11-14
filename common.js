@@ -508,7 +508,7 @@
         im.src = src;
       } catch (e) {}
     };
-    const fitW = (el, w, h) => { if (masonry && w && h && w / h > 4 / 3) { el.style.objectFit = 'contain'; if (el.tagName === 'IMG') edgeFill(el, el.currentSrc || el.src); } };
+    const fitW = (el, w, h) => { if (w && h && w / h > 4 / 3) { el.style.objectFit = 'contain'; if (el.tagName === 'IMG') edgeFill(el, el.currentSrc || el.src); } };
     const media = (it, big) => {
       if (has(it.file) && isVideo(it.file)) {
         const vd = h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });

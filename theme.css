@@ -397,7 +397,6 @@ footer{margin-top:48px;border-top:1px solid var(--line);padding:38px 0 46px;back
 @media (min-width:900px){
   :root{--cw:340px}
   .works-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .masonry{columns:4}
 }
 @media (min-width:1200px){.works-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 
@@ -616,3 +615,5 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 
 /* 사이트 요청 박스: 제목 아래 작은 글씨는 들여쓰기 */
 .prompt-multi:not(.pm-sum) .pm-body{padding-left:1.1em}
+
+.more-r{display:flex;justify-content:flex-end}
