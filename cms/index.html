@@ -1152,7 +1152,7 @@ dialog#editors{width:min(680px,94vw)}
       pos();
       thumb.append(el('span', { class: 'fhint', text: '끌어서 위치 맞추기' }));
       thumb.onpointerdown = e => {
-        const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth, ih = im.naturalHeight;
+        const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight;
         if (!iw || !ih) return;
         e.preventDefault(); thumb.setPointerCapture(e.pointerId);
         const sc = Math.max(W / iw, H / ih), ox = iw * sc - W, oy = ih * sc - H, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
@@ -1177,7 +1177,7 @@ dialog#editors{width:min(680px,94vw)}
         meta.className = 'f-meta ok'; meta.textContent = (isUrl(v) ? '✓ 올렸어요' : '✓ media/에 있음') + (mi.size ? ' · ' + fmtSize(mi.size) : '') + odd;
         const asVideo = kind === 'video' || (kind === 'media' && /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(v));
         if (kind === 'image' || (kind === 'media' && !asVideo)) { const im = el('img', { src: mi.url, alt: '' }); thumb.replaceChildren(im); if (f.focus) bindFocus(im); }
-        else if (asVideo) { const vd = el('video', { src: mi.url, muted: true, preload: 'metadata', playsinline: true }); vd.muted = true; vd.addEventListener('loadedmetadata', () => { vd.currentTime = Math.min(0.1, vd.duration || 0.1); }); thumb.replaceChildren(vd); }
+        else if (asVideo) { const vd = el('video', { src: mi.url, muted: true, preload: 'metadata', playsinline: true }); vd.muted = true; vd.addEventListener('loadedmetadata', () => { vd.currentTime = Math.min(0.1, vd.duration || 0.1); }); thumb.replaceChildren(vd); if (f.focus) bindFocus(vd); }
         else thumb.textContent = kind === 'pdf' ? 'PDF' : 'VTT';
       } else if (mi.state === 'missing') {
         meta.className = 'f-meta bad'; meta.textContent = '⚠ media/ 폴더에 이 파일이 없어요.' + (dir ? '' : ' 같은 이름으로 직접 넣어 주세요.') + odd; thumb.textContent = '없음';
