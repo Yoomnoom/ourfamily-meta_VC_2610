@@ -220,6 +220,13 @@ dialog#editors{width:min(680px,94vw)}
 .listhost[data-l="more"] .f-thumb{width:100%;height:90px}
 .listhost[data-l="more"] .f-btns{justify-content:center}
 .listhost[data-l="more"] .filebox~*{display:none}
+.listhost[data-l="more"]>.list{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.listhost[data-l="more"] .item-head{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap}
+.listhost[data-l="more"] .item-head b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.listhost[data-l="more"] .btn.sm{white-space:nowrap;padding:5px 10px;min-width:0;flex:none}
+.listhost[data-l="more"] .item-tools{flex:none}
+.listhost[data-l="more"] .f-btns{display:flex;flex-direction:row;gap:6px;flex-wrap:nowrap}
+.listhost[data-l="more"] .f-btns .btn{flex:1}
 </style>
 </head>
 <body>
@@ -448,7 +455,7 @@ dialog#editors{width:min(680px,94vw)}
         A('intro', '앨범 소개 문구 (없어도 돼요)', { rows: 2 }),
         { type: 'list', key: 'photos', multiDrop: true, itemLabel: i => `사진 ${i + 1}`, addLabel: '사진·영상 1개 추가', fields: [
           F('file', '사진·영상 파일', 'media', { hint: '사진(jpg·png·webp) 또는 영상(mp4, 50MB 이하)을 올려요.' }),
-          { type: 'list', key: 'more', multiDrop: true, itemLabel: i => `같은 장면의 사진·영상 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '사진 설명 (선택)', { hint: '비우면 위 사진 설명을 그대로 읽어 드려요.' })] },
+          { type: 'list', key: 'more', multiDrop: true, itemLabel: i => `추가 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '사진 설명 (선택)', { hint: '비우면 위 사진 설명을 그대로 읽어 드려요.' })] },
           S('mode', '여러 장일 때 보여주는 방식', [['auto', '썸네일 안에서 자동으로 넘어가기'], ['grid', '작은 격자로 함께 보이기'], ['stack', '첫 장만 보이고 장수 표시']], { hint: '같은 장면에 사진을 더 추가했을 때만 적용돼요. 누르면 크게 넘겨 볼 수 있어요.' }),
           T('caption', '사진 위에 보일 글', { ph: '예) 시나리오 회의' }),
           T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진이 안 보이는 분께 읽어 드리는 글이에요.\n사진 속 모습을 한 문장으로 적어요.' })] }] }] }],
