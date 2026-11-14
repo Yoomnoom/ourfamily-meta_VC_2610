@@ -617,5 +617,6 @@ details.tool .prompt-multi:not(.pm-sum) h5:first-child{margin-top:4px}
 .prompt-multi:not(.pm-sum) .pm-body{padding-left:1.1em}
 
 .wrap:has(>.more-top){position:relative}
-.more-top{position:absolute;top:0;right:0;margin:0}   /* 섹션 제목 줄의 오른쪽 끝 */
-@media (max-width:719px){.more-top{height:38px;padding:0 14px;font-size:.85rem}}
+.more-top{position:absolute;top:0;right:0;margin:0;display:inline-flex;align-items:center;min-height:44px;padding:0 2px;color:var(--accent-hi);font-weight:700;font-size:.95rem;text-decoration:none;white-space:nowrap}   /* 섹션 제목 줄의 오른쪽 끝, 테두리 없는 글자 링크 */
+.more-top:hover{color:#fff;text-decoration:underline;text-underline-offset:4px}
+@media (max-width:719px){.more-top{font-size:.85rem}}
