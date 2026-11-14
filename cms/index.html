@@ -234,7 +234,8 @@ dialog#editors{width:min(680px,94vw)}
 .f-thumb.focusable img{pointer-events:none}
 .f-thumb .fhint{position:absolute;left:6px;bottom:6px;padding:2px 8px;border-radius:999px;background:rgba(20,16,12,.75);color:#fff;font-size:.72rem;pointer-events:none}
 .listhost[data-l="more"] .f-thumb.focusable{height:auto;aspect-ratio:4/3}
-.f-thumb.framed{overflow:hidden;background:#111}
+.f-thumb.framed{overflow:hidden;background:#111;position:relative}
+.f-thumb .fin{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .f-thumb.framed img,.f-thumb.framed video{object-fit:fill}
 .listhost[data-l="more"] .fhint{display:none}
 .f-thumb .ffr{position:absolute;box-shadow:0 0 0 999px rgba(0,0,0,.7);border:2px solid #fff;box-sizing:border-box;pointer-events:none}
@@ -1159,18 +1160,20 @@ dialog#editors{width:min(680px,94vw)}
         frame.style.width = fw * 100 + '%'; frame.style.height = fh * 100 + '%';
         frame.style.left = (o.fx ?? 50) / 100 * (1 - fw) * 100 + '%'; frame.style.top = (o.fy ?? 50) / 100 * (1 - fh) * 100 + '%';
       };
+      const inner = el('div', { class: 'fin' });   // 칸(4:3)은 고정하고, 사진은 그 안에 통째로 줄여 넣는다
       const setup = () => {
         const iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight; if (!iw || !ih) return;
-        thumb.style.aspectRatio = iw + ' / ' + ih; thumb.style.maxWidth = Math.min(320, 260 * iw / ih) + 'px';
+        inner.style.aspectRatio = iw + ' / ' + ih;
+        if (iw / ih >= R) { inner.style.width = '100%'; inner.style.height = 'auto'; } else { inner.style.height = '100%'; inner.style.width = 'auto'; }
         if (iw / ih > R) { fw = R * ih / iw; fh = 1; } else { fw = 1; fh = iw / (R * ih); }
         ready = true; place();
       };
-      im.addEventListener(im.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', setup); setup();
-      thumb.append(frame, hint);
+      im.addEventListener(im.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', setup);
+      inner.append(im, frame); thumb.replaceChildren(inner, hint); setup();
       thumb.onpointerdown = e => {
         if (!ready) return;
         e.preventDefault(); thumb.setPointerCapture(e.pointerId);
-        const W = thumb.clientWidth, H = thumb.clientHeight, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
+        const W = inner.clientWidth, H = inner.clientHeight, sx = e.clientX, sy = e.clientY, fx0 = o.fx ?? 50, fy0 = o.fy ?? 50;
         const cl = v => Math.max(0, Math.min(100, Math.round(v)));
         thumb.onpointermove = ev => {
           if (fw < 0.99) o.fx = cl(fx0 + (ev.clientX - sx) / (W * (1 - fw)) * 100);
