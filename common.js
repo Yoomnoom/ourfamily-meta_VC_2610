@@ -404,7 +404,7 @@
           const btn = h('button', { type: 'button', class: 'btn ghost sm', 'aria-label': `${ptitle || '프롬프트'} 복사` }, '복사');
           btn.addEventListener('click', () => copyText(p.text, btn));
           const box = h('div', { class: 'prompt' },
-            h('div', { class: 'prompt-head' }, h('h4', { text: ptitle || (group ? group : '프롬프트') }), btn),
+            h('div', { class: 'prompt-head' }, h('h4', { text: ptitle || (group ? group : '프롬프트') }), group !== '요약' && btn),
             promptBody(p.text),
             refs.length > 0 && h('div', { class: 'prompt-refs' }, h('p', { class: 'prompt-refs-title', text: '프롬프트에 함께 넣은 이미지' }), gallery(refs)));
           return head ? h('div', { class: 'prompt-set' }, head, box) : box;
