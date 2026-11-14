@@ -470,6 +470,8 @@
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
       const shown = mode === 'grid' ? mine.slice(0, 4) : mode === 'auto' ? mine : mine.slice(0, 1);
       const els = shown.map(m => media(m));
+      const op = { top: '50% 0%', bottom: '50% 100%', left: '0% 50%', right: '100% 50%' }[g.pos];   // 썸네일 칸에서 잘릴 때 보이게 할 부분 (CMS '썸네일에서 보일 부분')
+      if (op) els.forEach(el => { el.style.objectPosition = op; });
       els.forEach((el, k) => { if (mode === 'auto') el.classList.add('slide', k ? 'off' : 'on', k ? 'over' : 'base'); });
       const unfix = () => { if (masonry) btn.style.aspectRatio = ''; };
       if (mode === 'grid') { const gr = h('div', { class: 'mini mini-' + shown.length }); els.forEach(el => gr.append(el)); btn.append(gr); }
