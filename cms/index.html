@@ -1158,6 +1158,7 @@ dialog#editors{width:min(680px,94vw)}
       im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`;
       const tell = () => { focusFile = o[f.key] || ''; try { $('frame').contentWindow.postMessage({ type: 'show-photo', file: focusFile }, '*'); } catch {} };   // 오른쪽 미리보기 썸네일이 이 사진을 보여 주게
       thumb.addEventListener('pointerenter', tell); thumb.addEventListener('pointerdown', tell);
+      thumb.addEventListener('pointerleave', () => { if (thumb.hasPointerCapture && thumb.onpointermove) return; focusFile = ''; try { $('frame').contentWindow.postMessage({ type: 'show-photo', file: '' }, '*'); } catch {} });
       const pos = () => { im.style.objectPosition = `${o.fx ?? 50}% ${o.fy ?? 50}%`; };
       thumb.onpointerdown = e => {
         const W = thumb.clientWidth, H = thumb.clientHeight, iw = im.naturalWidth || im.videoWidth, ih = im.naturalHeight || im.videoHeight;

@@ -484,7 +484,7 @@
         const go = k => { els[at].classList.replace('on', 'off'); at = k; els[at].classList.replace('off', 'on'); };
         setTimeout(() => setInterval(() => { if (Date.now() > hold) go((at + 1) % els.length); }, 3000), (i % 4) * 700);
         btn._files = mine.map(m => m.file || '');
-        btn._show = k => { hold = Date.now() + 12000; go(k); };   // CMS(미리보기)에서 이 사진을 만지는 동안은 자동 넘김을 멈추고 이 사진을 보여 준다
+        btn._show = k => { hold = Date.now() + 60000; go(k); }; btn._release = () => { hold = 0; };   // CMS(미리보기)에서 이 사진을 만지는 동안은 자동 넘김을 멈추고 이 사진을 보여 준다
       }
       btn.addEventListener('click', () => { show(first[i]); dlg.showModal(); });
       return h('li', {}, btn, cap ? h('p', { class: 'cap-below', text: cap }) : null);   // 글은 사진 위가 아니라 아래에 둔다 (사진을 가리지 않게)
@@ -716,6 +716,7 @@
       window.addEventListener('message', e => {
         if (e.source !== host || !e.data) return;
         if (e.data.type === 'content') run(e.data.data);
+        else if (e.data.type === 'show-photo' && !e.data.file) document.querySelectorAll('.tile').forEach(b => b._release && b._release());   // 마우스가 사진 칸을 벗어나면 자동 넘김 다시 시작
         else if (e.data.type === 'show-photo') {   // 관리 페이지에서 만지고 있는 사진을 썸네일에 바로 보여 준다
           const t = [...document.querySelectorAll('.tile')].find(b => b._files && b._files.includes(e.data.file));
           host.postMessage({ type: 'show-photo-ack', found: !!t, index: t ? t._files.indexOf(e.data.file) : -1, tiles: document.querySelectorAll('.tile').length }, '*');
