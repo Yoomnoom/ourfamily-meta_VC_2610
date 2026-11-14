@@ -569,3 +569,6 @@ details.tool summary{padding:18px 0}
 
 #loader .ld-mark{width:72px;height:72px;display:grid;place-items:center}
 #loader .ld-mark .logo{animation:pulse .9s ease-in-out infinite alternate}
+
+/* 소개 페이지: 제작자 소개·기획 의도·공모전 안내의 글 폭을 팀원 영역과 같게 (한 줄로 맞춰 내려 보이게) */
+#producer .prose,#intent .prose,#contest .prose{max-width:none}
