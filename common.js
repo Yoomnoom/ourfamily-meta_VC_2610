@@ -641,7 +641,7 @@
     const get = q => fetch(SB.url + '/rest/v1/' + q, { headers: hd, cache: 'no-store' })
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
     const [st, ser, wk] = await Promise.all([
-      get('ourfamilymeta_settings?key=in.(site,album)&select=key,value'),
+      get('ourfamilymeta_settings?key=in.(site,album,worlds)&select=key,value'),
       get('ourfamilymeta_series?select=id,title,summary,status,poster_path,solo,common&order=sort_order,created_at'),
       get('ourfamilymeta_works?select=slug,kind,title,series_id,episode_no,content&order=sort_order,created_at')]);
     const siteRow = st.find(r => r.key === 'site'), albumRow = st.find(r => r.key === 'album');   // 비하인드 컷은 편집자도 고칠 수 있게 따로 저장한다(없으면 site 안의 예전 값)
@@ -651,6 +651,8 @@
     d.series = ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoX: obj(x.common).logoX || '', logoY: obj(x.common).logoY || '', logoW: obj(x.common).logoW || '', solo: !!x.solo, common: obj(x.common) }));
     d.works = wk.map(x => ({ ...obj(x.content), kind: obj(x.content).kind === 'app' ? 'app' : x.kind, id: x.slug || obj(x.content).id, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''),
       series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '' }));
+    const worldsRow = st.find(r => r.key === 'worlds');   // 같은 세계관 연결은 따로 모아 저장한다(행이 없으면 예전처럼 작품 안의 related를 쓴다)
+    if (worldsRow) d.works.forEach(w => { w.related = arr(obj(obj(worldsRow.value).related)[w.id]); });
     return d;
   }
 

@@ -359,8 +359,7 @@ dialog#editors{width:min(680px,94vw)}
             hint: '연재물이면 시리즈를 고르거나 새로 만들어요. 총 몇 화일지는 몰라도 돼요. 시리즈 소개·대표 포스터는 7단계에서 고쳐요.',
             onChange: (v, o) => setSeriesFor(o, v) }),
         T('episode', '회차 번호 (몇 화)', { ph: '예) 3', show: () => { const w = data.works[ui.work] || {}; return !!w.series && !isSolo(w); },
-          hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' }),
-        { type: 'multi', key: 'related', label: '같은 세계관 작품 (선택)', hint: '세계관을 함께 쓰는 다른 작품에 체크해요. 한쪽에서만 체크해도 두 작품의 상영관에 서로 "같은 세계관 이야기"로 보여요.', options: () => worldOptions() }] },
+          hint: '1, 2, 3처럼 숫자로 적어요. 새 편이 나오면 작품을 추가하고 같은 시리즈를 고른 뒤 다음 번호를 적어요.' })] },
         { fields: [
           { group: 'video', fields: [
             F('file', '영상 파일', 'video', { show: () => kindOf() === 'video', hint: '5분 이내 mp4 파일이에요. 비워 두면 "영상을 불러오지 못했습니다" 안내가 나와요.' }),
@@ -423,6 +422,21 @@ dialog#editors{width:min(680px,94vw)}
       parts: [{ fields: [SOURCES_TABLE()] }],
       checks: w => [ck('외부 자료 출처·저작권', best(arr(w.sources).filter(s => !s.auto).map(s => Math.min(st(s.item), st(s.source)))), true, 'item', 'source')] },
 
+    { id: 'album', scope: 'site', shared: true, title: '비하인드 컷', pv: ['album.html', 'gallery'],
+      why: '사진과 영상을 여러 개 한꺼번에 끌어다 놓을 수 있어요. 홈에는 앞의 6개가 나와요.',
+      parts: [{ fields: [{ group: 'album', fields: [
+        A('intro', '앨범 소개 문구 (없어도 돼요)', { rows: 2 }),
+        { type: 'list', key: 'photos', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `사진 ${i + 1}`, addLabel: '사진·영상 1개 추가', fields: [
+          F('file', '사진·영상 파일', 'media', { focus: true, hint: '사진(jpg·png·webp) 또는 영상(mp4, 50MB 이하)을 올려요. 올린 사진을 손가락·마우스로 끌어서, 작은 썸네일에 보일 부분을 맞춰요. (크게 열면 전체가 나와요)' }),
+          { type: 'list', key: 'more', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `추가 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { focus: true, hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '사진 설명 (선택)', { hint: '비우면 위 사진 설명을 그대로 읽어 드려요.' })] },
+          S('mode', '여러 장일 때 보여주는 방식', [['auto', '썸네일 안에서 자동으로 넘어가기'], ['grid', '작은 격자로 함께 보이기'], ['stack', '첫 장만 보이고 장수 표시']], { hint: '같은 장면에 사진을 더 추가했을 때만 적용돼요. 누르면 크게 넘겨 볼 수 있어요.' }),
+          T('caption', '사진 아래에 보일 글', { ph: '예) 시나리오 회의', hint: '비하인드 컷 목록에서 사진 바로 아래에 보여요.' }),
+          T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진을 눌러 크게 열면 사진 아래에 보여요.\n사진이 안 보이는 분께 읽어 드리는 글도 되니, 사진 속 모습을 한두 문장으로 적어요.' })] }] }] }],
+      checks: d => [ck('비하인드 컷 사진 (파일 + 설명)', best(arr(obj(d.album).photos).map(x => Math.min(st(x.file), st(x.alt)))), false, 'file', 'alt')] },
+    { id: 'world', scope: 'site', shared: true, title: '같은 세계관 연결', pv: [WATCH, 'world'],
+      why: '세계관을 함께 쓰는 작품끼리 연결해요. 연결하면 두 작품의 상영관 아래에 "같은 세계관 이야기"로 서로 보여요.\n한쪽에서만 골라도 반대쪽에 같이 나와요. 연결하지 않아도 괜찮아요(선택).',
+      parts: [{ fields: [{ type: 'worlds' }] }] },
+
     { id: 'series', scope: 'site', title: '연재물 정보 고치기', pv: ['works.html', 'list'],
       why: '시리즈는 1단계에서 작품을 올릴 때 만들어요. 여기서는 시리즈 소개, 연재 중·완결 상태, 대표 포스터를 고치고, 아래 회차 목록에서 다음 회차를 추가해요.',
       parts: [{ fields: [{ type: 'list', key: 'series', itemLabel: i => `연재물 ${i + 1}`, addLabel: '연재물 추가', fields: [
@@ -470,17 +484,6 @@ dialog#editors{width:min(680px,94vw)}
           T('works', '작품 목록 구역'), T('topics', '주제 카드 구역'), T('album', '비하인드 컷 구역'), T('making', '메이킹 구역')] }] }] }],
       checks: d => [ck('첫 화면 배경 파일', st(obj(d.hero).mode === 'image' ? obj(d.hero).image : obj(d.hero).video), false, 'hero/video', 'hero/image'),
         ck('주제 설명 카드 3개', arr(obj(d.home).topics).length ? worst(arr(obj(d.home).topics).map(t => Math.min(st(t.title), st(t.text)))) : 0, false, 'topics/title', 'topics/text')] },
-    { id: 'album', scope: 'site', shared: true, title: '비하인드 컷', pv: ['album.html', 'gallery'],
-      why: '사진과 영상을 여러 개 한꺼번에 끌어다 놓을 수 있어요. 홈에는 앞의 6개가 나와요.',
-      parts: [{ fields: [{ group: 'album', fields: [
-        A('intro', '앨범 소개 문구 (없어도 돼요)', { rows: 2 }),
-        { type: 'list', key: 'photos', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `사진 ${i + 1}`, addLabel: '사진·영상 1개 추가', fields: [
-          F('file', '사진·영상 파일', 'media', { focus: true, hint: '사진(jpg·png·webp) 또는 영상(mp4, 50MB 이하)을 올려요. 올린 사진을 손가락·마우스로 끌어서, 작은 썸네일에 보일 부분을 맞춰요. (크게 열면 전체가 나와요)' }),
-          { type: 'list', key: 'more', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `추가 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { focus: true, hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '사진 설명 (선택)', { hint: '비우면 위 사진 설명을 그대로 읽어 드려요.' })] },
-          S('mode', '여러 장일 때 보여주는 방식', [['auto', '썸네일 안에서 자동으로 넘어가기'], ['grid', '작은 격자로 함께 보이기'], ['stack', '첫 장만 보이고 장수 표시']], { hint: '같은 장면에 사진을 더 추가했을 때만 적용돼요. 누르면 크게 넘겨 볼 수 있어요.' }),
-          T('caption', '사진 아래에 보일 글', { ph: '예) 시나리오 회의', hint: '비하인드 컷 목록에서 사진 바로 아래에 보여요.' }),
-          T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진을 눌러 크게 열면 사진 아래에 보여요.\n사진이 안 보이는 분께 읽어 드리는 글도 되니, 사진 속 모습을 한두 문장으로 적어요.' })] }] }] }],
-      checks: d => [ck('비하인드 컷 사진 (파일 + 설명)', best(arr(obj(d.album).photos).map(x => Math.min(st(x.file), st(x.alt)))), false, 'file', 'alt')] },
     { id: 'making', scope: 'site', title: '메이킹 페이지 공통', pv: ['making.html', 'process'],
       why: '모든 작품에 공통인 만든 과정과 AI 활용 선언문이에요. 작품별 내용은 1~6단계에 써요.',
       parts: [
@@ -603,6 +606,8 @@ dialog#editors{width:min(680px,94vw)}
     out.making = { intro: '', ...mk, timeline: normSteps(mk.timeline), tools: normTools(mk.tools), roles: normRoles(mk.roles),
       declaration: { title: '', text: '', ...obj(mk.declaration) } };
     out.album = { intro: '', ...al, photos: arr(al.photos).map(g => ({ file: '', caption: '', alt: '', mode: 'auto', ...obj(g), more: arr(obj(g).more).map(x => ({ file: '', alt: '', ...obj(x) })) })) };
+    const oldRel = {}; arr(d.works).forEach(w => { if (arr(obj(w).related).length) oldRel[obj(w).id] = arr(w.related).filter(has); });   // 예전엔 작품 안에 저장했다
+    out.worlds = { related: d.worlds && typeof d.worlds === 'object' ? obj(obj(d.worlds).related) : oldRel };
     const src = arr(ab.sources).map(x => ({ item: '', source: '', license: '', ...obj(x) })).filter(x => !x.auto);
     out.about = { ...ab, producer: { name: '', text: '', ...obj(ab.producer), members: arr(obj(ab.producer).members).map(m => ({ photo: '', name: '', role: '', text: '', ...obj(m) })) }, intent: ab.intent || '', sources: [{ ...FONT_ROW }, ...src] };
     const sers = [...arr(d.series), ...arr(d.solos)].map(normSeries).map(x => ({ ...x, id: has(x.id) ? x.id : crypto.randomUUID() }));
@@ -620,17 +625,17 @@ dialog#editors{width:min(680px,94vw)}
     return id;
   }
   const allSeries = () => [...data.series, ...data.solos];
-  /* 같은 세계관: 작품의 related(작품 id 목록)를 연재물 단위로 묶어 고른다. 한쪽에만 적어도 서로 연결된 것으로 본다. */
+  /* 같은 세계관: 연결은 작품이 아니라 data.worlds.related({작품 id: [연결한 작품 id]})에 따로 모은다 (비하인드 컷처럼 편집자 누구나 고친다).
+     연재물은 한 덩어리(첫 회 id가 대표)로 보고, 한쪽에만 적어도 서로 연결된 것으로 본다. */
+  const worldRel = () => { data.worlds = obj(data.worlds); data.worlds.related = obj(data.worlds.related); return data.worlds.related; };
   const worldKey = x => has(x.series) && !isSolo(x) ? 's:' + x.series : 'w:' + x.id;
-  const worldGroups = w => { const g = new Map(); data.works.forEach(x => { if (!has(x.id) || worldKey(x) === worldKey(w)) return; const k = worldKey(x); (g.get(k) || g.set(k, []).get(k)).push(x); });
-    g.forEach(a => a.sort((p, q) => (+p.episode || 0) - (+q.episode || 0))); return g; };
-  const worldLinked = (a, b) => arr(a.related).some(id => b.some(x => x.id === id));
-  const worldOptions = () => { const w = data.works[ui.work] || {}, mine = data.works.filter(x => worldKey(x) === worldKey(w));
-    return [...worldGroups(w).values()].map(g => { const x = seriesOf(g[0]), t = x && !x.solo && has(x.title) ? x.title : has(g[0].title) ? g[0].title : '(제목 없음)';
-      return [g[0].id, t, worldLinked(w, g) || g.some(y => worldLinked(y, mine))]; }); };
-  const setWorld = (w, repId, on) => { const g = worldGroups(w).get(worldKey(data.works.find(x => x.id === repId))) || [], mine = data.works.filter(x => worldKey(x) === worldKey(w)), ids = new Set(g.map(x => x.id));
-    w.related = arr(w.related).filter(id => !ids.has(id)); g.forEach(y => { y.related = arr(y.related).filter(id => !mine.some(m => m.id === id)); });
-    if (on) w.related.push(repId); };
+  const worldAll = () => { const g = new Map(); data.works.forEach(x => { if (has(x.id)) (g.get(worldKey(x)) || g.set(worldKey(x), []).get(worldKey(x))).push(x); });
+    g.forEach(a => a.sort((p, q) => (+p.episode || 0) - (+q.episode || 0))); return [...g.values()]; };
+  const worldTitle = g => { const x = seriesOf(g[0]); return x && !x.solo && has(x.title) ? x.title : has(g[0].title) ? g[0].title : '(제목 없음)'; };
+  const worldTo = (a, b) => a.some(x => arr(worldRel()[x.id]).some(id => b.some(y => y.id === id)));
+  const worldOn = (a, b) => worldTo(a, b) || worldTo(b, a);
+  const worldSet = (a, b, on) => { const r = worldRel(); [[a, b], [b, a]].forEach(([p, q]) => p.forEach(x => { r[x.id] = arr(r[x.id]).filter(id => !q.some(y => y.id === id)); if (!r[x.id].length) delete r[x.id]; }));
+    if (on) r[a[0].id] = [...arr(r[a[0].id]), b[0].id]; };
 
   const seriesOf = w => allSeries().find(x => x.id === (w || {}).series);
   const isSolo = w => data.solos.some(x => x.id === (w || {}).series);
@@ -845,13 +850,14 @@ dialog#editors{width:min(680px,94vw)}
         cb.addEventListener('change', () => { o[f.key] = cb.checked; changed(); if (f.rerender) renderStep(); });
         return el('div', { class: 'field' }, el('label', { class: 'cb', for: id }, cb, f.label), hintEl(f));
       }
-      if (f.type === 'multi') {   // 고르기 목록: 드롭다운에서 고르면 아래에 나열되고 ×로 뺀다. 고른 값의 id를 o[f.key] 배열에 담는다
-        const opts = f.options(), id = 'f' + (++uid), left = opts.filter(x => !x[2]), done = opts.filter(x => x[2]);
-        const sel = el('select', { id, class: 'fld' }, [el('option', { value: '', text: '작품 고르기…' }), ...left.map(([v, l]) => el('option', { value: v, text: l }))]);
-        sel.addEventListener('change', () => { if (!sel.value) return; setWorld(o, sel.value, true); changed(); renderStep(); });
-        const chosen = done.length ? el('div', { class: 'picked' }, done.map(([v, l]) => el('span', { class: 'pick' }, l,
-          el('button', { type: 'button', 'aria-label': l + ' 빼기', text: '×', onclick: () => { setWorld(o, v, false); changed(); renderStep(); } })))) : null;
-        return el('div', { class: 'field' }, lab(f.label, id), opts.length ? [chosen, left.length ? sel : null] : el('p', { class: 'hint', text: '연결할 다른 작품이 아직 없어요.' }), hintEl(f));
+      if (f.type === 'worlds') {   // 작품마다 한 줄: 연결된 작품은 알약으로, 더하는 것은 드롭다운으로
+        const all = worldAll();
+        return el('div', { class: 'worlds' }, all.map(G => { const others = all.filter(H => H !== G), on = others.filter(H => worldOn(G, H)), left = others.filter(H => !worldOn(G, H)), id = 'f' + (++uid);
+          const sel = left.length ? el('select', { id, class: 'fld' }, [el('option', { value: '', text: '작품 고르기…' }), ...left.map(H => el('option', { value: H[0].id, text: worldTitle(H) }))]) : null;
+          if (sel) sel.addEventListener('change', () => { const H = left.find(x => x[0].id === sel.value); if (!H) return; worldSet(G, H, true); changed(); renderStep(); });
+          return el('div', { class: 'field' }, el('label', { for: sel ? id : null, text: worldTitle(G) }),
+            on.length ? el('div', { class: 'picked' }, on.map(H => el('span', { class: 'pick' }, worldTitle(H),
+              el('button', { type: 'button', 'aria-label': worldTitle(G) + '에서 ' + worldTitle(H) + ' 빼기', text: '×', onclick: () => { worldSet(G, H, false); changed(); renderStep(); } })))) : null, sel); }));
       }
       if (f.type === 'select') {
         const opts = typeof f.options === 'function' ? f.options() : f.options;
@@ -1265,7 +1271,7 @@ dialog#editors{width:min(680px,94vw)}
     const nodes = [todo];
     let group = null;
     STEPS.forEach((s, i) => {
-      if (s.scope !== group) { group = s.scope; nodes.push(el('h2', { text: group === 'work' ? '이 작품' : '사이트 공통' })); }
+      const gk = s.shared ? 'shared' : s.scope; if (gk !== group) { group = gk; nodes.push(el('h2', { text: { work: '이 작품', shared: '모두 함께', site: '사이트 공통' }[gk] })); }
       const stt = sts[i];
       nodes.push(el('button', { type: 'button', class: 'stp', 'aria-current': i === ui.step ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.title} (${STATUS_TXT[stt]}${stepReqLeft(s, curScopeOf(s)) ? ', 필수 항목 남음' : ''})`, onclick: () => goStep(i) },
         el('span', { class: 'ic ' + stt, 'aria-hidden': 'true', text: stt === 'done' ? '✓' : '' }), el('span', { class: 'no', 'aria-hidden': 'true', text: i + 1 }), el('span', { text: s.title }), stepReqLeft(s, curScopeOf(s)) ? el('span', { class: 'req', text: '필수' }) : null));
@@ -1649,33 +1655,33 @@ dialog#editors{width:min(680px,94vw)}
     const works = arr(d.works).map((w, i) => {
       const inSeries = has(w.series) && sids.has(w.series), solo = soloIds.has(w.series);
       if (inSeries && !solo && !(+w.episode >= 1)) throw new Error(`"${has(w.title) ? w.title : w.id}"의 회차 번호를 1 이상의 숫자로 적어 주세요.`);
-      const c = clone(w); delete c.series; delete c.episode; delete c.owner; delete c.ownerAdmin; delete c.locked; delete c.lockedTo;
+      const c = clone(w); delete c.series; delete c.episode; delete c.owner; delete c.ownerAdmin; delete c.locked; delete c.lockedTo; delete c.related;
       const slug = String(w.id || '').trim();
       return { slug, ...lockCols(w), kind: w.kind === 'app' ? 'game' : w.kind === 'game' || w.kind === 'storyboard' ? w.kind : 'video', title: has(w.title) ? w.title.trim() : slug, series_id: inSeries ? w.series : null,
         episode_no: inSeries ? (solo ? 1 : Math.floor(+w.episode)) : null, poster_path: has(obj(w.video).poster) ? w.video.poster.trim() : null,
         sort_order: i, is_published: has(w.title), content: c };
     });
-    const site = clone(d); delete site.works; delete site.series; delete site.solos;
-    return { series, works, site: { key: 'site', value: site }, album: { key: 'album', value: clone(obj(d.album)) } };
+    const site = clone(d); delete site.works; delete site.series; delete site.solos; delete site.worlds;
+    return { series, works, site: { key: 'site', value: site }, album: { key: 'album', value: clone(obj(d.album)) }, worlds: { key: 'worlds', value: { related: clone(obj(obj(d.worlds).related)) } } };
   }
   async function loadOnline() {
-    const [st, ser, wk] = await Promise.all([getJson('ourfamilymeta_settings?key=in.(site,album)&select=key,value,updated_at'),
+    const [st, ser, wk] = await Promise.all([getJson('ourfamilymeta_settings?key=in.(site,album,worlds)&select=key,value,updated_at'),
       getJson('ourfamilymeta_series?select=*&order=sort_order,created_at'), getJson('ourfamilymeta_works?select=*&order=sort_order,created_at')]);
     let d = null;
     if (st.length || ser.length || wk.length) {
-      const siteRow = st.find(r => r.key === 'site'), albumRow = st.find(r => r.key === 'album');   // 비하인드 컷은 'album' 행이 있으면 그것이 우선
-      d = { ...obj(siteRow && siteRow.value), ...(albumRow ? { album: obj(albumRow.value) } : {}),
+      const siteRow = st.find(r => r.key === 'site'), albumRow = st.find(r => r.key === 'album'), worldsRow = st.find(r => r.key === 'worlds');   // 비하인드 컷·같은 세계관 연결은 각자 행이 있으면 그것이 우선
+      d = { ...obj(siteRow && siteRow.value), ...(albumRow ? { album: obj(albumRow.value) } : {}), ...(worldsRow ? { worlds: obj(worldsRow.value) } : {}),
         series: ser.map(x => ({ id: x.id, title: x.title, summary: x.summary || '', status: x.status, poster: x.poster_path || '', logo: obj(x.common).logo || '', logoX: obj(x.common).logoX || '', logoY: obj(x.common).logoY || '', logoW: obj(x.common).logoW || '', owner: x.owner || '', solo: !!x.solo, common: obj(x.common), ...lockProps(x) })),
         works: wk.map(x => ({ ...obj(x.content), kind: obj(x.content).kind === 'app' ? 'app' : x.kind, id: x.slug, title: has(obj(x.content).title) ? obj(x.content).title : (x.title && x.title !== x.slug ? x.title : ''), series: x.series_id || '', episode: x.episode_no ? String(x.episode_no) : '', owner: x.owner || '', ...lockProps(x) })) };
     }
     return { d, st, ser, wk };
   }
-  let albumExists = false, albumBase = '';   // 'album' 행이 DB에 있는지 / 불러올 때의 내용(안 바꿨으면 보내지 않으려고)
+  let albumExists = false, albumBase = '', worldsExists = false;   // 'album' 행이 DB에 있는지 / 불러올 때의 내용(안 바꿨으면 보내지 않으려고)
   function markSnap({ st, ser, wk }) {
     const rows = rowsOf(data), at = (list, col) => new Map(list.map(x => [x[col], x.updated_at]));
     const fill = (map, list, col, upd) => { map.clear(); list.forEach(r => { if (upd.has(r[col])) map.set(r[col], { json: JSON.stringify(r), updated: upd.get(r[col]) }); }); };
-    fill(snap.series, rows.series, 'id', at(ser, 'id')); fill(snap.works, rows.works, 'slug', at(wk, 'slug')); fill(snap.site, [rows.site, rows.album], 'key', at(st, 'key'));
-    albumExists = st.some(x => x.key === 'album'); albumBase = JSON.stringify(rows.album);
+    fill(snap.series, rows.series, 'id', at(ser, 'id')); fill(snap.works, rows.works, 'slug', at(wk, 'slug')); fill(snap.site, [rows.site, rows.album, rows.worlds], 'key', at(st, 'key'));
+    albumExists = st.some(x => x.key === 'album'); worldsExists = st.some(x => x.key === 'worlds'); albumBase = JSON.stringify(rows.album);
   }
   async function writeRows(table, col, rows, map) {
     for (const r of rows) {
@@ -1725,6 +1731,10 @@ dialog#editors{width:min(680px,94vw)}
       if (albumExists || JSON.stringify(rows.album) !== albumBase) {   // 비하인드 컷: 등록된 편집자 누구나 (바꾼 게 없고 아직 행이 없으면 보내지 않는다)
         try { await writeRows('ourfamilymeta_settings', 'key', [rows.album], snap.site); albumExists = true; albumBase = JSON.stringify(rows.album); }
         catch (e) { if (/관리자만/.test(e.message)) throw new Error('비하인드 컷은 편집자도 저장할 수 있게 DB 설정을 한 번 켜야 해요.\n관리자에게 db/ourfamilymeta_album.sql 실행을 요청하세요.'); throw e; }
+      }
+      if (worldsExists || Object.keys(rows.worlds.value.related).length) {   // 같은 세계관 연결: 등록된 편집자 누구나 (연결이 하나도 없고 아직 행이 없으면 보내지 않는다)
+        try { await writeRows('ourfamilymeta_settings', 'key', [rows.worlds], snap.site); worldsExists = true; }
+        catch (e) { if (/관리자만/.test(e.message)) throw new Error('같은 세계관 연결은 편집자도 저장할 수 있게 DB 설정을 한 번 켜야 해요.\n관리자에게 db/ourfamilymeta_worlds.sql 실행을 요청하세요.'); throw e; }
       }
       if (isAdmin()) await writeRows('ourfamilymeta_settings', 'key', [rows.site], snap.site);   // 사이트 공통 문구는 관리자만
       lastSaved = new Date(); setDirty(false); toast('저장했어요. 사이트에 바로 반영돼요.');
