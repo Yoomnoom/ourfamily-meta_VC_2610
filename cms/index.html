@@ -133,6 +133,11 @@ details.adv[open]{padding-bottom:10px}
 .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
 .item-head b{font-family:var(--hand);font-size:1.2rem}
 .item-tools{display:flex;gap:6px;flex-wrap:wrap}
+.item-head .fsum{display:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted,#777);font-size:.9rem}
+.item.folded .fsum{display:block}
+.item.folded>:not(.item-head){display:none}
+.item.folded .item-head{margin-bottom:0}
+.foldbar{display:flex;gap:6px;margin:8px 0}
 .epbox{border:1.5px solid var(--line);border-radius:16px;background:#fffaf0;padding:14px;margin-top:14px}
 .epbox h3{font-family:var(--hand);font-size:1.2rem;margin:0 0 8px}
 .eplist{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
@@ -216,7 +221,7 @@ dialog#editors{width:min(680px,94vw)}
 .listhost[data-l="more"] .item-head{margin:0 0 6px}
 .listhost[data-l="more"] .item-head b{font-size:.82rem}
 .listhost[data-l="more"] .item-tools>:nth-child(2){display:none}
-.listhost[data-l="more"] .field~.field{display:none}
+.listhost[data-l="more"] .field~.field{margin-top:8px}
 .listhost[data-l="more"] .filebox{flex-direction:column;align-items:stretch}
 .listhost[data-l="more"] .f-info{display:none}
 .listhost[data-l="more"] .f-thumb{width:100%;height:90px}
@@ -427,9 +432,9 @@ dialog#editors{width:min(680px,94vw)}
       why: '사진과 영상을 여러 개 한꺼번에 끌어다 놓을 수 있어요. 홈에는 앞의 6개가 나와요.',
       parts: [{ fields: [{ group: 'album', fields: [
         A('intro', '앨범 소개 문구 (없어도 돼요)', { rows: 2 }),
-        { type: 'list', key: 'photos', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `사진 ${i + 1}`, addLabel: '사진·영상 1개 추가', fields: [
+        { type: 'list', key: 'photos', multiDrop: true, dragOnly: true, fold: true, clearKey: 'file', itemLabel: i => `사진 ${i + 1}`, addLabel: '사진·영상 1개 추가', fields: [
           F('file', '사진·영상 파일', 'media', { focus: true, hint: '사진(jpg·png·webp) 또는 영상(mp4, 50MB 이하)을 올려요. 올린 사진을 손가락·마우스로 끌어서, 작은 썸네일에 보일 부분을 맞춰요. (크게 열면 전체가 나와요)' }),
-          { type: 'list', key: 'more', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `추가 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { focus: true, hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '사진 설명 (선택)', { hint: '비우면 위 사진 설명을 그대로 읽어 드려요.' })] },
+          { type: 'list', key: 'more', multiDrop: true, dragOnly: true, clearKey: 'file', itemLabel: i => `추가 ${i + 1}`, addLabel: '같은 장면에 사진·영상 더 추가', fields: [F('file', '사진 또는 영상', 'media', { focus: true, hint: '위 사진과 같은 글·설명으로 묶여서 나와요. 사진과 영상을 섞어도 돼요.' }), T('alt', '이 사진 제목 (선택)', { ph: '예) KTX', hint: '한 장면에 여러 장일 때, 눌러서 모아 볼 때 사진 아래에 보여요. 화면 읽기 프로그램도 이 글을 읽어요.' })] },
           S('mode', '여러 장일 때 보여주는 방식', [['auto', '썸네일 안에서 자동으로 넘어가기'], ['grid', '작은 격자로 함께 보이기'], ['stack', '첫 장만 보이고 장수 표시']], { hint: '같은 장면에 사진을 더 추가했을 때만 적용돼요. 누르면 크게 넘겨 볼 수 있어요.' }),
           T('caption', '사진 아래에 보일 글', { ph: '예) 시나리오 회의', hint: '비하인드 컷 목록에서 사진 바로 아래에 보여요.' }),
           T('alt', '사진 설명', { req: 1, ph: '예) 거실 식탁에 둘러앉아 시나리오를 의논하는 가족', hint: '사진을 눌러 크게 열면 사진 아래에 보여요.\n사진이 안 보이는 분께 읽어 드리는 글도 되니, 사진 속 모습을 한두 문장으로 적어요.' })] }] }] }],
@@ -931,6 +936,7 @@ dialog#editors{width:min(680px,94vw)}
     const host = el('div', { class: 'listhost', 'data-l': f.key });
     const items = () => o[f.key];
     let dragIdx = null, rows = [];
+    const folded = new WeakSet();   // 접어 둔 항목 (순서를 바꾸거나 지워도 항목 따라간다)
 
     const mkNew = () => f.make ? f.make() : f.str ? '' : blank(f.fields);
     function addAt(idx, k) { items().splice(idx, 0, mkNew()); changed(); draw(idx, k); }
@@ -1015,12 +1021,23 @@ dialog#editors{width:min(680px,94vw)}
             body = el('div', { class: 'field' }, exWrap(ta));
           } else body = renderFields(f.fields, item);
           const row = el('div', { class: 'item' }, el('div', { class: 'item-head' }, el('b', { text: label }), f.fixed ? null : rowTools(i, label, false)), body);
+          if (f.fold && !f.str) {   // 접기: 접으면 제목 줄만 남고, 파일 이름·설명을 한 줄로 보여 준다
+            const head = row.firstChild, fb = el('button', { type: 'button', class: 'btn sm', 'aria-label': `${label} 접기·펼치기` });
+            const sum = el('span', { class: 'fsum', text: [String(item.file || '').split('/').pop(), item.caption].filter(Boolean).join(' · ') || '(비어 있음)' });
+            const sync = () => { const c = row.classList.contains('folded'); fb.textContent = c ? '▸ 펼치기' : '▾ 접기'; fb.setAttribute('aria-expanded', String(!c)); };
+            fb.onclick = () => { row.classList.toggle('folded'); row.classList.contains('folded') ? folded.add(item) : folded.delete(item); sync(); };
+            if (folded.has(item) && i !== focusIdx) row.classList.add('folded'); else folded.delete(item);
+            head.insertBefore(fb, head.firstChild); head.insertBefore(sum, head.children[2]); sync();
+          }
           listEl.append(wire(row, i, label));
         });
       }
       const addBtn = f.fixed ? null : el('button', { type: 'button', class: 'btn sm', text: '＋ ' + (f.addLabel || '추가'), onclick: () => addAt(items().length) });
+      const foldAll = f.fold && !f.str && items().length > 1 ? el('div', { class: 'foldbar' },
+        el('button', { type: 'button', class: 'btn sm', text: '▸ 모두 접기', onclick: () => { items().forEach(x => folded.add(x)); draw(); } }),
+        el('button', { type: 'button', class: 'btn sm', text: '▾ 모두 펼치기', onclick: () => { items().forEach(x => folded.delete(x)); draw(); } })) : null;
       host.replaceChildren(...[f.title && el('div', { class: 'sub-title', text: f.title }), f.hint && el('span', { class: 'hint', text: brk(f.hint) }),
-        f.multiDrop ? multiDrop() : null, listEl, addBtn].filter(Boolean));
+        f.multiDrop ? multiDrop() : null, foldAll, listEl, addBtn].filter(Boolean));
       if (focusIdx != null) focusRow(focusIdx, focusK);
     }
 

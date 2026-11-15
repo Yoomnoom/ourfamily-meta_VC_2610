@@ -461,16 +461,37 @@
     /* 한 장면(글·설명 하나)에 사진·영상이 여럿일 수 있다: file + more[]. 확대 보기는 모든 파일을 한 줄로 이어서 넘겨 본다. */
     const filesOf = g => [{ file: g.file, alt: g.alt, fx: g.fx, fy: g.fy }, ...arr(g.more).map(m => ({ file: m && m.file, alt: m && has(m.alt) ? m.alt : g.alt, fx: m && m.fx, fy: m && m.fy }))].filter(f => has(f.file));
     const items = [], first = [];
-    groups.forEach(g => { first.push(items.length); const fs = filesOf(g); (fs.length ? fs : [{ file: '', alt: g.alt }]).forEach(f => items.push({ file: f.file || '', alt: f.alt, caption: g.caption, fx: f.fx, fy: f.fy })); });
+    groups.forEach((g, gi) => { first.push(items.length); const fs = filesOf(g); (fs.length ? fs : [{ file: '', alt: g.alt }]).forEach(f => items.push({ file: f.file || '', alt: f.alt, caption: g.caption, gi, own: has(f.alt) && f.alt !== g.alt, fx: f.fx, fy: f.fy })); });
     const dlg = h('dialog', { class: 'lightbox', 'aria-label': '사진 확대 보기' });
     let cur = 0;
     const fig = h('figure', { class: 'lb-fig' });
     const close = h('button', { type: 'button', class: 'lb-btn lb-close', 'aria-label': '닫기', text: '✕' });
     const prev = h('button', { type: 'button', class: 'lb-btn lb-prev', 'aria-label': '이전 사진', text: '‹' });
     const next = h('button', { type: 'button', class: 'lb-btn lb-next', 'aria-label': '다음 사진', text: '›' });
-    dlg.append(fig, close, prev, next);
+    const back = h('button', { type: 'button', class: 'lb-btn lb-back', 'aria-label': '한눈에 보기로 돌아가기', text: '▦', hidden: true });
+    dlg.append(fig, close, prev, next, back);
+    let ovGroup = -1;
+    function overview(gi) {   // 한 장면에 사진이 여럿이면, 한 장씩 넘기기 전에 모두 한 화면에 제목과 함께 보여 준다
+      ovGroup = gi;
+      const mine = items.map((it, k) => ({ it, k })).filter(x => x.it.gi === gi);
+      const cap = mine[0] && mine[0].it.caption;
+      fig.replaceChildren(
+        has(cap) ? h('p', { class: 'lb-ov-title', text: cap }) : null,
+        h('ul', { class: 'lb-ov' }, mine.map(({ it, k }, n) => {
+          const t = it.own ? it.alt : '';
+          const th = h('button', { type: 'button', class: 'lb-ov-btn', 'aria-label': `${t || (n + 1) + '번째 사진'} 크게 보기` });
+          const m = isVideo(it.file) ? h('video', { src: mediaPath(it.file) + '#t=0.1', muted: true, preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' }) : h('img', { src: mediaPath(it.file), alt: '', loading: 'lazy' });
+          m.addEventListener('error', () => m.remove());
+          if (it.fx != null || it.fy != null) m.style.objectPosition = `${it.fx ?? 50}% ${it.fy ?? 50}%`;
+          th.append(m);
+          th.addEventListener('click', () => show(k));
+          return h('li', {}, th, h('p', { class: 'lb-ov-cap', text: t || `${n + 1}` }));
+        })));
+      prev.hidden = next.hidden = back.hidden = true;
+    }
     function show(i) {
       cur = (i + items.length) % items.length;
+      back.hidden = !(items.filter(x => x.gi === items[cur].gi).length > 1);
       const it = items[cur];
       const cap = has(it.alt) ? it.alt : (it.caption || '');   // 누르면 '사진 설명'이 보인다 (목록 밖에는 '사진 아래에 보일 글'만)
       let media;
@@ -484,6 +505,7 @@
       fig.replaceChildren(media, h('figcaption', { class: 'lb-cap', text: `${cur + 1} / ${items.length}${cap ? ' · ' + cap : ''}` }));
       prev.hidden = next.hidden = items.length < 2;
     }
+    back.addEventListener('click', () => overview(items[cur].gi));
     close.addEventListener('click', () => dlg.close());
     dlg.addEventListener('close', () => fig.replaceChildren());   // 닫으면 영상 소리도 함께 멈춘다
     prev.addEventListener('click', () => show(cur - 1));
@@ -546,7 +568,7 @@
         btn._files = mine.map(m => m.file || '');
         btn._show = k => { hold = Date.now() + 60000; go(k); }; btn._release = () => { hold = 0; };   // CMS(미리보기)에서 이 사진을 만지는 동안은 자동 넘김을 멈추고 이 사진을 보여 준다
       }
-      btn.addEventListener('click', () => { show(first[i]); dlg.showModal(); });
+      btn.addEventListener('click', () => { if (n > 1) overview(i); else show(first[i]); dlg.showModal(); });
       return h('li', {}, btn, cap ? h('p', { class: 'cap-below', text: cap }) : null);   // 글은 사진 위가 아니라 아래에 둔다 (사진을 가리지 않게)
     }));
     return [list, dlg];
