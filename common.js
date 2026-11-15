@@ -551,20 +551,27 @@
       if (masonry) { btn.style.aspectRatio = '3 / 2'; btn.classList.add('fixed'); }   // 썸네일은 항상 4:3 (CMS 사진 칸과 같은 모양이라, CMS에서 맞춘 위치가 그대로 보인다)
       btn.append(h('div', { class: 'poster-fallback', 'aria-hidden': 'true' }));
       const shown = mode === 'grid' ? mine.slice(0, 4) : mode === 'auto' ? mine : mine.slice(0, 1);
-      const els = shown.map(m => media(m));
-      shown.forEach((m, k) => { if (m.fx != null || m.fy != null) els[k].style.objectPosition = `${m.fx ?? 50}% ${m.fy ?? 50}%`; });   // 썸네일 칸에서 잘릴 때 보이게 할 부분 (CMS에서 사진을 끌어 맞춘 값)
-      els.forEach((el, k) => { if (mode === 'auto') el.classList.add('shot', k ? 'off' : 'on', k ? 'over' : 'base'); });
+      const mk = k => {   // 썸네일 칸에서 잘릴 때 보이게 할 부분 (CMS에서 사진을 끌어 맞춘 값)
+        const m = shown[k], el = media(m);
+        if (m.fx != null || m.fy != null) el.style.objectPosition = `${m.fx ?? 50}% ${m.fy ?? 50}%`;
+        if (mode === 'auto') el.classList.add('shot', k ? 'off' : 'on', k ? 'over' : 'base');
+        return el;
+      };
+      const els = shown.map((m, k) => mode === 'auto' && k > 0 ? null : mk(k));   // 자동 넘김 장면은 첫 장만 먼저 불러오고, 나머지는 넘어갈 때 (느려지지 않게)
+      const ensure = k => { if (!els[k]) { els[k] = mk(k); btn.append(els[k]); } return els[k]; };
       const unfix = () => {};
       if (mode === 'grid') { const gr = h('div', { class: 'mini mini-' + shown.length }); els.forEach(el => gr.append(el)); btn.append(gr); }
-      else els.forEach(el => btn.append(el));
+      else els.forEach(el => el && btn.append(el));
       if (mode !== 'grid' && els[0]) els[0].addEventListener(els[0].tagName === 'VIDEO' ? 'loadedmetadata' : 'load', unfix);
       
       if (mine[0] && has(mine[0].file) && isVideo(mine[0].file) && mode !== 'auto') btn.append(h('span', { class: 'vbadge', 'aria-hidden': 'true', text: '▶' }));
       if (n > 1 && mode !== 'auto') btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
       if (mode === 'auto') {
         let at = 0, hold = 0; btn.append(h('span', { class: 'count', 'aria-hidden': 'true', text: n + '장' }));
-        const go = k => { els[at].classList.replace('on', 'off'); at = k; els[at].classList.replace('off', 'on'); };
-        setTimeout(() => setInterval(() => { if (Date.now() > hold) go((at + 1) % els.length); }, 3000), (i % 4) * 700);
+        let vis = true;   // 화면 밖에서는 넘기지 않는다
+        if ('IntersectionObserver' in window) new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; }).observe(btn);
+        const go = k => { ensure(k); els[at].classList.replace('on', 'off'); at = k; els[at].classList.replace('off', 'on'); ensure((at + 1) % els.length); };   // 다음 장은 미리 불러 둔다
+        setTimeout(() => setInterval(() => { if (vis && Date.now() > hold) go((at + 1) % els.length); }, 3000), (i % 4) * 700);
         btn._files = mine.map(m => m.file || '');
         btn._show = k => { hold = Date.now() + 60000; go(k); }; btn._release = () => { hold = 0; };   // CMS(미리보기)에서 이 사진을 만지는 동안은 자동 넘김을 멈추고 이 사진을 보여 준다
       }
