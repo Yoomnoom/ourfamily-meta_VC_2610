@@ -652,3 +652,10 @@ details.tool.no-prompt[open] summary::after{content:"접기 －"}
 .kind-tabs .kt.on{background:var(--accent);color:#fff}
 .kind-tabs .kt:focus-visible{outline:3px solid var(--accent-hi);outline-offset:-3px}
 .kind-sec[hidden]{display:none}
+/* 모아 보기 스크롤: 얇은 막대, 사이트 강조색 */
+.lb-ov{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent;padding-right:10px}
+.lb-ov::-webkit-scrollbar{width:8px}
+.lb-ov::-webkit-scrollbar-track{background:transparent}
+.lb-ov::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:999px}
+.lb-ov::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+.lb-ov::-webkit-scrollbar-button{display:none}
