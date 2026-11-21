@@ -1850,7 +1850,31 @@ dialog#editors{width:min(680px,94vw)}
         const oldWeekly = () => tbl(['주', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
           wk.slice().reverse().map(x => [d2(x.wk) + ' ~', n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)]));
         const label = (u, b) => u === 'month' ? b.slice(0, 7) : u === 'week' ? d2(b) + ' 주~' : d2(b) + ' (' + DOW[(new Date(b + 'T00:00:00Z').getUTCDay() + 6) % 7] + ')';
+        let mode = null, active = null;   // mode: 최근 N시간이면 {h, b(분 단위 칸)}, 날짜 범위면 null
+        const btns = [];
+        const mark = k => { active = k; btns.forEach(([bk, b]) => b.classList.toggle('primary', bk === k)); };
+        const kstTime = iso => { const d = new Date(+new Date(iso) + 9 * 36e5).toISOString(); return d.slice(5, 10).replace('-', '/') + ' ' + d.slice(11, 16); };
+        const loadRecent = async () => {
+          box.replaceChildren(note('불러오는 중…'));
+          try {
+            const res = await (await sbFetch('/rest/v1/rpc/ourfamilymeta_pageview_recent', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ p_hours: mode.h, p_bucket_min: mode.b }) })).json();
+            if (res.message) throw new Error(res.message);
+            const T = res.total || {}, P = res.prev || {}, sub = k => `직전 ${mode.label} 대비 ${delta(T[k] || 0, P[k] || 0)}`;
+            box.replaceChildren(
+              grid(card('방문', n(T.views), sub('views')), card('방문자', n(T.visitors), sub('visitors')), card('처음 온', n(T.new_visitors), sub('new_visitors')),
+                card('방문(세션)', n(T.sessions), sub('sessions')), card('평균 머문 시간', secs(T.avg_secs)), card('영상 재생', n(T.plays), sub('plays'))),
+              el('div', { style: 'height:10px' }),
+              tbl([mode.b < 60 ? `시각 (${mode.b}분 단위)` : '시각 (1시간 단위)', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
+                (res.rows || []).slice().reverse().map(x => [kstTime(x.bk), n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)])),
+              note('한국 시간 기준, 지금부터 거꾸로 센 구간이에요. "직전"은 바로 앞의 같은 길이 구간이에요.'));
+          } catch (e) {
+            box.replaceChildren(note(/42883|function|does not exist|schema cache|404/i.test(e.message)
+              ? '시간 단위로 보려면 db/ourfamilymeta_pageviews_recent.sql 을 Supabase SQL Editor 에서 한 번 실행해 주세요.' : '불러오지 못했어요: ' + e.message));
+          }
+        };
         const loadRange = async () => {
+          if (mode) return loadRecent();
           if (!inFrom.value || !inTo.value || inFrom.value > inTo.value) { box.replaceChildren(note('시작일이 끝일보다 늦어요. 날짜를 다시 골라 주세요.')); return; }
           box.replaceChildren(note('불러오는 중…'));
           try {
@@ -1869,10 +1893,16 @@ dialog#editors{width:min(680px,94vw)}
           }
         };
         const t0 = t.first_record ? new Date(+new Date(t.first_record) + 9 * 36e5).toISOString().slice(0, 10) : kst(29);
-        const preset = (txt, days) => el('button', { type: 'button', class: 'btn', text: txt, onclick: () => { inFrom.value = days === 'all' ? t0 : kst(days - 1); inTo.value = kst(0); loadRange(); } });
-        unitSel.addEventListener('change', loadRange); inFrom.addEventListener('change', loadRange); inTo.addEventListener('change', loadRange);
+        const preset = (txt, days, hrs) => { const b = el('button', { type: 'button', class: 'btn', text: txt, onclick: () => {
+            if (hrs) { const h = hrs === 'today' ? Math.max(1, Math.ceil(((Date.now() + 9 * 36e5) % 864e5) / 36e5)) : hrs;
+              mode = { h, b: h <= 1 ? 5 : 60, label: hrs === 'today' ? '같은 시간' : txt }; }
+            else { mode = null; inFrom.value = days === 'all' ? t0 : kst(days - 1); inTo.value = kst(0); unitSel.value = days === 'all' ? 'month' : days > 31 ? 'week' : 'day'; }
+            mark(txt); loadRange(); } }); btns.push([txt, b]); return b; };
+        const manual = () => { mode = null; mark(null); loadRange(); };
+        unitSel.addEventListener('change', manual); inFrom.addEventListener('change', manual); inTo.addEventListener('change', manual);
         out.push(sec('기간별 방문 (일·주·월)', el('div', { class: 'rng' }, unitSel, inFrom, el('span', { class: 'sep', text: '~' }), inTo,
-          preset('최근 7일', 7), preset('최근 30일', 30), preset('최근 90일', 90), preset('전체', 'all')), box));
+          preset('1시간', 0, 1), preset('12시간', 0, 12), preset('24시간', 0, 24), preset('오늘', 0, 'today'), preset('3일', 3), preset('7일', 7), preset('30일', 30), preset('90일', 90), preset('전체', 'all')), box));
+        mark('30일');
         loadRange();
         const dw = DOW.map((lab, i) => ({ lab, views: ((r.by_dow || []).find(x => x.k === i + 1) || {}).n || 0, v: ((r.by_dow || []).find(x => x.k === i + 1) || {}).visitors || 0 }));
         out.push(sec('요일별 방문', col(dw, 'views', 80, x => `${x.lab}요일 · 방문 ${x.views} · 방문자 ${x.v}`)));

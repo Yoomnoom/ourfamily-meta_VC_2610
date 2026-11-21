@@ -6,6 +6,7 @@
 ## 2026-11-21 (CMS 방문 집계: 기간 선택)
 - "주별 12주" 표를 "기간별 방문"으로 교체: 단위(일별·주별·월별) + 시작~끝 날짜 + 빠른 선택(7·30·90일·전체). cms/index.html openStats.
 - 새 DB 함수 `ourfamilymeta_pageview_range(p_from, p_to, p_unit)`: db/ourfamilymeta_pageviews_range.sql. **사용자가 Supabase SQL Editor에서 한 번 실행해야 켜진다.** 실행 전에는 예전 12주 표를 대신 보여 주고 안내 문구를 띄움. SQL 실행 완료(2026-11-21), CMS push로 배포.
+- 빠른 선택 버튼: 1시간·12시간·24시간·오늘(시간 단위, 직전 같은 길이 구간 대비 증감 표시) · 3일·7일·30일·90일·전체(날짜 단위). 시간 단위는 새 DB 함수 `ourfamilymeta_pageview_recent(p_hours, p_bucket_min)`(db/ourfamilymeta_pageviews_recent.sql, 2026-11-21 SQL 실행 완료).
 - 날짜는 한국 기준, 최대 2년. 주·월 칸의 방문자는 칸 안 중복 제외라 일별 합과 다를 수 있음.
 
 
