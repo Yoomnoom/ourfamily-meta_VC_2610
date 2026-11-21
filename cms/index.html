@@ -1837,9 +1837,37 @@ dialog#editors{width:min(680px,94vw)}
       const day = (r.by_day || []).map(x => ({ ...x, lab: x.d.slice(8) }));
       out.push(sec(v3 ? '최근 30일 방문' : '최근 14일', col(day, 'views', 96, x => `${x.d} · 방문 ${x.views} · 방문자 ${x.visitors}` + (x.new_visitors != null ? ` · 처음 온 ${x.new_visitors}` : ''))));
       if (v3) {
-        const wk = r.by_week || [];
-        out.push(sec('주별 (월요일 시작, 최근 12주)', tbl(['주', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
-          wk.slice().reverse().map(x => [d2(x.wk) + ' ~', n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)]))));
+        /* 기간별 보기: 단위(일·주·월)와 기간(빠른 선택 또는 직접 날짜)을 골라 표를 다시 불러온다. 함수가 없으면 예전 12주 표를 보여 준다. */
+        const wk = r.by_week || [], kst = d => new Date(Date.now() + 9 * 36e5 - d * 864e5).toISOString().slice(0, 10);
+        const box = el('div'), inFrom = el('input', { type: 'date', 'aria-label': '시작일' }), inTo = el('input', { type: 'date', 'aria-label': '끝일' });
+        const unitSel = el('select', { 'aria-label': '보는 단위' }, ...[['day', '일별'], ['week', '주별 (월요일 시작)'], ['month', '월별']].map(([v, t]) => el('option', { value: v, text: t })));
+        inFrom.value = kst(29); inTo.value = kst(0); inFrom.max = inTo.max = kst(0);
+        const oldWeekly = () => tbl(['주', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
+          wk.slice().reverse().map(x => [d2(x.wk) + ' ~', n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)]));
+        const label = (u, b) => u === 'month' ? b.slice(0, 7) : u === 'week' ? d2(b) + ' 주~' : d2(b) + ' (' + DOW[(new Date(b + 'T00:00:00Z').getUTCDay() + 6) % 7] + ')';
+        const loadRange = async () => {
+          if (!inFrom.value || !inTo.value || inFrom.value > inTo.value) { box.replaceChildren(note('시작일이 끝일보다 늦어요. 날짜를 다시 골라 주세요.')); return; }
+          box.replaceChildren(note('불러오는 중…'));
+          try {
+            const res = await (await sbFetch('/rest/v1/rpc/ourfamilymeta_pageview_range', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ p_from: inFrom.value, p_to: inTo.value, p_unit: unitSel.value }) })).json();
+            const T = res.total || {}, u = res.unit;
+            box.replaceChildren(
+              note(`${inFrom.value} ~ ${inTo.value} 전체 (한국 날짜): 방문 ${n(T.views)} · 방문자 ${n(T.visitors)} · 처음 온 ${n(T.new_visitors)} · 방문(세션) ${n(T.sessions)} · 평균 머문 ${secs(T.avg_secs)} · 영상 재생 ${n(T.plays)}`),
+              tbl([u === 'day' ? '날짜' : u === 'week' ? '주' : '월', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
+                (res.rows || []).slice().reverse().map(x => [label(u, x.b), n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)])),
+              u === 'day' ? null : note('고른 기간 밖의 날짜는 세지 않아요. 주·월 칸의 방문자는 그 칸 안에서 중복을 뺀 수예요(일별 합과 다를 수 있어요).'));
+          } catch (e) {
+            box.replaceChildren(note(/42883|function|does not exist|schema cache|404/i.test(e.message)
+              ? '기간을 골라 보려면 db/ourfamilymeta_pageviews_range.sql 을 Supabase SQL Editor 에서 한 번 실행해 주세요.\n그 전까지는 최근 12주 표를 보여 드려요.' : '불러오지 못했어요: ' + e.message), oldWeekly());
+          }
+        };
+        const t0 = t.first_record ? new Date(+new Date(t.first_record) + 9 * 36e5).toISOString().slice(0, 10) : kst(29);
+        const preset = (txt, days) => el('button', { type: 'button', class: 'btn', text: txt, onclick: () => { inFrom.value = days === 'all' ? t0 : kst(days - 1); inTo.value = kst(0); loadRange(); } });
+        unitSel.addEventListener('change', loadRange); inFrom.addEventListener('change', loadRange); inTo.addEventListener('change', loadRange);
+        out.push(sec('기간별 방문 (일·주·월)', el('div', { style: 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px' }, unitSel, inFrom, '~', inTo,
+          preset('최근 7일', 7), preset('최근 30일', 30), preset('최근 90일', 90), preset('전체', 'all')), box));
+        loadRange();
         const dw = DOW.map((lab, i) => ({ lab, views: ((r.by_dow || []).find(x => x.k === i + 1) || {}).n || 0, v: ((r.by_dow || []).find(x => x.k === i + 1) || {}).visitors || 0 }));
         out.push(sec('요일별 방문', col(dw, 'views', 80, x => `${x.lab}요일 · 방문 ${x.views} · 방문자 ${x.v}`)));
         const hm = r.heat || [], hmax = Math.max(1, ...hm.map(x => x.n)), cell = (dw0, h) => (hm.find(x => x.dow === dw0 && x.h === h) || {}).n || 0;
