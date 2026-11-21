@@ -112,6 +112,11 @@ textarea{resize:vertical;min-height:96px;line-height:1.6}
 textarea.big{min-height:180px;font-family:ui-monospace,"Cascadia Mono",Consolas,var(--sans);font-size:1rem;white-space:pre-wrap;tab-size:2}
 input:focus,textarea:focus,select:focus{border-color:var(--sky-d)}
 ::placeholder{color:#a39684;opacity:1}
+input[type=date]{font:inherit;font-size:.92rem;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:10px;padding:4px 10px;min-height:36px}
+.rng{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.rng select{min-height:36px;padding:2px 10px;font-size:.92rem;border-radius:10px}
+.rng .sep{opacity:.6}
+.rng .btn{min-height:34px;padding:2px 12px;font-size:.85rem;border-width:1.5px;border-radius:10px}
 select{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--field);border-radius:12px;padding:8px 12px;min-height:42px}
 .cb{display:flex;gap:10px;align-items:center;font-weight:700}
 .cb input{width:22px;height:22px;accent-color:var(--ok)}
@@ -1853,7 +1858,8 @@ dialog#editors{width:min(680px,94vw)}
               body: JSON.stringify({ p_from: inFrom.value, p_to: inTo.value, p_unit: unitSel.value }) })).json();
             const T = res.total || {}, u = res.unit;
             box.replaceChildren(
-              note(`${inFrom.value} ~ ${inTo.value} 전체 (한국 날짜): 방문 ${n(T.views)} · 방문자 ${n(T.visitors)} · 처음 온 ${n(T.new_visitors)} · 방문(세션) ${n(T.sessions)} · 평균 머문 ${secs(T.avg_secs)} · 영상 재생 ${n(T.plays)}`),
+              grid(card('방문', n(T.views)), card('방문자', n(T.visitors)), card('처음 온', n(T.new_visitors)), card('방문(세션)', n(T.sessions)), card('평균 머문 시간', secs(T.avg_secs)), card('영상 재생', n(T.plays))),
+              el('div', { style: 'height:10px' }),
               tbl([u === 'day' ? '날짜' : u === 'week' ? '주' : '월', '방문', '방문자', '처음 온', '방문(세션)', '평균 머문 시간', '영상 재생'],
                 (res.rows || []).slice().reverse().map(x => [label(u, x.b), n(x.views), n(x.visitors), n(x.new_visitors), n(x.sessions), secs(x.avg_secs), n(x.plays)])),
               u === 'day' ? null : note('고른 기간 밖의 날짜는 세지 않아요. 주·월 칸의 방문자는 그 칸 안에서 중복을 뺀 수예요(일별 합과 다를 수 있어요).'));
@@ -1865,7 +1871,7 @@ dialog#editors{width:min(680px,94vw)}
         const t0 = t.first_record ? new Date(+new Date(t.first_record) + 9 * 36e5).toISOString().slice(0, 10) : kst(29);
         const preset = (txt, days) => el('button', { type: 'button', class: 'btn', text: txt, onclick: () => { inFrom.value = days === 'all' ? t0 : kst(days - 1); inTo.value = kst(0); loadRange(); } });
         unitSel.addEventListener('change', loadRange); inFrom.addEventListener('change', loadRange); inTo.addEventListener('change', loadRange);
-        out.push(sec('기간별 방문 (일·주·월)', el('div', { style: 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px' }, unitSel, inFrom, '~', inTo,
+        out.push(sec('기간별 방문 (일·주·월)', el('div', { class: 'rng' }, unitSel, inFrom, el('span', { class: 'sep', text: '~' }), inTo,
           preset('최근 7일', 7), preset('최근 30일', 30), preset('최근 90일', 90), preset('전체', 'all')), box));
         loadRange();
         const dw = DOW.map((lab, i) => ({ lab, views: ((r.by_dow || []).find(x => x.k === i + 1) || {}).n || 0, v: ((r.by_dow || []).find(x => x.k === i + 1) || {}).visitors || 0 }));
